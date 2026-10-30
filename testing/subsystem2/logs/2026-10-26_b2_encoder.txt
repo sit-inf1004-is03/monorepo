@@ -1,0 +1,3295 @@
+﻿monitor: batch  n=195 last=60 from core 1
+monitor: t=3355834006 ms  samples=195  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=200 last=10 from core 1
+monitor: t=3355835556 ms  samples=200  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=205 last=40 from core 1
+monitor: t=3355837106 ms  samples=205  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=210 last=90 from core 1
+monitor: t=3355838656 ms  samples=210  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=215 last=60 from core 1
+monitor: t=3355840206 ms  samples=215  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=220 last=10 from core 1
+monitor: t=3355841756 ms  samples=220  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=225 last=40 from core 1
+monitor: t=3355843306 ms  samples=225  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=230 last=90 from core 1
+monitor: t=3355844856 ms  samples=230  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=235 last=60 from core 1
+monitor: t=3355846406 ms  samples=235  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=240 last=10 from core 1
+monitor: t=3355847956 ms  samples=240  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] result step 3, RIGHT (GP7) forwards: L=0 R=0 (expect 20 on the turned wheel, 0 on the other)
+[B2] step 4: turn the RIGHT (GP7) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=245 last=40 from core 1
+monitor: t=3355849506 ms  samples=245  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=250 last=90 from core 1
+monitor: t=3355851056 ms  samples=250  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=255 last=60 from core 1
+monitor: t=3355852606 ms  samples=255  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=260 last=10 from core 1
+monitor: t=3355854156 ms  samples=260  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=265 last=40 from core 1
+monitor: t=3355855706 ms  samples=265  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=270 last=90 from core 1
+monitor: t=3355857256 ms  samples=270  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=275 last=60 from core 1
+monitor: t=3355858806 ms  samples=275  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=280 last=10 from core 1
+monitor: t=3355860356 ms  samples=280  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=285 last=40 from core 1
+monitor: t=3355861906 ms  samples=285  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=290 last=90 from core 1
+monitor: t=3355863456 ms  samples=290  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=295 last=60 from core 1
+monitor: t=3355865006 ms  samples=295  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=300 last=10 from core 1
+monitor: t=3355866556 ms  samples=300  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=305 last=40 from core 1
+monitor: t=3355868106 ms  samples=305  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=310 last=90 from core 1
+monitor: t=3355869656 ms  samples=310  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2] result step 4, RIGHT (GP7) backwards: L=0 R=0 (expect 20 on the turned wheel, 0 on the other)
+[B2] done.  Copy the four result lines into TEST_LOG.md as S2-M01.
+monitor: batch  n=315 last=60 from core 1
+monitor: t=3355871206 ms  samples=315  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=320 last=10 from core 1
+monitor: t=3355872756 ms  samples=320  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=325 last=40 from core 1
+monitor: t=3355874306 ms  samples=325  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=330 last=90 from core 1
+monitor: t=3355875856 ms  samples=330  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=335 last=60 from core 1
+monitor: t=3355877406 ms  samples=335  min=0 max=1monitor: batch  n=1470 last=90 from core 1
+monitor: t=3356229256 ms  samples=1470  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1475 last=60 from core 1
+monitor: t=3356230806 ms  samples=1475  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1480 last=10 from core 1
+monitor: t=3356232356 ms  samples=1480  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1485 last=40 from core 1
+monitor: t=3356233906 ms  samples=1485  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1490 last=90 from core 1
+monitor: t=3356235456 ms  samples=1490  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1495 last=60 from core 1
+monitor: t=3356237006 ms  samples=1495  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1500 last=10 from core 1
+monitor: t=3356238556 ms  samples=1500  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1505 last=40 from core 1
+monitor: t=3356240106 ms  samples=1505  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1510 last=90 from core 1
+monitor: t=3356241656 ms  samples=1510  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1515 last=60 from core 1
+monitor: t=3356243206 ms  samples=1515  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1520 last=10 from core 1
+monitor: t=3356244756 ms  samples=1520  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1525 last=40 from core 1
+monitor: t=3356246306 ms  samples=1525  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1530 last=90 from core 1
+monitor: t=3356247856 ms  samples=1530  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1535 last=60 from core 1
+monitor: t=3356249406 ms  samples=1535  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1540 last=10 from core 1
+monitor: t=3356250956 ms  samples=1540  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1545 last=40 from core 1
+monitor: t=3356252506 ms  samples=1545  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1550 last=90 from core 1
+monitor: t=3356254056 ms  samples=1550  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1555 last=60 from core 1
+monitor: t=3356255606 ms  samples=1555  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1560 last=10 from core 1
+monitor: t=3356257156 ms  samples=1560  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1565 last=40 from core 1
+monitor: t=3356258706 ms  samples=1565  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1570 last=90 from core 1
+monitor: t=3356260256 ms  samples=1570  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1575 last=60 from core 1
+monitor: t=3356261806 ms  samples=1575  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1580 last=10 from core 1
+monitor: t=3356263356 ms  samples=1580  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1585 last=40 from core 1
+monitor: t=3356264906 ms  samples=1585  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1590 last=90 from core 1
+monitor: t=3356266456 ms  samples=1590  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1595 last=60 from core 1
+monitor: t=3356268006 ms  samples=1595  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1600 last=10 from core 1
+monitor: t=3356269556 ms  samples=1600  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1605 last=40 from core 1
+monitor: t=3356271106 ms  samples=1605  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1610 last=90 from core 1
+monitor: t=3356272656 ms  samples=1610  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1615 last=60 from core 1
+monitor: t=3356274206 ms  samples=1615  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1620 last=10 from core 1
+monitor: t=3356275756 ms  samples=1620  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1625 last=40 from core 1
+monitor: t=3356277306 ms  samples=1625  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1630 last=90 from core 1
+monitor: t=3356278856 ms  samples=1630  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1635 last=60 from core 1
+monitor: t=3356280406 ms  samples=1635  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1640 last=10 from core 1
+monitor: t=3356281956 ms  samples=1640  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1645 last=40 from core 1
+monitor: t=3356283506 ms  samples=1645  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1650 last=90 from core 1
+monitor: t=3356285056 ms  samples=1650  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1655 last=60 from core 1
+monitor: t=3356286606 ms  samples=1655  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1660 last=10 from core 1
+monitor: t=3356288156 ms  samples=1660  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1665 last=40 from core 1
+monitor: t=3356289706 ms  samples=1665  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1670 last=90 from core 1
+monitor: t=3356291256 ms  samples=1670  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1675 last=60 from core 1
+monitor: t=3356292806 ms  samples=1675  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1680 last=10 from core 1
+monitor: t=3356294356 ms  samples=1680  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1685 last=40 from core 1
+monitor: t=3356295906 ms  samples=1685  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1690 last=90 from core 1
+monitor: t=3356297456 ms  samples=1690  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1695 last=60 from core 1
+monitor: t=3356299006 ms  samples=1695  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1700 last=10 from core 1
+monitor: t=3356300556 ms  samples=1700  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1705 last=40 from core 1
+monitor: t=3356302106 ms  samples=1705  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1710 last=90 from core 1
+monitor: t=3356303656 ms  samples=1710  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1715 last=60 from core 1
+monitor: t=3356305206 ms  samples=1715  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1720 last=10 from core 1
+monitor: t=3356306756 ms  samples=1720  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1725 last=40 from core 1
+monitor: t=3356308306 ms  samples=1725  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1730 last=90 from core 1
+monitor: t=3356309856 ms  samples=1730  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1735 last=60 from core 1
+monitor: t=3356311406 ms  samples=1735  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1740 last=10 from core 1
+monitor: t=3356312956 ms  samples=1740  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1745 last=40 from core 1
+monitor: t=3356314506 ms  samples=1745  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1750 last=90 from core 1
+monitor: t=3356316056 ms  samples=1750  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1755 last=60 from core 1
+monitor: t=3356317606 ms  samples=1755  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1760 last=10 from core 1
+monitor: t=3356319156 ms  samples=1760  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1765 last=40 from core 1
+monitor: t=3356320706 ms  samples=1765  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1770 last=90 from core 1
+monitor: t=3356322256 ms  samples=1770  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1775 last=60 from core 1
+monitor: t=3356323806 ms  samples=1775  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1780 last=10 from core 1
+monitor: t=3356325356 ms  samples=1780  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1785 last=40 from core 1
+monitor: t=3356326906 ms  samples=1785  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1790 last=90 from core 1
+monitor: t=3356328456 ms  samples=1790  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1795 last=60 from core 1
+monitor: t=3356330006 ms  samples=1795  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1800 last=10 from core 1
+monitor: t=3356331556 ms  samples=1800  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1805 last=40 from core 1
+monitor: t=3356333106 ms  samples=1805  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1810 last=90 from core 1
+monitor: t=3356334656 ms  samples=1810  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1815 last=60 from core 1
+monitor: t=3356336206 ms  samples=1815  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1820 last=10 from core 1
+monitor: t=3356337756 ms  samples=1820  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1825 last=40 from core 1
+monitor: t=3356339306 ms  samples=1825  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1830 last=90 from core 1
+monitor: t=3356340856 ms  samples=1830  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1835 last=60 from core 1
+monitor: t=3356342406 ms  samples=1835  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1840 last=10 from core 1
+monitor: t=3356343956 ms  samples=1840  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1845 last=40 from core 1
+monitor: t=3356345506 ms  samples=1845  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1850 last=90 from core 1
+monitor: t=3356347056 ms  samples=1850  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1855 last=60 from core 1
+monitor: t=3356348606 ms  samples=1855  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1860 last=10 from core 1
+monitor: t=3356350156 ms  samples=1860  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1865 last=40 from core 1
+monitor: t=3356351706 ms  samples=1865  min=0 max=100 avg=49  free slots=4  free blocks=4
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+monitor: I am task 7
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] S2-U03 PASS  encoder pulses convert to mm
+[TEST] S2-U04 PASS  still wheels: counts steady, speed 0
+[TEST] S2-U05 PASS  GPIO dispatcher refuses a second handler on GP5
+[TEST] subsystem2 SUMMARY 5 passed, 0 failed
+[B2] encoder pulse count: 4 steps of 15 s, starting in 10 s.  Wheels off the ground, motors off.
+monitor: batch  n=5 last=40 from core 1
+monitor: t=3355771096 ms  samples=5  min=0 max=40 avg=20  free slots=4  free blocks=4
+monitor: batch  n=10 last=90 from core 1
+monitor: t=3355772646 ms  samples=10  min=0 max=90 avg=45  free slots=4  free blocks=4
+[TEST] INT-01 PASS  samples flow from subsystem 2 to subsystem 3
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 2 passed, 0 failed
+[TEST] S4-U01 PASS  message buffer max line = S4_SUMMARY_MAX
+monitor: batch  n=15 last=60 from core 1
+monitor: t=3355774196 ms  samples=15  min=0 max=100 avg=56  free slots=4  free blocks=4
+monitor: batch  n=20 last=10 from core 1
+monitor: t=3355775746 ms  samples=20  min=0 max=100 avg=50  free slots=4  free blocks=4
+[TEST] INT-02 PASS  summary lines flow from subsystem 3 to subsystem 4
+[TEST] subsystem4 SUMMARY 2 passed, 0 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+monitor: batch  n=25 last=40 from core 1
+monitor: t=3355777296 ms  samples=25  min=0 max=100 avg=44  free slots=4  free blocks=4
+monitor: batch  n=30 last=90 from core 1
+monitor: t=3355778846 ms  samples=30  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=35 last=60 from core 1
+monitor: t=3355780396 ms  samples=35  min=0 max=100 avg=52  free slots=4  free blocks=4
+[B2] step 1: turn the LEFT (GP5) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=40 last=10 from core 1
+monitor: t=3355781946 ms  samples=40  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=45 last=40 from core 1
+monitor: t=3355783496 ms  samples=45  min=0 max=100 avg=46  free slots=4  free blocks=4
+monitor: batch  n=50 last=90 from core 1
+monitor: t=3355785046 ms  samples=50  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=55 last=60 from core 1
+monitor: t=3355786596 ms  samples=55  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: batch  n=60 last=10 from core 1
+monitor: t=3355788146 ms  samples=60  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=65 last=40 from core 1
+monitor: t=3355789696 ms  samples=65  min=0 max=100 avg=47  free slots=4  free blocks=4
+monitor: batch  n=70 last=90 from core 1
+monitor: t=3355791246 ms  samples=70  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=75 last=60 from core 1
+monitor: t=3355792796 ms  samples=75  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: batch  n=80 last=10 from core 1
+monitor: t=3355794346 ms  samples=80  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=85 last=40 from core 1
+monitor: t=3355795896 ms  samples=85  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=90 last=90 from core 1
+monitor: t=3355797446 ms  samples=90  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=95 last=60 from core 1
+monitor: t=3355798996 ms  samples=95  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: batch  n=100 last=10 from core 1
+monitor: t=3355800546 ms  samples=100  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=105 last=40 from core 1
+monitor: t=3355802096 ms  samples=105  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2] result step 1, LEFT (GP5) forwards: L=0 R=0 (expect 20 on the turned wheel, 0 on the other)
+[B2] step 2: turn the LEFT (GP5) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=110 last=90 from core 1
+monitor: t=3355803646 ms  samples=110  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=115 last=60 from core 1
+monitor: t=3355805196 ms  samples=115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=120 last=10 from core 1
+monitor: t=3355806746 ms  samples=120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=125 last=40 from core 1
+monitor: t=3355808296 ms  samples=125  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2]   L=2 R=0
+[B2]   L=6 R=0
+monitor: batch  n=130 last=90 from core 1
+monitor: t=3355809846 ms  samples=130  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=12 R=0
+[B2]   L=18 R=0
+[B2]   L=24 R=0
+[B2]   L=29 R=0
+[B2]   L=32 R=0
+[B2]   L=34 R=0
+[B2]   L=36 R=0
+[B2]   L=37 R=0
+[B2]   L=39 R=0
+[B2]   L=40 R=0
+[B2]   L=42 R=0
+[B2]   L=43 R=0
+[B2]   L=44 R=0
+[B2]   L=46 R=0
+[B2]   L=48 R=0
+[B2]   L=49 R=0
+[B2]   L=51 R=0
+[B2]   L=52 R=0
+[B2]   L=53 R=0
+[B2]   L=55 R=0
+[B2]   L=56 R=0
+[B2]   L=57 R=0
+[B2]   L=59 R=0
+[B2]   L=60 R=0
+[B2]   L=62 R=0
+[B2]   L=63 R=0
+[B2]   L=64 R=0
+[B2]   L=66 R=0
+[B2]   L=67 R=0
+[B2]   L=68 R=0
+[B2]   L=70 R=0
+[B2]   L=71 R=0
+[B2]   L=73 R=0
+[B2]   L=74 R=0
+[B2]   L=75 R=0
+[B2]   L=77 R=0
+[B2]   L=78 R=0
+[B2]   L=79 R=0
+[B2]   L=80 R=0
+[B2]   L=81 R=0
+[B2]   L=83 R=0
+monitor: batch  n=135 last=60 from core 1
+monitor: t=3355811396 ms  samples=135  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=84 R=0
+[B2]   L=85 R=0
+[B2]   L=87 R=0
+[B2]   L=88 R=0
+[B2]   L=89 R=0
+monitor: batch  n=140 last=10 from core 1
+monitor: t=3355812946 ms  samples=140  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=145 last=40 from core 1
+monitor: t=3355814496 ms  samples=145  min=0 max=100 avg=48  free slots=4  free blocks=4
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+monitor: I am task 7
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] S2-U03 PASS  encoder pulses convert to mm
+[TEST] S2-U04 PASS  still wheels: counts steady, speed 0
+[TEST] S2-U05 PASS  GPIO dispatcher refuses a second handler on GP5
+[TEST] subsystem2 SUMMARY 5 passed, 0 failed
+[B2] encoder pulse count: 4 steps of 15 s, starting in 10 s.  Wheels off the ground, motors off.
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355771866 ms  samples=4  min=0 max=30 avg=15  free slots=1  free blocks=1
+[TEST] INT-01 FAIL  samples flow from subsystem 2 to subsystem 3   (../app_program/subsystem3/subsystem3_test.c:34)
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 1 passed, 1 failed
+[TEST] S4-U01 PASS  message buffer max line = S4_SUMMARY_MAX
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355773876 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355775886 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+monitor: batch  n=5 last=40 from core 1
+monitor: t=3355776346 ms  samples=8  min=0 max=70 avg=35  free slots=3  free blocks=4
+[TEST] INT-02 FAIL  summary lines flow from subsystem 3 to subsystem 4   (../app_program/subsystem4/subsystem4_test.c:30)
+[TEST] subsystem4 SUMMARY 1 passed, 1 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+monitor: batch  n=10 last=90 from core 1
+monitor: t=3355776656 ms  samples=10  min=0 max=90 avg=45  free slots=4  free blocks=4
+monitor: batch  n=15 last=60 from core 1
+monitor: t=3355778206 ms  samples=15  min=0 max=100 avg=56  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=20 last=10 from core 1
+monitor: t=3355779756 ms  samples=20  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] step 1: turn the LEFT (GP5) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=25 last=40 from core 1
+monitor: t=3355781306 ms  samples=25  min=0 max=100 avg=44  free slots=4  free blocks=4
+monitor: batch  n=30 last=90 from core 1
+monitor: t=3355782856 ms  samples=30  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=35 last=60 from core 1
+monitor: t=3355784406 ms  samples=35  min=0 max=100 avg=52  free slots=4  free blocks=4
+monitor: batch  n=40 last=10 from core 1
+monitor: t=3355785956 ms  samples=40  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=1 R=0
+monitor: batch  n=45 last=40 from core 1
+monitor: t=3355787506 ms  samples=45  min=0 max=100 avg=46  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=50 last=90 from core 1
+monitor: t=3355789056 ms  samples=50  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=2 R=0
+monitor: batch  n=55 last=60 from core 1
+monitor: t=3355790606 ms  samples=55  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: batch  n=60 last=10 from core 1
+monitor: t=3355792156 ms  samples=60  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=65 last=40 from core 1
+monitor: t=3355793706 ms  samples=65  min=0 max=100 avg=47  free slots=4  free blocks=4
+[B2]   L=3 R=0
+monitor: batch  n=70 last=90 from core 1
+monitor: t=3355795256 ms  samples=70  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=75 last=60 from core 1
+monitor: t=3355796806 ms  samples=75  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=80 last=10 from core 1
+monitor: t=3355798356 ms  samples=80  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=85 last=40 from core 1
+monitor: t=3355799906 ms  samples=85  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=90 last=90 from core 1
+monitor: t=3355801456 ms  samples=90  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=95 last=60 from core 1
+monitor: t=3355803006 ms  samples=95  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2] result step 1, LEFT (GP5) forwards: L=3 R=0 (expect 20 on the turned wheel, 0 on the other)
+[B2] step 2: turn the LEFT (GP5) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=100 last=10 from core 1
+monitor: t=3355804556 ms  samples=100  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=105 last=40 from core 1
+monitor: t=3355806106 ms  samples=105  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+[B2]   L=1 R=0
+monitor: batch  n=110 last=90 from core 1
+monitor: t=3355807656 ms  samples=110  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=115 last=60 from core 1
+monitor: t=3355809206 ms  samples=115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=120 last=10 from core 1
+monitor: t=3355810756 ms  samples=120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=125 last=40 from core 1
+monitor: t=3355812306 ms  samples=125  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=130 last=90 from core 1
+monitor: t=3355813856 ms  samples=130  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=2 R=0
+monitor: batch  n=135 last=60 from core 1
+monitor: t=3355815406 ms  samples=135  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=140 last=10 from core 1
+monitor: t=3355816956 ms  samples=140  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=145 last=40 from core 1
+monitor: t=3355818506 ms  samples=145  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=150 last=90 from core 1
+monitor: t=3355820056 ms  samples=150  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=155 last=60 from core 1
+monitor: t=3355821606 ms  samples=155  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=160 last=10 from core 1
+monitor: t=3355823156 ms  samples=160  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=165 last=40 from core 1
+monitor: t=3355824706 ms  samples=165  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+[B2] result step 2, LEFT (GP5) backwards: L=2 R=0 (expect 20 on the turned wheel, 0 on the other)
+[B2] step 3: turn the RIGHT (GP7) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=170 last=90 from core 1
+monitor: t=3355826256 ms  samples=170  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=0 R=1
+monitor: batch  n=175 last=60 from core 1
+monitor: t=3355827806 ms  samples=175  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=180 last=10 from core 1
+monitor: t=3355829356 ms  samples=180  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=2
+monitor: batch  n=185 last=40 from core 1
+monitor: t=3355830906 ms  samples=185  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=190 last=90 from core 1
+monitor: t=3355832456 ms  samples=190  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=0 R=3
+monitor: batch  n=195 last=60 from core 1
+monitor: t=3355834006 ms  samples=195  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=200 last=10 from core 1
+monitor: t=3355835556 ms  samples=200  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=4
+[B2]   L=0 R=5
+[B2]   L=0 R=6
+monitor: batch  n=205 last=40 from core 1
+monitor: t=3355837106 ms  samples=205  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=210 last=90 from core 1
+monitor: t=3355838656 ms  samples=210  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=0 R=7
+monitor: batch  n=215 last=60 from core 1
+monitor: t=3355840206 ms  samples=215  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=8
+monitor: batch  n=220 last=10 from core 1
+monitor: t=3355841756 ms  samples=220  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=225 last=40 from core 1
+monitor: t=3355843306 ms  samples=225  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=230 last=90 from core 1
+monitor: t=3355844856 ms  samples=230  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=0 R=9
+[B2]   L=0 R=10
+monitor: batch  n=235 last=60 from core 1
+monitor: t=3355846406 ms  samples=235  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=11
+monitor: batch  n=240 last=10 from core 1
+monitor: t=3355847956 ms  samples=240  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] result step 3, RIGHT (GP7) forwards: L=0 R=11 (expect 20 on the turned wheel, 0 on the other)
+[B2] step 4: turn the RIGHT (GP7) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=245 last=40 from core 1
+monitor: t=3355849506 ms  samples=245  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=0 R=1
+monitor: batch  n=250 last=90 from core 1
+monitor: t=3355851056 ms  samples=250  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=255 last=60 from core 1
+monitor: t=3355852606 ms  samples=255  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=260 last=10 from core 1
+monitor: t=3355854156 ms  samples=260  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=2
+[B2]   L=0 R=3
+monitor: batch  n=265 last=40 from core 1
+monitor: t=3355855706 ms  samples=265  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=270 last=90 from core 1
+monitor: t=3355857256 ms  samples=270  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=275 last=60 from core 1
+monitor: t=3355858806 ms  samples=275  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=280 last=10 from core 1
+monitor: t=3355860356 ms  samples=280  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=285 last=40 from core 1
+monitor: t=3355861906 ms  samples=285  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=290 last=90 from core 1
+monitor: t=3355863456 ms  samples=290  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=295 last=60 from core 1
+monitor: t=3355865006 ms  samples=295  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=300 last=10 from core 1
+monitor: t=3355866556 ms  samples=300  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=305 last=40 from core 1
+monitor: t=3355868106 ms  samples=305  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=310 last=90 from core 1
+monitor: t=3355869656 ms  samples=310  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2] result step 4, RIGHT (GP7) backwards: L=0 R=3 (expect 20 on the turned wheel, 0 on the other)
+[B2] done.  Copy the four result lines into TEST_LOG.md as S2-M01.
+monitor: batch  n=315 last=60 from core 1
+monitor: t=3355871206 ms  samples=315  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=320 last=10 from core 1
+monitor: t=3355872756 ms  samples=320  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=325 last=40 from core 1
+monitor: t=3355874306 ms  samples=325  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=330 last=90 from core 1
+monitor: t=3355875856 ms  samples=330  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=335 last=60 from core 1
+monitor: t=3355877406 ms  samples=335  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=340 last=10 from core 1
+monitor: t=3355878956 ms  samples=340  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=345 last=40 from core 1
+monitor: t=3355880506 ms  samples=345  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=350 last=90 from core 1
+monitor: t=3355882056 ms  samples=350  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=355 last=60 from core 1
+monitor: t=3355883606 ms  samples=355  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=360 last=10 from core 1
+monitor: t=3355885156 ms  samples=360  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=365 last=40 from core 1
+monitor: t=3355886706 ms  samples=365  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=370 last=90 from core 1
+monitor: t=3355888256 ms  samples=370  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=375 last=60 from core 1
+monitor: t=3355889806 ms  samples=375  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=380 last=10 from core 1
+monitor: t=3355891356 ms  samples=380  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=385 last=40 from core 1
+monitor: t=3355892906 ms  samples=385  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=390 last=90 from core 1
+monitor: t=3355894456 ms  samples=390  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=395 last=60 from core 1
+monitor: t=3355896006 ms  samples=395  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=400 last=10 from core 1
+monitor: t=3355897556 ms  samples=400  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=405 last=40 from core 1
+monitor: t=3355899106 ms  samples=405  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=410 last=90 from core 1
+monitor: t=3355900656 ms  samples=410  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=415 last=60 from core 1
+monitor: t=3355902206 ms  samples=415  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=420 last=10 from core 1
+monitor: t=3355903756 ms  samples=420  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=425 last=40 from core 1
+monitor: t=3355905306 ms  samples=425  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=430 last=90 from core 1
+monitor: t=3355906856 ms  samples=430  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=435 last=60 from core 1
+monitor: t=3355908406 ms  samples=435  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=440 last=10 from core 1
+monitor: t=3355909956 ms  samples=440  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=445 last=40 from core 1
+monitor: t=3355911506 ms  samples=445  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=450 last=90 from core 1
+monitor: t=3355913056 ms  samples=450  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=455 last=60 from core 1
+monitor: t=3355914606 ms  samples=455  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=460 last=10 from core 1
+monitor: t=3355916156 ms  samples=460  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=465 last=40 from core 1
+monitor: t=3355917706 ms  samples=465  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=470 last=90 from core 1
+monitor: t=3355919256 ms  samples=470  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=475 last=60 from core 1
+monitor: t=3355920806 ms  samples=475  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=480 last=10 from core 1
+monitor: t=3355922356 ms  samples=480  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=485 last=40 from core 1
+monitor: t=3355923906 ms  samples=485  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=490 last=90 from core 1
+monitor: t=3355925456 ms  samples=490  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=495 last=60 from core 1
+monitor: t=3355927006 ms  samples=495  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=500 last=10 from core 1
+monitor: t=3355928556 ms  samples=500  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=505 last=40 from core 1
+monitor: t=3355930106 ms  samples=505  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=510 last=90 from core 1
+monitor: t=3355931656 ms  samples=510  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=515 last=60 from core 1
+monitor: t=3355933206 ms  samples=515  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=520 last=10 from core 1
+monitor: t=3355934756 ms  samples=520  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=525 last=40 from core 1
+monitor: t=3355936306 ms  samples=525  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=530 last=90 from core 1
+monitor: t=3355937856 ms  samples=530  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=535 last=60 from core 1
+monitor: t=3355939406 ms  samples=535  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=540 last=10 from core 1
+monitor: t=3355940956 ms  samples=540  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=545 last=40 from core 1
+monitor: t=3355942506 ms  samples=545  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=550 last=90 from core 1
+monitor: t=3355944056 ms  samples=550  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=555 last=60 from core 1
+monitor: t=3355945606 ms  samples=555  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=560 last=10 from core 1
+monitor: t=3355947156 ms  samples=560  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=565 last=40 from core 1
+monitor: t=3355948706 ms  samples=565  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=570 last=90 from core 1
+monitor: t=3355950256 ms  samples=570  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=575 last=60 from core 1
+monitor: t=3355951806 ms  samples=575  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=580 last=10 from core 1
+monitor: t=3355953356 ms  samples=580  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=585 last=40 from core 1
+monitor: t=3355954906 ms  samples=585  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=590 last=90 from core 1
+monitor: t=3355956456 ms  samples=590  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=595 last=60 from core 1
+monitor: t=3355958006 ms  samples=595  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=600 last=10 from core 1
+monitor: t=3355959556 ms  samples=600  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=605 last=40 from core 1
+monitor: t=3355961106 ms  samples=605  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=610 last=90 from core 1
+monitor: t=3355962656 ms  samples=610  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=615 last=60 from core 1
+monitor: t=3355964206 ms  samples=615  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=620 last=10 from core 1
+monitor: t=3355965756 ms  samples=620  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=625 last=40 from core 1
+monitor: t=3355967306 ms  samples=625  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=630 last=90 from core 1
+monitor: t=3355968856 ms  samples=630  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=635 last=60 from core 1
+monitor: t=3355970406 ms  samples=635  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=640 last=10 from core 1
+monitor: t=3355971956 ms  samples=640  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=645 last=40 from core 1
+monitor: t=3355973506 ms  samples=645  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=650 last=90 from core 1
+monitor: t=3355975056 ms  samples=650  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=655 last=60 from core 1
+monitor: t=3355976606 ms  samples=655  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=660 last=10 from core 1
+monitor: t=3355978156 ms  samples=660  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=665 last=40 from core 1
+monitor: t=3355979706 ms  samples=665  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=670 last=90 from core 1
+monitor: t=3355981256 ms  samples=670  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=675 last=60 from core 1
+monitor: t=3355982806 ms  samples=675  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=680 last=10 from core 1
+monitor: t=3355984356 ms  samples=680  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=685 last=40 from core 1
+monitor: t=3355985906 ms  samples=685  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=690 last=90 from core 1
+monitor: t=3355987456 ms  samples=690  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=695 last=60 from core 1
+monitor: t=3355989006 ms  samples=695  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: t=3355990556 ms  samples=700  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=705 last=40 from core 1
+monitor: t=3355992106 ms  samples=705  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=710 last=90 from core 1
+monitor: t=3355993656 ms  samples=710  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=715 last=60 from core 1
+monitor: t=3355995206 ms  samples=715  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=720 last=10 from core 1
+monitor: t=3355996756 ms  samples=720  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=725 last=40 from core 1
+monitor: t=3355998306 ms  samples=725  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=730 last=90 from core 1
+monitor: t=3355999856 ms  samples=730  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=735 last=60 from core 1
+monitor: t=3356001406 ms  samples=735  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=740 last=10 from core 1
+monitor: t=3356002956 ms  samples=740  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=745 last=40 from core 1
+monitor: t=3356004506 ms  samples=745  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=750 last=90 from core 1
+monitor: t=3356006056 ms  samples=750  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=755 last=60 from core 1
+monitor: t=3356007606 ms  samples=755  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=760 last=10 from core 1
+monitor: t=3356009156 ms  samples=760  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=765 last=40 from core 1
+monitor: t=3356010706 ms  samples=765  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=770 last=90 from core 1
+monitor: t=3356012256 ms  samples=770  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=775 last=60 from core 1
+monitor: t=3356013806 ms  samples=775  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=780 last=10 from core 1
+monitor: t=3356015356 ms  samples=780  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=785 last=40 from core 1
+monitor: t=3356016906 ms  samples=785  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=790 last=90 from core 1
+monitor: t=3356018456 ms  samples=790  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=795 last=60 from core 1
+monitor: t=3356020006 ms  samples=795  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=800 last=10 from core 1
+monitor: t=3356021556 ms  samples=800  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=805 last=40 from core 1
+monitor: t=3356023106 ms  samples=805  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=810 last=90 from core 1
+monitor: t=3356024656 ms  samples=810  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=815 last=60 from core 1
+monitor: t=3356026206 ms  samples=815  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=820 last=10 from core 1
+monitor: t=3356027756 ms  samples=820  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=825 last=40 from core 1
+monitor: t=3356029306 ms  samples=825  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=830 last=90 from core 1
+monitor: t=3356030856 ms  samples=830  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=835 last=60 from core 1
+monitor: t=3356032406 ms  samples=835  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=840 last=10 from core 1
+monitor: t=3356033956 ms  samples=840  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=845 last=40 from core 1
+monitor: t=3356035506 ms  samples=845  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=850 last=90 from core 1
+monitor: t=3356037056 ms  samples=850  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=855 last=60 from core 1
+monitor: t=3356038606 ms  samples=855  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=860 last=10 from core 1
+monitor: t=3356040156 ms  samples=860  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=865 last=40 from core 1
+monitor: t=3356041706 ms  samples=865  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=870 last=90 from core 1
+monitor: t=3356043256 ms  samples=870  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=875 last=60 from core 1
+monitor: t=3356044806 ms  samples=875  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=880 last=10 from core 1
+monitor: t=3356046356 ms  samples=880  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=885 last=40 from core 1
+monitor: t=3356047906 ms  samples=885  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=890 last=90 from core 1
+monitor: t=3356049456 ms  samples=890  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=895 last=60 from core 1
+monitor: t=3356051006 ms  samples=895  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=900 last=10 from core 1
+monitor: t=3356052556 ms  samples=900  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=905 last=40 from core 1
+monitor: t=3356054106 ms  samples=905  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=910 last=90 from core 1
+monitor: t=3356055656 ms  samples=910  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=915 last=60 from core 1
+monitor: t=3356057206 ms  samples=915  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=920 last=10 from core 1
+monitor: t=3356058756 ms  samples=920  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=925 last=40 from core 1
+monitor: t=3356060306 ms  samples=925  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=930 last=90 from core 1
+monitor: t=3356061856 ms  samples=930  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=935 last=60 from core 1
+monitor: t=3356063406 ms  samples=935  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=940 last=10 from core 1
+monitor: t=3356064956 ms  samples=940  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=945 last=40 from core 1
+monitor: t=3356066506 ms  samples=945  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=950 last=90 from core 1
+monitor: t=3356068056 ms  samples=950  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=955 last=60 from core 1
+monitor: t=3356069606 ms  samples=955  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=960 last=10 from core 1
+monitor: t=3356071156 ms  samples=960  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=965 last=40 from core 1
+monitor: t=3356072706 ms  samples=965  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=970 last=90 from core 1
+monitor: t=3356074256 ms  samples=970  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=975 last=60 from core 1
+monitor: t=3356075806 ms  samples=975  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=980 last=10 from core 1
+monitor: t=3356077356 ms  samples=980  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=985 last=40 from core 1
+monitor: t=3356078906 ms  samples=985  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=990 last=90 from core 1
+monitor: t=3356080456 ms  samples=990  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=995 last=60 from core 1
+monitor: t=3356082006 ms  samples=995  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1000 last=10 from core 1
+monitor: t=3356083556 ms  samples=1000  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1005 last=40 from core 1
+monitor: t=3356085106 ms  samples=1005  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1010 last=90 from core 1
+monitor: t=3356086656 ms  samples=1010  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1015 last=60 from core 1
+monitor: t=3356088206 ms  samples=1015  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1020 last=10 from core 1
+monitor: t=3356089756 ms  samples=1020  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1025 last=40 from core 1
+monitor: t=3356091306 ms  samples=1025  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1030 last=90 from core 1
+monitor: t=3356092856 ms  samples=1030  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1035 last=60 from core 1
+monitor: t=3356094406 ms  samples=1035  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1040 last=10 from core 1
+monitor: t=3356095956 ms  samples=1040  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1045 last=40 from core 1
+monitor: t=3356097506 ms  samples=1045  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1050 last=90 from core 1
+monitor: t=3356099056 ms  samples=1050  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1055 last=60 from core 1
+monitor: t=3356100606 ms  samples=1055  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1060 last=10 from core 1
+monitor: t=3356102156 ms  samples=1060  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1065 last=40 from core 1
+monitor: t=3356103706 ms  samples=1065  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1070 last=90 from core 1
+monitor: t=3356105256 ms  samples=1070  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1075 last=60 from core 1
+monitor: t=3356106806 ms  samples=1075  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1080 last=10 from core 1
+monitor: t=3356108356 ms  samples=1080  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1085 last=40 from core 1
+monitor: t=3356109906 ms  samples=1085  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1090 last=90 from core 1
+monitor: t=3356111456 ms  samples=1090  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1095 last=60 from core 1
+monitor: t=3356113006 ms  samples=1095  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1100 last=10 from core 1
+monitor: t=3356114556 ms  samples=1100  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1105 last=40 from core 1
+monitor: t=3356116106 ms  samples=1105  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1110 last=90 from core 1
+monitor: t=3356117656 ms  samples=1110  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1115 last=60 from core 1
+monitor: t=3356119206 ms  samples=1115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1120 last=10 from core 1
+monitor: t=3356120756 ms  samples=1120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1125 last=40 from core 1
+monitor: t=3356122306 ms  samples=1125  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1130 last=90 from core 1
+monitor: t=3356123856 ms  samples=1130  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1135 last=60 from core 1
+monitor: t=3356125406 ms  samples=1135  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1140 last=10 from core 1
+monitor: t=3356126956 ms  samples=1140  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1145 last=40 from core 1
+monitor: t=3356128506 ms  samples=1145  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1150 last=90 from core 1
+monitor: t=3356130056 ms  samples=1150  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1155 last=60 from core 1
+monitor: t=3356131606 ms  samples=1155  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1160 last=10 from core 1
+monitor: t=3356133156 ms  samples=1160  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1165 last=40 from core 1
+monitor: t=3356134706 ms  samples=1165  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1170 last=90 from core 1
+monitor: t=3356136256 ms  samples=1170  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1175 last=60 from core 1
+monitor: t=3356137806 ms  samples=1175  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1180 last=10 from core 1
+monitor: t=3356139356 ms  samples=1180  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1185 last=40 from core 1
+monitor: t=3356140906 ms  samples=1185  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1190 last=90 from core 1
+monitor: t=3356142456 ms  samples=1190  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1195 last=60 from core 1
+monitor: t=3356144006 ms  samples=1195  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1200 last=10 from core 1
+monitor: t=3356145556 ms  samples=1200  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1205 last=40 from core 1
+monitor: t=3356147106 ms  samples=1205  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1210 last=90 from core 1
+monitor: t=3356148656 ms  samples=1210  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1215 last=60 from core 1
+monitor: t=3356150206 ms  samples=1215  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1220 last=10 from core 1
+monitor: t=3356151756 ms  samples=1220  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1225 last=40 from core 1
+monitor: t=3356153306 ms  samples=1225  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1230 last=90 from core 1
+monitor: t=3356154856 ms  samples=1230  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1235 last=60 from core 1
+monitor: t=3356156406 ms  samples=1235  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1240 last=10 from core 1
+monitor: t=3356157956 ms  samples=1240  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1245 last=40 from core 1
+monitor: t=3356159506 ms  samples=1245  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1250 last=90 from core 1
+monitor: t=3356161056 ms  samples=1250  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1255 last=60 from core 1
+monitor: t=3356162606 ms  samples=1255  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1260 last=10 from core 1
+monitor: t=3356164156 ms  samples=1260  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1265 last=40 from core 1
+monitor: t=3356165706 ms  samples=1265  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1270 last=90 from core 1
+monitor: t=3356167256 ms  samples=1270  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1275 last=60 from core 1
+monitor: t=3356168806 ms  samples=1275  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1280 last=10 from core 1
+monitor: t=3356170356 ms  samples=1280  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1285 last=40 from core 1
+monitor: t=3356171906 ms  samples=1285  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1290 last=90 from core 1
+monitor: t=3356173456 ms  samples=1290  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1295 last=60 from core 1
+monitor: t=3356175006 ms  samples=1295  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1300 last=10 from core 1
+monitor: t=3356176556 ms  samples=1300  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1305 last=40 from core 1
+monitor: t=3356178106 ms  samples=1305  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1310 last=90 from core 1
+monitor: t=3356179656 ms  samples=1310  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1315 last=60 from core 1
+monitor: t=3356181206 ms  samples=1315  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1320 last=10 from core 1
+monitor: t=3356182756 ms  samples=1320  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1325 last=40 from core 1
+monitor: t=3356184306 ms  samples=1325  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1330 last=90 from core 1
+monitor: t=3356185856 ms  samples=1330  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1335 last=60 from core 1
+monitor: t=3356187406 ms  samples=1335  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1340 last=10 from core 1
+monitor: t=3356188956 ms  samples=1340  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1345 last=40 from core 1
+monitor: t=3356190506 ms  samples=1345  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1350 last=90 from core 1
+monitor: t=3356192056 ms  samples=1350  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1355 last=60 from core 1
+monitor: t=3356193606 ms  samples=1355  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1360 last=10 from core 1
+monitor: t=3356195156 ms  samples=1360  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1365 last=40 from core 1
+monitor: t=3356196706 ms  samples=1365  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1370 last=90 from core 1
+monitor: t=3356198256 ms  samples=1370  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1375 last=60 from core 1
+monitor: t=3356199806 ms  samples=1375  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1380 last=10 from core 1
+monitor: t=3356201356 ms  samples=1380  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1385 last=40 from core 1
+monitor: t=3356202906 ms  samples=1385  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1390 last=90 from core 1
+monitor: t=3356204456 ms  samples=1390  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1395 last=60 from core 1
+monitor: t=3356206006 ms  samples=1395  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1400 last=10 from core 1
+monitor: t=3356207556 ms  samples=1400  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1405 last=40 from core 1
+monitor: t=3356209106 ms  samples=1405  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1410 last=90 from core 1
+monitor: t=3356210656 ms  samples=1410  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1415 last=60 from core 1
+monitor: t=3356212206 ms  samples=1415  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1420 last=10 from core 1
+monitor: t=3356213756 ms  samples=1420  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1425 last=40 from core 1
+monitor: t=3356215306 ms  samples=1425  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1430 last=90 from core 1
+monitor: t=3356216856 ms  samples=1430  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1435 last=60 from core 1
+monitor: t=3356218406 ms  samples=1435  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1440 last=10 from core 1
+monitor: t=3356219956 ms  samples=1440  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1445 last=40 from core 1
+monitor: t=3356221506 ms  samples=1445  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1450 last=90 from core 1
+monitor: t=3356223056 ms  samples=1450  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1455 last=60 from core 1
+monitor: t=3356224606 ms  samples=1455  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1460 last=10 from core 1
+monitor: t=3356226156 ms  samples=1460  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1465 last=40 from core 1
+monitor: t=3356227706 ms  samples=1465  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1470 last=90 from core 1
+monitor: t=3356229256 ms  samples=1470  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1475 last=60 from core 1
+monitor: t=3356230806 ms  samples=1475  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1480 last=10 from core 1
+monitor: t=3356232356 ms  samples=1480  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1485 last=40 from core 1
+monitor: t=3356233906 ms  samples=1485  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1490 last=90 from core 1
+monitor: t=3356235456 ms  samples=1490  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1495 last=60 from core 1
+monitor: t=3356237006 ms  samples=1495  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1500 last=10 from core 1
+monitor: t=3356238556 ms  samples=1500  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1505 last=40 from core 1
+monitor: t=3356240106 ms  samples=1505  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1510 last=90 from core 1
+monitor: t=3356241656 ms  samples=1510  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1515 last=60 from core 1
+monitor: t=3356243206 ms  samples=1515  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1520 last=10 from core 1
+monitor: t=3356244756 ms  samples=1520  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1525 last=40 from core 1
+monitor: t=3356246306 ms  samples=1525  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1530 last=90 from core 1
+monitor: t=3356247856 ms  samples=1530  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1535 last=60 from core 1
+monitor: t=3356249406 ms  samples=1535  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1540 last=10 from core 1
+monitor: t=3356250956 ms  samples=1540  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1545 last=40 from core 1
+monitor: t=3356252506 ms  samples=1545  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1550 last=90 from core 1
+monitor: t=3356254056 ms  samples=1550  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1555 last=60 from core 1
+monitor: t=3356255606 ms  samples=1555  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1560 last=10 from core 1
+monitor: t=3356257156 ms  samples=1560  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1565 last=40 from core 1
+monitor: t=3356258706 ms  samples=1565  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1570 last=90 from core 1
+monitor: t=3356260256 ms  samples=1570  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1575 last=60 from core 1
+monitor: t=3356261806 ms  samples=1575  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1580 last=10 from core 1
+monitor: t=3356263356 ms  samples=1580  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1585 last=40 from core 1
+monitor: t=3356264906 ms  samples=1585  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1590 last=90 from core 1
+monitor: t=3356266456 ms  samples=1590  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1595 last=60 from core 1
+monitor: t=3356268006 ms  samples=1595  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1600 last=10 from core 1
+monitor: t=3356269556 ms  samples=1600  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1605 last=40 from core 1
+monitor: t=3356271106 ms  samples=1605  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1610 last=90 from core 1
+monitor: t=3356272656 ms  samples=1610  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1615 last=60 from core 1
+monitor: t=3356274206 ms  samples=1615  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1620 last=10 from core 1
+monitor: t=3356275756 ms  samples=1620  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1625 last=40 from core 1
+monitor: t=3356277306 ms  samples=1625  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1630 last=90 from core 1
+monitor: t=3356278856 ms  samples=1630  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1635 last=60 from core 1
+monitor: t=3356280406 ms  samples=1635  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1640 last=10 from core 1
+monitor: t=3356281956 ms  samples=1640  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1645 last=40 from core 1
+monitor: t=3356283506 ms  samples=1645  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1650 last=90 from core 1
+monitor: t=3356285056 ms  samples=1650  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1655 last=60 from core 1
+monitor: t=3356286606 ms  samples=1655  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1660 last=10 from core 1
+monitor: t=3356288156 ms  samples=1660  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1665 last=40 from core 1
+monitor: t=3356289706 ms  samples=1665  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1670 last=90 from core 1
+monitor: t=3356291256 ms  samples=1670  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1675 last=60 from core 1
+monitor: t=3356292806 ms  samples=1675  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1680 last=10 from core 1
+monitor: t=3356294356 ms  samples=1680  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1685 last=40 from core 1
+monitor: t=3356295906 ms  samples=1685  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1690 last=90 from core 1
+monitor: t=3356297456 ms  samples=1690  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1695 last=60 from core 1
+monitor: t=3356299006 ms  samples=1695  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1700 last=10 from core 1
+monitor: t=3356300556 ms  samples=1700  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1705 last=40 from core 1
+monitor: t=3356302106 ms  samples=1705  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1710 last=90 from core 1
+monitor: t=3356303656 ms  samples=1710  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1715 last=60 from core 1
+monitor: t=3356305206 ms  samples=1715  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1720 last=10 from core 1
+monitor: t=3356306756 ms  samples=1720  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1725 last=40 from core 1
+monitor: t=3356308306 ms  samples=1725  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+monitor: I am task 7
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] S2-U03 PASS  encoder pulses convert to mm
+[TEST] S2-U04 PASS  still wheels: counts steady, speed 0
+[TEST] S2-U05 PASS  GPIO dispatcher refuses a second handler on GP5
+monitor: batch  n=5 last=40 from core 1
+monitor: t=3355771096 ms  samples=5  min=0 max=40 avg=20  free slots=4  free blocks=4
+[TEST] S2-U06 note: 1009472 timer ticks in 1000 ms (expect 1000000)
+[TEST] S2-U06 PASS  encoder timer counts at 1 MHz (+/- 2 percent)
+[TEST] subsystem2 SUMMARY 6 passed, 0 failed
+[B2] encoder pulse count: 4 steps of 15 s, starting in 10 s.  Wheels off the ground, motors off.
+monitor: batch  n=10 last=90 from core 1
+monitor: t=3355772646 ms  samples=10  min=0 max=90 avg=45  free slots=4  free blocks=4
+[TEST] INT-01 PASS  samples flow from subsystem 2 to subsystem 3
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 2 passed, 0 failed
+[TEST] S4-U01 PASS  message buffer max line = S4_SUMMARY_MAX
+monitor: batch  n=15 last=60 from core 1
+monitor: t=3355774196 ms  samples=15  min=0 max=100 avg=56  free slots=4  free blocks=4
+monitor: batch  n=20 last=10 from core 1
+monitor: t=3355775746 ms  samples=20  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=25 last=40 from core 1
+monitor: t=3355777296 ms  samples=25  min=0 max=100 avg=44  free slots=4  free blocks=4
+[TEST] INT-02 PASS  summary lines flow from subsystem 3 to subsystem 4
+[TEST] subsystem4 SUMMARY 2 passed, 0 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+monitor: batch  n=30 last=90 from core 1
+monitor: t=3355778846 ms  samples=30  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=35 last=60 from core 1
+monitor: t=3355780396 ms  samples=35  min=0 max=100 avg=52  free slots=4  free blocks=4
+monitor: batch  n=40 last=10 from core 1
+monitor: t=3355781946 ms  samples=40  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] step 1: turn the LEFT (GP5) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=45 last=40 from core 1
+monitor: t=3355783496 ms  samples=45  min=0 max=100 avg=46  free slots=4  free blocks=4
+monitor: batch  n=50 last=90 from core 1
+monitor: t=3355785046 ms  samples=50  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=55 last=60 from core 1
+monitor: t=3355786596 ms  samples=55  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=1 R=0
+[B2]   L=2 R=0
+[B2]   L=4 R=0
+monitor: batch  n=60 last=10 from core 1
+monitor: t=3355788146 ms  samples=60  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+[B2]   L=6 R=0
+[B2]   L=9 R=0
+[B2]   L=13 R=0
+[B2]   L=16 R=0
+[B2]   L=19 R=0
+[B2]   L=20 R=0
+[B2]   L=21 R=0
+[B2]   L=23 R=0
+[B2]   L=25 R=0
+[B2]   L=28 R=0
+[B2]   L=30 R=0
+[B2]   L=33 R=0
+[B2]   L=35 R=0
+[B2]   L=38 R=0
+[B2]   L=40 R=0
+[B2]   L=42 R=0
+[B2]   L=44 R=0
+[B2]   L=45 R=0
+[B2]   L=47 R=0
+[B2]   L=49 R=0
+[B2]   L=51 R=0
+[B2]   L=54 R=0
+[B2]   L=56 R=0
+[B2]   L=59 R=0
+[B2]   L=62 R=0
+[B2]   L=65 R=0
+[B2]   L=68 R=0
+[B2]   L=71 R=0
+[B2]   L=73 R=0
+[B2]   L=76 R=0
+[B2]   L=79 R=0
+[B2]   L=82 R=0
+[B2]   L=84 R=0
+[B2]   L=86 R=0
+[B2]   L=90 R=0
+[B2]   L=93 R=0
+[B2]   L=97 R=0
+[B2]   L=100 R=0
+[B2]   L=105 R=0
+[B2]   L=109 R=0
+[B2]   L=112 R=0
+[B2]   L=114 R=0
+[B2]   L=115 R=0
+monitor: batch  n=65 last=40 from core 1
+monitor: t=3355789696 ms  samples=65  min=0 max=100 avg=47  free slots=4  free blocks=4
+[B2]   L=116 R=0
+[B2]   L=118 R=0
+[B2]   L=123 R=0
+[B2]   L=128 R=0
+[B2]   L=133 R=0
+[B2]   L=138 R=0
+[B2]   L=143 R=0
+[B2]   L=148 R=0
+[B2]   L=151 R=0
+[B2]   L=155 R=0
+[B2]   L=157 R=0
+[B2]   L=159 R=0
+[B2]   L=161 R=0
+[B2]   L=162 R=0
+[B2]   L=163 R=0
+[B2]   L=166 R=0
+[B2]   L=169 R=0
+[B2]   L=172 R=0
+[B2]   L=176 R=0
+[B2]   L=181 R=0
+[B2]   L=186 R=0
+[B2]   L=191 R=0
+[B2]   L=195 R=0
+[B2]   L=200 R=0
+[B2]   L=204 R=0
+[B2]   L=208 R=0
+[B2]   L=211 R=0
+[B2]   L=214 R=0
+[B2]   L=215 R=0
+[B2]   L=217 R=0
+[B2]   L=218 R=0
+[B2]   L=219 R=0
+[B2]   L=220 R=0
+[B2]   L=221 R=0
+[B2]   L=222 R=0
+monitor: batch  n=70 last=90 from core 1
+monitor: t=3355791246 ms  samples=70  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=225 R=0
+[B2]   L=230 R=0
+[B2]   L=236 R=0
+[B2]   L=242 R=0
+[B2]   L=249 R=0
+[B2]   L=255 R=0
+[B2]   L=261 R=0
+[B2]   L=267 R=0
+[B2]   L=273 R=0
+[B2]   L=277 R=0
+[B2]   L=280 R=0
+[B2]   L=284 R=0
+[B2]   L=289 R=0
+[B2]   L=293 R=0
+[B2]   L=298 R=0
+[B2]   L=303 R=0
+[B2]   L=309 R=0
+[B2]   L=315 R=0
+[B2]   L=320 R=0
+[B2]   L=325 R=0
+[B2]   L=330 R=0
+[B2]   L=335 R=0
+[B2]   L=338 R=0
+[B2]   L=341 R=0
+[B2]   L=344 R=0
+[B2]   L=346 R=0
+[B2]   L=349 R=0
+[B2]   L=351 R=0
+[B2]   L=353 R=0
+[B2]   L=355 R=0
+[B2]   L=356 R=0
+[B2]   L=357 R=0
+[B2]   L=359 R=0
+[B2]   L=361 R=0
+[B2]   L=365 R=0
+[B2]   L=369 R=0
+[B2]   L=375 R=0
+[B2]   L=382 R=0
+[B2]   L=387 R=0
+[B2]   L=392 R=0
+monitor: batch  n=75 last=60 from core 1
+monitor: t=3355792796 ms  samples=75  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=394 R=0
+[B2]   L=400 R=0
+[B2]   L=406 R=0
+[B2]   L=412 R=0
+[B2]   L=417 R=0
+[B2]   L=423 R=0
+[B2]   L=429 R=0
+[B2]   L=435 R=0
+[B2]   L=440 R=0
+[B2]   L=444 R=0
+[B2]   L=447 R=0
+[B2]   L=452 R=0
+[B2]   L=456 R=0
+[B2]   L=460 R=0
+[B2]   L=465 R=0
+[B2]   L=469 R=0
+[B2]   L=473 R=0
+[B2]   L=477 R=0
+[B2]   L=482 R=0
+[B2]   L=486 R=0
+[B2]   L=491 R=0
+[B2]   L=495 R=0
+[B2]   L=500 R=0
+[B2]   L=505 R=0
+[B2]   L=511 R=0
+[B2]   L=517 R=0
+[B2]   L=521 R=0
+[B2]   L=524 R=0
+[B2]   L=525 R=0
+[B2]   L=527 R=0
+[B2]   L=530 R=0
+[B2]   L=533 R=0
+[B2]   L=537 R=0
+[B2]   L=541 R=0
+[B2]   L=544 R=0
+[B2]   L=548 R=0
+[B2]   L=552 R=0
+[B2]   L=558 R=0
+[B2]   L=564 R=0
+[B2]   L=570 R=0
+[B2]   L=576 R=0
+[B2]   L=581 R=0
+[B2]   L=585 R=0
+[B2]   L=589 R=0
+[B2]   L=594 R=0
+[B2]   L=598 R=0
+[B2]   L=601 R=0
+[B2]   L=605 R=0
+[B2]   L=608 R=0
+[B2]   L=612 R=0
+[B2]   L=616 R=0
+monitor: batch  n=80 last=10 from core 1
+monitor: t=3355794346 ms  samples=80  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=620 R=0
+[B2]   L=624 R=0
+[B2]   L=629 R=0
+[B2]   L=633 R=0
+[B2]   L=637 R=0
+[B2]   L=639 R=0
+[B2]   L=640 R=0
+[B2]   L=641 R=0
+monitor: batch  n=85 last=40 from core 1
+monitor: t=3355795896 ms  samples=85  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=90 last=90 from core 1
+monitor: t=3355797446 ms  samples=90  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=95 last=60 from core 1
+monitor: t=3355798996 ms  samples=95  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: batch  n=100 last=10 from core 1
+monitor: t=3355800546 ms  samples=100  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=105 last=40 from core 1
+monitor: t=3355802096 ms  samples=105  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=110 last=90 from core 1
+monitor: t=3355803646 ms  samples=110  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2] result step 1, LEFT (GP5) forwards: L=641 R=0 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=10 R=0
+[B2] step 2: turn the LEFT (GP5) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=115 last=60 from core 1
+monitor: t=3355805196 ms  samples=115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=120 last=10 from core 1
+monitor: t=3355806746 ms  samples=120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+[B2]   L=1 R=0
+[B2]   L=3 R=0
+[B2]   L=6 R=0
+[B2]   L=10 R=0
+[B2]   L=14 R=0
+[B2]   L=18 R=0
+[B2]   L=21 R=0
+[B2]   L=25 R=0
+[B2]   L=27 R=0
+[B2]   L=30 R=0
+[B2]   L=33 R=0
+[B2]   L=36 R=0
+[B2]   L=39 R=0
+[B2]   L=43 R=0
+[B2]   L=46 R=0
+[B2]   L=50 R=0
+[B2]   L=54 R=0
+[B2]   L=57 R=0
+[B2]   L=61 R=0
+[B2]   L=64 R=0
+[B2]   L=67 R=0
+[B2]   L=70 R=0
+[B2]   L=73 R=0
+[B2]   L=76 R=0
+monitor: batch  n=125 last=40 from core 1
+monitor: t=3355808296 ms  samples=125  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2]   L=80 R=0
+[B2]   L=84 R=0
+[B2]   L=88 R=0
+[B2]   L=92 R=0
+[B2]   L=97 R=0
+[B2]   L=102 R=0
+[B2]   L=107 R=0
+[B2]   L=113 R=0
+[B2]   L=118 R=0
+[B2]   L=123 R=0
+[B2]   L=126 R=0
+[B2]   L=129 R=0
+[B2]   L=131 R=0
+[B2]   L=133 R=0
+[B2]   L=137 R=0
+[B2]   L=141 R=0
+[B2]   L=146 R=0
+[B2]   L=151 R=0
+[B2]   L=156 R=0
+[B2]   L=161 R=0
+[B2]   L=166 R=0
+[B2]   L=171 R=0
+[B2]   L=176 R=0
+[B2]   L=180 R=0
+[B2]   L=184 R=0
+[B2]   L=188 R=0
+[B2]   L=192 R=0
+[B2]   L=196 R=0
+[B2]   L=200 R=0
+[B2]   L=204 R=0
+[B2]   L=208 R=0
+[B2]   L=212 R=0
+[B2]   L=216 R=0
+[B2]   L=221 R=0
+[B2]   L=226 R=0
+[B2]   L=231 R=0
+[B2]   L=238 R=0
+[B2]   L=244 R=0
+[B2]   L=248 R=0
+[B2]   L=249 R=0
+[B2]   L=250 R=0
+[B2]   L=256 R=0
+[B2]   L=262 R=0
+[B2]   L=266 R=0
+[B2]   L=270 R=0
+[B2]   L=271 R=0
+[B2]   L=272 R=0
+monitor: batch  n=130 last=90 from core 1
+monitor: t=3355809846 ms  samples=130  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=273 R=0
+[B2]   L=275 R=0
+[B2]   L=280 R=0
+[B2]   L=285 R=0
+[B2]   L=291 R=0
+[B2]   L=297 R=0
+[B2]   L=302 R=0
+[B2]   L=308 R=0
+[B2]   L=315 R=0
+[B2]   L=321 R=0
+[B2]   L=327 R=0
+[B2]   L=332 R=0
+[B2]   L=337 R=0
+[B2]   L=340 R=0
+[B2]   L=344 R=0
+[B2]   L=347 R=0
+[B2]   L=351 R=0
+[B2]   L=355 R=0
+[B2]   L=361 R=0
+[B2]   L=367 R=0
+[B2]   L=372 R=0
+[B2]   L=376 R=0
+[B2]   L=382 R=0
+[B2]   L=388 R=0
+[B2]   L=393 R=0
+[B2]   L=398 R=0
+[B2]   L=402 R=0
+[B2]   L=405 R=0
+[B2]   L=408 R=0
+[B2]   L=411 R=0
+[B2]   L=414 R=0
+[B2]   L=418 R=0
+[B2]   L=423 R=0
+[B2]   L=428 R=0
+[B2]   L=433 R=0
+[B2]   L=439 R=0
+[B2]   L=445 R=0
+[B2]   L=450 R=0
+[B2]   L=455 R=0
+[B2]   L=459 R=0
+[B2]   L=462 R=0
+[B2]   L=465 R=0
+[B2]   L=468 R=0
+[B2]   L=471 R=0
+[B2]   L=474 R=0
+[B2]   L=478 R=0
+[B2]   L=482 R=0
+monitor: batch  n=135 last=60 from core 1
+monitor: t=3355811396 ms  samples=135  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=485 R=0
+[B2]   L=489 R=0
+[B2]   L=493 R=0
+[B2]   L=496 R=0
+[B2]   L=499 R=0
+[B2]   L=502 R=0
+[B2]   L=505 R=0
+[B2]   L=508 R=0
+[B2]   L=511 R=0
+[B2]   L=514 R=0
+[B2]   L=517 R=0
+[B2]   L=521 R=0
+[B2]   L=525 R=0
+[B2]   L=529 R=0
+[B2]   L=533 R=0
+[B2]   L=537 R=0
+[B2]   L=541 R=0
+[B2]   L=545 R=0
+[B2]   L=548 R=0
+[B2]   L=552 R=0
+[B2]   L=554 R=0
+[B2]   L=557 R=0
+[B2]   L=559 R=0
+[B2]   L=562 R=0
+[B2]   L=564 R=0
+[B2]   L=567 R=0
+[B2]   L=570 R=0
+[B2]   L=572 R=0
+[B2]   L=575 R=0
+[B2]   L=577 R=0
+[B2]   L=579 R=0
+[B2]   L=581 R=0
+[B2]   L=582 R=0
+[B2]   L=584 R=0
+[B2]   L=586 R=0
+[B2]   L=587 R=0
+[B2]   L=588 R=0
+[B2]   L=589 R=0
+[B2]   L=591 R=0
+[B2]   L=592 R=0
+monitor: batch  n=140 last=10 from core 1
+monitor: t=3355812946 ms  samples=140  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=145 last=40 from core 1
+monitor: t=3355814496 ms  samples=145  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=150 last=90 from core 1
+monitor: t=3355816046 ms  samples=150  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=155 last=60 from core 1
+monitor: t=3355817596 ms  samples=155  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=160 last=10 from core 1
+monitor: t=3355819146 ms  samples=160  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=165 last=40 from core 1
+monitor: t=3355820696 ms  samples=165  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=170 last=90 from core 1
+monitor: t=3355822246 ms  samples=170  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=175 last=60 from core 1
+monitor: t=3355823796 ms  samples=175  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=180 last=10 from core 1
+monitor: t=3355825346 ms  samples=180  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=185 last=40 from core 1
+monitor: t=3355826896 ms  samples=185  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2] result step 2, LEFT (GP5) backwards: L=592 R=0 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=40 R=0
+[B2] step 3: turn the RIGHT (GP7) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=190 last=90 from core 1
+monitor: t=3355828446 ms  samples=190  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=195 last=60 from core 1
+monitor: t=3355829996 ms  samples=195  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=2
+[B2]   L=0 R=5
+[B2]   L=0 R=10
+[B2]   L=0 R=14
+[B2]   L=0 R=19
+[B2]   L=0 R=24
+[B2]   L=0 R=28
+[B2]   L=0 R=32
+[B2]   L=0 R=36
+[B2]   L=0 R=40
+[B2]   L=0 R=43
+[B2]   L=0 R=47
+[B2]   L=0 R=50
+[B2]   L=0 R=53
+[B2]   L=0 R=57
+[B2]   L=0 R=61
+[B2]   L=0 R=64
+[B2]   L=0 R=68
+[B2]   L=0 R=72
+[B2]   L=0 R=76
+[B2]   L=0 R=80
+[B2]   L=0 R=85
+[B2]   L=0 R=89
+[B2]   L=0 R=94
+[B2]   L=0 R=98
+[B2]   L=0 R=103
+[B2]   L=0 R=108
+[B2]   L=0 R=112
+[B2]   L=0 R=117
+[B2]   L=0 R=122
+[B2]   L=0 R=127
+[B2]   L=0 R=132
+[B2]   L=0 R=137
+[B2]   L=0 R=142
+[B2]   L=0 R=147
+[B2]   L=0 R=152
+[B2]   L=0 R=158
+[B2]   L=0 R=163
+[B2]   L=0 R=168
+monitor: batch  n=200 last=10 from core 1
+monitor: t=3355831546 ms  samples=200  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=173
+[B2]   L=0 R=177
+[B2]   L=0 R=181
+[B2]   L=0 R=185
+[B2]   L=0 R=190
+[B2]   L=0 R=193
+[B2]   L=0 R=196
+[B2]   L=0 R=200
+[B2]   L=0 R=203
+[B2]   L=0 R=205
+[B2]   L=0 R=208
+[B2]   L=0 R=209
+[B2]   L=0 R=210
+[B2]   L=0 R=211
+[B2]   L=0 R=212
+[B2]   L=0 R=215
+[B2]   L=0 R=218
+[B2]   L=0 R=221
+[B2]   L=0 R=226
+[B2]   L=0 R=231
+[B2]   L=0 R=237
+[B2]   L=0 R=243
+[B2]   L=0 R=249
+[B2]   L=0 R=256
+[B2]   L=0 R=262
+[B2]   L=0 R=268
+[B2]   L=0 R=272
+[B2]   L=0 R=277
+[B2]   L=0 R=284
+[B2]   L=0 R=290
+[B2]   L=0 R=295
+[B2]   L=0 R=301
+[B2]   L=0 R=306
+[B2]   L=0 R=311
+[B2]   L=0 R=317
+[B2]   L=0 R=321
+[B2]   L=0 R=325
+[B2]   L=0 R=327
+monitor: batch  n=205 last=40 from core 1
+monitor: t=3355833096 ms  samples=205  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=0 R=328
+[B2]   L=0 R=329
+[B2]   L=0 R=334
+[B2]   L=0 R=340
+[B2]   L=0 R=341
+[B2]   L=0 R=342
+[B2]   L=0 R=343
+[B2]   L=0 R=347
+[B2]   L=0 R=348
+[B2]   L=0 R=352
+[B2]   L=0 R=357
+[B2]   L=0 R=360
+[B2]   L=0 R=361
+[B2]   L=0 R=362
+monitor: batch  n=210 last=90 from core 1
+monitor: t=3355834646 ms  samples=210  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+[B2]   L=0 R=364
+[B2]   L=0 R=368
+[B2]   L=0 R=373
+[B2]   L=0 R=379
+[B2]   L=0 R=385
+[B2]   L=0 R=390
+[B2]   L=0 R=396
+[B2]   L=0 R=401
+[B2]   L=0 R=406
+[B2]   L=0 R=410
+[B2]   L=0 R=414
+[B2]   L=0 R=417
+[B2]   L=0 R=421
+[B2]   L=0 R=425
+[B2]   L=0 R=429
+[B2]   L=0 R=432
+[B2]   L=0 R=435
+[B2]   L=0 R=437
+[B2]   L=0 R=440
+[B2]   L=0 R=443
+[B2]   L=0 R=446
+[B2]   L=0 R=449
+[B2]   L=0 R=452
+[B2]   L=0 R=455
+[B2]   L=0 R=458
+[B2]   L=0 R=462
+[B2]   L=0 R=466
+[B2]   L=0 R=471
+[B2]   L=0 R=475
+[B2]   L=0 R=480
+[B2]   L=0 R=483
+[B2]   L=0 R=487
+[B2]   L=0 R=490
+[B2]   L=0 R=494
+[B2]   L=0 R=496
+[B2]   L=0 R=499
+[B2]   L=0 R=502
+[B2]   L=0 R=505
+[B2]   L=0 R=508
+[B2]   L=0 R=510
+[B2]   L=0 R=513
+[B2]   L=0 R=515
+[B2]   L=0 R=517
+[B2]   L=0 R=518
+[B2]   L=0 R=519
+monitor: batch  n=215 last=60 from core 1
+monitor: t=3355836196 ms  samples=215  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=220 last=10 from core 1
+monitor: t=3355837746 ms  samples=220  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=225 last=40 from core 1
+monitor: t=3355839296 ms  samples=225  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=230 last=90 from core 1
+monitor: t=3355840846 ms  samples=230  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=235 last=60 from core 1
+monitor: t=3355842396 ms  samples=235  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=240 last=10 from core 1
+monitor: t=3355843946 ms  samples=240  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=245 last=40 from core 1
+monitor: t=3355845496 ms  samples=245  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=250 last=90 from core 1
+monitor: t=3355847046 ms  samples=250  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=255 last=60 from core 1
+monitor: t=3355848596 ms  samples=255  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] result step 3, RIGHT (GP7) forwards: L=0 R=519 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=0 R=99
+[B2] step 4: turn the RIGHT (GP7) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=260 last=10 from core 1
+monitor: t=3355850146 ms  samples=260  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=1
+[B2]   L=0 R=3
+[B2]   L=0 R=6
+[B2]   L=0 R=8
+[B2]   L=0 R=11
+[B2]   L=0 R=12
+[B2]   L=0 R=14
+[B2]   L=0 R=15
+[B2]   L=0 R=17
+[B2]   L=0 R=18
+[B2]   L=0 R=19
+[B2]   L=0 R=21
+[B2]   L=0 R=23
+[B2]   L=0 R=24
+[B2]   L=0 R=25
+[B2]   L=0 R=26
+[B2]   L=0 R=27
+[B2]   L=0 R=28
+[B2]   L=0 R=30
+[B2]   L=0 R=32
+[B2]   L=0 R=34
+[B2]   L=0 R=36
+[B2]   L=0 R=38
+[B2]   L=0 R=41
+[B2]   L=0 R=44
+monitor: batch  n=265 last=40 from core 1
+monitor: t=3355851696 ms  samples=265  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=0 R=47
+[B2]   L=0 R=50
+[B2]   L=0 R=53
+[B2]   L=0 R=57
+[B2]   L=0 R=61
+[B2]   L=0 R=65
+[B2]   L=0 R=70
+[B2]   L=0 R=75
+[B2]   L=0 R=80
+[B2]   L=0 R=85
+[B2]   L=0 R=90
+[B2]   L=0 R=95
+[B2]   L=0 R=100
+[B2]   L=0 R=105
+[B2]   L=0 R=111
+[B2]   L=0 R=115
+[B2]   L=0 R=117
+[B2]   L=0 R=118
+[B2]   L=0 R=119
+[B2]   L=0 R=120
+[B2]   L=0 R=121
+[B2]   L=0 R=122
+[B2]   L=0 R=123
+[B2]   L=0 R=125
+[B2]   L=0 R=126
+[B2]   L=0 R=128
+[B2]   L=0 R=129
+[B2]   L=0 R=130
+[B2]   L=0 R=132
+[B2]   L=0 R=136
+[B2]   L=0 R=142
+[B2]   L=0 R=143
+[B2]   L=0 R=144
+[B2]   L=0 R=149
+[B2]   L=0 R=154
+[B2]   L=0 R=158
+[B2]   L=0 R=162
+[B2]   L=0 R=167
+[B2]   L=0 R=172
+[B2]   L=0 R=178
+[B2]   L=0 R=183
+monitor: batch  n=270 last=90 from core 1
+monitor: t=3355853246 ms  samples=270  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+[B2]   L=0 R=185
+[B2]   L=0 R=189
+[B2]   L=0 R=190
+[B2]   L=0 R=191
+[B2]   L=0 R=192
+[B2]   L=0 R=193
+[B2]   L=0 R=195
+[B2]   L=0 R=199
+[B2]   L=0 R=203
+[B2]   L=0 R=207
+[B2]   L=0 R=211
+[B2]   L=0 R=215
+[B2]   L=0 R=218
+[B2]   L=0 R=221
+[B2]   L=0 R=223
+[B2]   L=0 R=225
+[B2]   L=0 R=227
+[B2]   L=0 R=228
+[B2]   L=0 R=230
+[B2]   L=0 R=231
+[B2]   L=0 R=233
+[B2]   L=0 R=234
+[B2]   L=0 R=236
+[B2]   L=0 R=238
+[B2]   L=0 R=241
+[B2]   L=0 R=244
+[B2]   L=0 R=246
+[B2]   L=0 R=248
+[B2]   L=0 R=251
+[B2]   L=0 R=253
+[B2]   L=0 R=256
+[B2]   L=0 R=258
+[B2]   L=0 R=260
+[B2]   L=0 R=262
+monitor: batch  n=275 last=60 from core 1
+monitor: t=3355854796 ms  samples=275  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=265
+[B2]   L=0 R=267
+[B2]   L=0 R=269
+[B2]   L=0 R=271
+[B2]   L=0 R=273
+[B2]   L=0 R=276
+[B2]   L=0 R=278
+[B2]   L=0 R=281
+[B2]   L=0 R=283
+[B2]   L=0 R=285
+[B2]   L=0 R=286
+[B2]   L=0 R=287
+[B2]   L=0 R=289
+[B2]   L=0 R=293
+[B2]   L=0 R=298
+[B2]   L=0 R=304
+[B2]   L=0 R=308
+[B2]   L=0 R=314
+[B2]   L=0 R=320
+[B2]   L=0 R=326
+[B2]   L=0 R=331
+[B2]   L=0 R=336
+[B2]   L=0 R=340
+[B2]   L=0 R=344
+[B2]   L=0 R=349
+[B2]   L=0 R=353
+[B2]   L=0 R=357
+[B2]   L=0 R=362
+[B2]   L=0 R=366
+[B2]   L=0 R=371
+[B2]   L=0 R=377
+[B2]   L=0 R=382
+[B2]   L=0 R=387
+[B2]   L=0 R=393
+[B2]   L=0 R=398
+[B2]   L=0 R=402
+[B2]   L=0 R=406
+[B2]   L=0 R=410
+[B2]   L=0 R=414
+[B2]   L=0 R=418
+[B2]   L=0 R=422
+monitor: batch  n=280 last=10 from core 1
+monitor: t=3355856346 ms  samples=280  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=426
+[B2]   L=0 R=430
+[B2]   L=0 R=436
+[B2]   L=0 R=441
+[B2]   L=0 R=446
+[B2]   L=0 R=452
+[B2]   L=0 R=458
+[B2]   L=0 R=463
+[B2]   L=0 R=468
+[B2]   L=0 R=473
+[B2]   L=0 R=478
+[B2]   L=0 R=481
+[B2]   L=0 R=483
+[B2]   L=0 R=485
+[B2]   L=0 R=486
+monitor: batch  n=285 last=40 from core 1
+monitor: t=3355857896 ms  samples=285  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=290 last=90 from core 1
+monitor: t=3355859446 ms  samples=290  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=295 last=60 from core 1
+monitor: t=3355860996 ms  samples=295  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=0 R=488
+[B2]   L=0 R=490
+[B2]   L=0 R=493
+[B2]   L=0 R=496
+[B2]   L=0 R=498
+[B2]   L=0 R=499
+[B2]   L=0 R=500
+monitor: batch  n=300 last=10 from core 1
+monitor: t=3355862546 ms  samples=300  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=305 last=40 from core 1
+monitor: t=3355864096 ms  samples=305  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=1 R=500
+monitor: batch  n=310 last=90 from core 1
+monitor: t=3355865646 ms  samples=310  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=1 R=501
+[B2]   L=1 R=502
+[B2]   L=2 R=502
+monitor: batch  n=315 last=60 from core 1
+monitor: t=3355867196 ms  samples=315  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=320 last=10 from core 1
+monitor: t=3355868746 ms  samples=320  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=325 last=40 from core 1
+monitor: t=3355870296 ms  samples=325  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=330 last=90 from core 1
+monitor: t=3355871846 ms  samples=330  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+[B2] result step 4, RIGHT (GP7) backwards: L=2 R=502 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=0 R=119
+[B2] done.  Copy the four result lines into TEST_LOG.md as S2-M01.
+monitor: batch  n=335 last=60 from core 1
+monitor: t=3355873396 ms  samples=335  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=340 last=10 from core 1
+monitor: t=3355874946 ms  samples=340  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=345 last=40 from core 1
+monitor: t=3355876496 ms  samples=345  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=350 last=90 from core 1
+monitor: t=3355878046 ms  samples=350  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=355 last=60 from core 1
+monitor: t=3355879596 ms  samples=355  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=360 last=10 from core 1
+monitor: t=3355881146 ms  samples=360  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=365 last=40 from core 1
+monitor: t=3355882696 ms  samples=365  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=370 last=90 from core 1
+monitor: t=3355884246 ms  samples=370  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=375 last=60 from core 1
+monitor: t=3355885796 ms  samples=375  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=380 last=10 from core 1
+monitor: t=3355887346 ms  samples=380  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=385 last=40 from core 1
+monitor: t=3355888896 ms  samples=385  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=390 last=90 from core 1
+monitor: t=3355890446 ms  samples=390  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=395 last=60 from core 1
+monitor: t=3355891996 ms  samples=395  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=400 last=10 from core 1
+monitor: t=3355893546 ms  samples=400  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=405 last=40 from core 1
+monitor: t=3355895096 ms  samples=405  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=410 last=90 from core 1
+monitor: t=3355896646 ms  samples=410  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=415 last=60 from core 1
+monitor: t=3355898196 ms  samples=415  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=420 last=10 from core 1
+monitor: t=3355899746 ms  samples=420  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=425 last=40 from core 1
+monitor: t=3355901296 ms  samples=425  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=430 last=90 from core 1
+monitor: t=3355902846 ms  samples=430  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=435 last=60 from core 1
+monitor: t=3355904396 ms  samples=435  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=440 last=10 from core 1
+monitor: t=3355905946 ms  samples=440  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=445 last=40 from core 1
+monitor: t=3355907496 ms  samples=445  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=450 last=90 from core 1
+monitor: t=3355909046 ms  samples=450  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=455 last=60 from core 1
+monitor: t=3355910596 ms  samples=455  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=460 last=10 from core 1
+monitor: t=3355912146 ms  samples=460  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=465 last=40 from core 1
+monitor: t=3355913696 ms  samples=465  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=470 last=90 from core 1
+monitor: t=3355915246 ms  samples=470  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=475 last=60 from core 1
+monitor: t=3355916796 ms  samples=475  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=480 last=10 from core 1
+monitor: t=3355918346 ms  samples=480  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=485 last=40 from core 1
+monitor: t=3355919896 ms  samples=485  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=490 last=90 from core 1
+monitor: t=3355921446 ms  samples=490  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=495 last=60 from core 1
+monitor: t=3355922996 ms  samples=495  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=500 last=10 from core 1
+monitor: t=3355924546 ms  samples=500  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=505 last=40 from core 1
+monitor: t=3355926096 ms  samples=505  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=510 last=90 from core 1
+monitor: t=3355927646 ms  samples=510  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=515 last=60 from core 1
+monitor: t=3355929196 ms  samples=515  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=520 last=10 from core 1
+monitor: t=3355930746 ms  samples=520  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=525 last=40 from core 1
+monitor: t=3355932296 ms  samples=525  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=530 last=90 from core 1
+monitor: t=3355933846 ms  samples=530  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=535 last=60 from core 1
+monitor: t=3355935396 ms  samples=535  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=540 last=10 from core 1
+monitor: t=3355936946 ms  samples=540  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=545 last=40 from core 1
+monitor: t=3355938496 ms  samples=545  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=550 last=90 from core 1
+monitor: t=3355940046 ms  samples=550  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=555 last=60 from core 1
+monitor: t=3355941596 ms  samples=555  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=560 last=10 from core 1
+monitor: t=3355943146 ms  samples=560  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=565 last=40 from core 1
+monitor: t=3355944696 ms  samples=565  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=570 last=90 from core 1
+monitor: t=3355946246 ms  samples=570  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=575 last=60 from core 1
+monitor: t=3355947796 ms  samples=575  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=580 last=10 from core 1
+monitor: t=3355949346 ms  samples=580  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=585 last=40 from core 1
+monitor: t=3355950896 ms  samples=585  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=590 last=90 from core 1
+monitor: t=3355952446 ms  samples=590  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=595 last=60 from core 1
+monitor: t=3355953996 ms  samples=595  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=600 last=10 from core 1
+monitor: t=3355955546 ms  samples=600  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=605 last=40 from core 1
+monitor: t=3355957096 ms  samples=605  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=610 last=90 from core 1
+monitor: t=3355958646 ms  samples=610  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=615 last=60 from core 1
+monitor: t=3355960196 ms  samples=615  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=620 last=10 from core 1
+monitor: t=3355961746 ms  samples=620  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=625 last=40 from core 1
+monitor: t=3355963296 ms  samples=625  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=630 last=90 from core 1
+monitor: t=3355964846 ms  samples=630  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=635 last=60 from core 1
+monitor: t=3355966396 ms  samples=635  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=640 last=10 from core 1
+monitor: t=3355967946 ms  samples=640  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=645 last=40 from core 1
+monitor: t=3355969496 ms  samples=645  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=650 last=90 from core 1
+monitor: t=3355971046 ms  samples=650  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=655 last=60 from core 1
+monitor: t=3355972596 ms  samples=655  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=660 last=10 from core 1
+monitor: t=3355974146 ms  samples=660  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=665 last=40 from core 1
+monitor: t=3355975696 ms  samples=665  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=670 last=90 from core 1
+monitor: t=3355977246 ms  samples=670  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=675 last=60 from core 1
+monitor: t=3355978796 ms  samples=675  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=680 last=10 from core 1
+monitor: t=3355980346 ms  samples=680  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=685 last=40 from core 1
+monitor: t=3355981896 ms  samples=685  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=690 last=90 from core 1
+monitor: t=3355983446 ms  samples=690  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=695 last=60 from core 1
+monitor: t=3355984996 ms  samples=695  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=700 last=10 from core 1
+monitor: t=3355986546 ms  samples=700  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=705 last=40 from core 1
+monitor: t=3355988096 ms  samples=705  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=710 last=90 from core 1
+monitor: t=3355989646 ms  samples=710  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=715 last=60 from core 1
+monitor: t=3355991196 ms  samples=715  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=720 last=10 from core 1
+monitor: t=3355992746 ms  samples=720  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=725 last=40 from core 1
+monitor: t=3355994296 ms  samples=725  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=730 last=90 from core 1
+monitor: t=3355995846 ms  samples=730  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=735 last=60 from core 1
+monitor: t=3355997396 ms  samples=735  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=740 last=10 from core 1
+monitor: t=3355998946 ms  samples=740  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=745 last=40 from core 1
+monitor: t=3356000496 ms  samples=745  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=750 last=90 from core 1
+monitor: t=3356002046 ms  samples=750  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=755 last=60 from core 1
+monitor: t=3356003596 ms  samples=755  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=760 last=10 from core 1
+monitor: t=3356005146 ms  samples=760  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=765 last=40 from core 1
+monitor: t=3356006696 ms  samples=765  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=770 last=90 from core 1
+monitor: t=3356008246 ms  samples=770  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=775 last=60 from core 1
+monitor: t=3356009796 ms  samples=775  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=780 last=10 from core 1
+monitor: t=3356011346 ms  samples=780  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=785 last=40 from core 1
+monitor: t=3356012896 ms  samples=785  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=790 last=90 from core 1
+monitor: t=3356014446 ms  samples=790  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=795 last=60 from core 1
+monitor: t=3356015996 ms  samples=795  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=800 last=10 from core 1
+monitor: t=3356017546 ms  samples=800  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=805 last=40 from core 1
+monitor: t=3356019096 ms  samples=805  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=810 last=90 from core 1
+monitor: t=3356020646 ms  samples=810  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=815 last=60 from core 1
+monitor: t=3356022196 ms  samples=815  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=820 last=10 from core 1
+monitor: t=3356023746 ms  samples=820  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=825 last=40 from core 1
+monitor: t=3356025296 ms  samples=825  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=830 last=90 from core 1
+monitor: t=3356026846 ms  samples=830  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=835 last=60 from core 1
+monitor: t=3356028396 ms  samples=835  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=840 last=10 from core 1
+monitor: t=3356029946 ms  samples=840  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=845 last=40 from core 1
+monitor: t=3356031496 ms  samples=845  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=850 last=90 from core 1
+monitor: t=3356033046 ms  samples=850  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=855 last=60 from core 1
+monitor: t=3356034596 ms  samples=855  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=860 last=10 from core 1
+monitor: t=3356036146 ms  samples=860  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=865 last=40 from core 1
+monitor: t=3356037696 ms  samples=865  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=870 last=90 from core 1
+monitor: t=3356039246 ms  samples=870  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=875 last=60 from core 1
+monitor: t=3356040796 ms  samples=875  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=880 last=10 from core 1
+monitor: t=3356042346 ms  samples=880  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=885 last=40 from core 1
+monitor: t=3356043896 ms  samples=885  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=890 last=90 from core 1
+monitor: t=3356045446 ms  samples=890  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=895 last=60 from core 1
+monitor: t=3356046996 ms  samples=895  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=900 last=10 from core 1
+monitor: t=3356048546 ms  samples=900  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=905 last=40 from core 1
+monitor: t=3356050096 ms  samples=905  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=910 last=90 from core 1
+monitor: t=3356051646 ms  samples=910  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=915 last=60 from core 1
+monitor: t=3356053196 ms  samples=915  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=920 last=10 from core 1
+monitor: t=3356054746 ms  samples=920  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=925 last=40 from core 1
+monitor: t=3356056296 ms  samples=925  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=930 last=90 from core 1
+monitor: t=3356057846 ms  samples=930  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=935 last=60 from core 1
+monitor: t=3356059396 ms  samples=935  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=940 last=10 from core 1
+monitor: t=3356060946 ms  samples=940  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=945 last=40 from core 1
+monitor: t=3356062496 ms  samples=945  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=950 last=90 from core 1
+monitor: t=3356064046 ms  samples=950  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=955 last=60 from core 1
+monitor: t=3356065596 ms  samples=955  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=960 last=10 from core 1
+monitor: t=3356067146 ms  samples=960  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=965 last=40 from core 1
+monitor: t=3356068696 ms  samples=965  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=970 last=90 from core 1
+monitor: t=3356070246 ms  samples=970  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=975 last=60 from core 1
+monitor: t=3356071796 ms  samples=975  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=980 last=10 from core 1
+monitor: t=3356073346 ms  samples=980  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=985 last=40 from core 1
+monitor: t=3356074896 ms  samples=985  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=990 last=90 from core 1
+monitor: t=3356076446 ms  samples=990  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=995 last=60 from core 1
+monitor: t=3356077996 ms  samples=995  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1000 last=10 from core 1
+monitor: t=3356079546 ms  samples=1000  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1005 last=40 from core 1
+monitor: t=3356081096 ms  samples=1005  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1010 last=90 from core 1
+monitor: t=3356082646 ms  samples=1010  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1015 last=60 from core 1
+monitor: t=3356084196 ms  samples=1015  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1020 last=10 from core 1
+monitor: t=3356085746 ms  samples=1020  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1025 last=40 from core 1
+monitor: t=3356087296 ms  samples=1025  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1030 last=90 from core 1
+monitor: t=3356088846 ms  samples=1030  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1035 last=60 from core 1
+monitor: t=3356090396 ms  samples=1035  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1040 last=10 from core 1
+monitor: t=3356091946 ms  samples=1040  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1045 last=40 from core 1
+monitor: t=3356093496 ms  samples=1045  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1050 last=90 from core 1
+monitor: t=3356095046 ms  samples=1050  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1055 last=60 from core 1
+monitor: t=3356096596 ms  samples=1055  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1060 last=10 from core 1
+monitor: t=3356098146 ms  samples=1060  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1065 last=40 from core 1
+monitor: t=3356099696 ms  samples=1065  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1070 last=90 from core 1
+monitor: t=3356101246 ms  samples=1070  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1075 last=60 from core 1
+monitor: t=3356102796 ms  samples=1075  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1080 last=10 from core 1
+monitor: t=3356104346 ms  samples=1080  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1085 last=40 from core 1
+monitor: t=3356105896 ms  samples=1085  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1090 last=90 from core 1
+monitor: t=3356107446 ms  samples=1090  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1095 last=60 from core 1
+monitor: t=3356108996 ms  samples=1095  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1100 last=10 from core 1
+monitor: t=3356110546 ms  samples=1100  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1105 last=40 from core 1
+monitor: t=3356112096 ms  samples=1105  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1110 last=90 from core 1
+monitor: t=3356113646 ms  samples=1110  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1115 last=60 from core 1
+monitor: t=3356115196 ms  samples=1115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1120 last=10 from core 1
+monitor: t=3356116746 ms  samples=1120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1125 last=40 from core 1
+monitor: t=3356118296 ms  samples=1125  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1130 last=90 from core 1
+monitor: t=3356119846 ms  samples=1130  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1135 last=60 from core 1
+monitor: t=3356121396 ms  samples=1135  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1140 last=10 from core 1
+monitor: t=3356122946 ms  samples=1140  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1145 last=40 from core 1
+monitor: t=3356124496 ms  samples=1145  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1150 last=90 from core 1
+monitor: t=3356126046 ms  samples=1150  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1155 last=60 from core 1
+monitor: t=3356127596 ms  samples=1155  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1160 last=10 from core 1
+monitor: t=3356129146 ms  samples=1160  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1165 last=40 from core 1
+monitor: t=3356130696 ms  samples=1165  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1170 last=90 from core 1
+monitor: t=3356132246 ms  samples=1170  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1175 last=60 from core 1
+monitor: t=3356133796 ms  samples=1175  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1180 last=10 from core 1
+monitor: t=3356135346 ms  samples=1180  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1185 last=40 from core 1
+monitor: t=3356136896 ms  samples=1185  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1190 last=90 from core 1
+monitor: t=3356138446 ms  samples=1190  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1195 last=60 from core 1
+monitor: t=3356139996 ms  samples=1195  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1200 last=10 from core 1
+monitor: t=3356141546 ms  samples=1200  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1205 last=40 from core 1
+monitor: t=3356143096 ms  samples=1205  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1210 last=90 from core 1
+monitor: t=3356144646 ms  samples=1210  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1215 last=60 from core 1
+monitor: t=3356146196 ms  samples=1215  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1220 last=10 from core 1
+monitor: t=3356147746 ms  samples=1220  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1225 last=40 from core 1
+monitor: t=3356149296 ms  samples=1225  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1230 last=90 from core 1
+monitor: t=3356150846 ms  samples=1230  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1235 last=60 from core 1
+monitor: t=3356152396 ms  samples=1235  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1240 last=10 from core 1
+monitor: t=3356153946 ms  samples=1240  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1245 last=40 from core 1
+monitor: t=3356155496 ms  samples=1245  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1250 last=90 from core 1
+monitor: t=3356157046 ms  samples=1250  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1255 last=60 from core 1
+monitor: t=3356158596 ms  samples=1255  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1260 last=10 from core 1
+monitor: t=3356160146 ms  samples=1260  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1265 last=40 from core 1
+monitor: t=3356161696 ms  samples=1265  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1270 last=90 from core 1
+monitor: t=3356163246 ms  samples=1270  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1275 last=60 from core 1
+monitor: t=3356164796 ms  samples=1275  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1280 last=10 from core 1
+monitor: t=3356166346 ms  samples=1280  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1285 last=40 from core 1
+monitor: t=3356167896 ms  samples=1285  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1290 last=90 from core 1
+monitor: t=3356169446 ms  samples=1290  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1295 last=60 from core 1
+monitor: t=3356170996 ms  samples=1295  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1300 last=10 from core 1
+monitor: t=3356172546 ms  samples=1300  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1305 last=40 from core 1
+monitor: t=3356174096 ms  samples=1305  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1310 last=90 from core 1
+monitor: t=3356175646 ms  samples=1310  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1315 last=60 from core 1
+monitor: t=3356177196 ms  samples=1315  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1320 last=10 from core 1
+monitor: t=3356178746 ms  samples=1320  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1325 last=40 from core 1
+monitor: t=3356180296 ms  samples=1325  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1330 last=90 from core 1
+monitor: t=3356181846 ms  samples=1330  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1335 last=60 from core 1
+monitor: t=3356183396 ms  samples=1335  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1340 last=10 from core 1
+monitor: t=3356184946 ms  samples=1340  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1345 last=40 from core 1
+monitor: t=3356186496 ms  samples=1345  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1350 last=90 from core 1
+monitor: t=3356188046 ms  samples=1350  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1355 last=60 from core 1
+monitor: t=3356189596 ms  samples=1355  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1360 last=10 from core 1
+monitor: t=3356191146 ms  samples=1360  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1365 last=40 from core 1
+monitor: t=3356192696 ms  samples=1365  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1370 last=90 from core 1
+monitor: t=3356194246 ms  samples=1370  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1375 last=60 from core 1
+monitor: t=3356195796 ms  samples=1375  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1380 last=10 from core 1
+monitor: t=3356197346 ms  samples=1380  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1385 last=40 from core 1
+monitor: t=3356198896 ms  samples=1385  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1390 last=90 from core 1
+monitor: t=3356200446 ms  samples=1390  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1395 last=60 from core 1
+monitor: t=3356201996 ms  samples=1395  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1400 last=10 from core 1
+monitor: t=3356203546 ms  samples=1400  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1405 last=40 from core 1
+monitor: t=3356205096 ms  samples=1405  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1410 last=90 from core 1
+monitor: t=3356206646 ms  samples=1410  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1415 last=60 from core 1
+monitor: t=3356208196 ms  samples=1415  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1420 last=10 from core 1
+monitor: t=3356209746 ms  samples=1420  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1425 last=40 from core 1
+monitor: t=3356211296 ms  samples=1425  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1430 last=90 from core 1
+monitor: t=3356212846 ms  samples=1430  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1435 last=60 from core 1
+monitor: t=3356214396 ms  samples=1435  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1440 last=10 from core 1
+monitor: t=3356215946 ms  samples=1440  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1445 last=40 from core 1
+monitor: t=3356217496 ms  samples=1445  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1450 last=90 from core 1
+monitor: t=3356219046 ms  samples=1450  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1455 last=60 from core 1
+monitor: t=3356220596 ms  samples=1455  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1460 last=10 from core 1
+monitor: t=3356222146 ms  samples=1460  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1465 last=40 from core 1
+monitor: t=3356223696 ms  samples=1465  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1470 last=90 from core 1
+monitor: t=3356225246 ms  samples=1470  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1475 last=60 from core 1
+monitor: t=3356226796 ms  samples=1475  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1480 last=10 from core 1
+monitor: t=3356228346 ms  samples=1480  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1485 last=40 from core 1
+monitor: t=3356229896 ms  samples=1485  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1490 last=90 from core 1
+monitor: t=3356231446 ms  samples=1490  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1495 last=60 from core 1
+monitor: t=3356232996 ms  samples=1495  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1500 last=10 from core 1
+monitor: t=3356234546 ms  samples=1500  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1505 last=40 from core 1
+monitor: t=3356236096 ms  samples=1505  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1510 last=90 from core 1
+monitor: t=3356237646 ms  samples=1510  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1515 last=60 from core 1
+monitor: t=3356239196 ms  samples=1515  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1520 last=10 from core 1
+monitor: t=3356240746 ms  samples=1520  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1525 last=40 from core 1
+monitor: t=3356242296 ms  samples=1525  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1530 last=90 from core 1
+monitor: t=3356243846 ms  samples=1530  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1535 last=60 from core 1
+monitor: t=3356245396 ms  samples=1535  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1540 last=10 from core 1
+monitor: t=3356246946 ms  samples=1540  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1545 last=40 from core 1
+monitor: t=3356248496 ms  samples=1545  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1550 last=90 from core 1
+monitor: t=3356250046 ms  samples=1550  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1555 last=60 from core 1
+monitor: t=3356251596 ms  samples=1555  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1560 last=10 from core 1
+monitor: t=3356253146 ms  samples=1560  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=1565 last=40 from core 1
+monitor: t=3356254696 ms  samples=1565  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1570 last=90 from core 1
+monitor: t=3356256246 ms  samples=1570  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1575 last=60 from core 1
+monitor: t=3356257796 ms  samples=1575  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1580 last=10 from core 1
+monitor: t=3356259346 ms  samples=1580  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1585 last=40 from core 1
+monitor: t=3356260896 ms  samples=1585  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1590 last=90 from core 1
+monitor: t=3356262446 ms  samples=1590  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=1595 last=60 from core 1
+monitor: t=3356263996 ms  samples=1595  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1600 last=10 from core 1
+monitor: t=3356265546 ms  samples=1600  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1605 last=40 from core 1
+monitor: t=3356267096 ms  samples=1605  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1610 last=90 from core 1
+monitor: t=3356268646 ms  samples=1610  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=1615 last=60 from core 1
+monitor: t=3356270196 ms  samples=1615  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=1620 last=10 from core 1
+monitor: t=3356271746 ms  samples=1620  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+monitor: I am task 7
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] S2-U03 PASS  encoder pulses convert to mm
+[TEST] S2-U04 PASS  still wheels: counts steady, speed 0
+[TEST] S2-U05 PASS  GPIO dispatcher refuses a second handler on GP5
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355771866 ms  samples=4  min=0 max=30 avg=15  free slots=1  free blocks=1
+[TEST] S2-U06 note: 23663 timer ticks in 1000 ms (expect 1000000)
+[TEST] S2-U06 FAIL  encoder timer counts at 1 MHz (+/- 2 percent)   (../app_program/subsystem2/subsystem2_test.c:95)
+[TEST] subsystem2 SUMMARY 5 passed, 1 failed
+[B2] encoder pulse count: 4 steps of 15 s, starting in 10 s.  Wheels off the ground, motors off.
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355773876 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+[TEST] INT-01 FAIL  samples flow from subsystem 2 to subsystem 3   (../app_program/subsystem3/subsystem3_test.c:34)
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 1 passed, 1 failed
+[TEST] S4-U01 PASS  message buffer max line = S4_SUMMARY_MAX
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355775886 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+monitor: batch  n=5 last=40 from core 1
+monitor: t=3355776346 ms  samples=8  min=0 max=70 avg=35  free slots=3  free blocks=4
+monitor: batch  n=10 last=90 from core 1
+monitor: t=3355776656 ms  samples=10  min=0 max=90 avg=45  free slots=4  free blocks=4
+[TEST] INT-02 PASS  summary lines flow from subsystem 3 to subsystem 4
+[TEST] subsystem4 SUMMARY 2 passed, 0 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+monitor: batch  n=15 last=60 from core 1
+monitor: t=3355778206 ms  samples=15  min=0 max=100 avg=56  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=20 last=10 from core 1
+monitor: t=3355779756 ms  samples=20  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=25 last=40 from core 1
+monitor: t=3355781306 ms  samples=25  min=0 max=100 avg=44  free slots=4  free blocks=4
+[B2] step 1: turn the LEFT (GP5) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=30 last=90 from core 1
+monitor: t=3355782856 ms  samples=30  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2]   L=1 R=0
+monitor: batch  n=35 last=60 from core 1
+monitor: t=3355784406 ms  samples=35  min=0 max=100 avg=52  free slots=4  free blocks=4
+[B2]   L=2 R=0
+monitor: batch  n=40 last=10 from core 1
+monitor: t=3355785956 ms  samples=40  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=3 R=0
+monitor: batch  n=45 last=40 from core 1
+monitor: t=3355787506 ms  samples=45  min=0 max=100 avg=46  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=50 last=90 from core 1
+monitor: t=3355789056 ms  samples=50  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=4 R=0
+monitor: batch  n=55 last=60 from core 1
+monitor: t=3355790606 ms  samples=55  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: batch  n=60 last=10 from core 1
+monitor: t=3355792156 ms  samples=60  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=5 R=0
+monitor: batch  n=65 last=40 from core 1
+monitor: t=3355793706 ms  samples=65  min=0 max=100 avg=47  free slots=4  free blocks=4
+[B2]   L=6 R=0
+[B2]   L=7 R=0
+monitor: batch  n=70 last=90 from core 1
+monitor: t=3355795256 ms  samples=70  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=8 R=0
+monitor: batch  n=75 last=60 from core 1
+monitor: t=3355796806 ms  samples=75  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=80 last=10 from core 1
+monitor: t=3355798356 ms  samples=80  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=85 last=40 from core 1
+monitor: t=3355799906 ms  samples=85  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=90 last=90 from core 1
+monitor: t=3355801456 ms  samples=90  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=95 last=60 from core 1
+monitor: t=3355803006 ms  samples=95  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=9 R=0
+monitor: batch  n=100 last=10 from core 1
+monitor: t=3355804556 ms  samples=100  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] result step 1, LEFT (GP5) forwards: L=9 R=0 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=733 R=0
+[B2] step 2: turn the LEFT (GP5) wheel ONE revolution backwards now (15 s)
+[B2]   L=0 R=1
+[B2]   L=0 R=2
+monitor: batch  n=105 last=40 from core 1
+monitor: t=3355806106 ms  samples=105  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=110 last=90 from core 1
+monitor: t=3355807656 ms  samples=110  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=1 R=2
+[B2]   L=1 R=3
+[B2]   L=2 R=3
+monitor: batch  n=115 last=60 from core 1
+monitor: t=3355809206 ms  samples=115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=120 last=10 from core 1
+monitor: t=3355810756 ms  samples=120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=125 last=40 from core 1
+monitor: t=3355812306 ms  samples=125  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=130 last=90 from core 1
+monitor: t=3355813856 ms  samples=130  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=3 R=3
+monitor: batch  n=135 last=60 from core 1
+monitor: t=3355815406 ms  samples=135  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+[B2]   L=4 R=3
+monitor: batch  n=140 last=10 from core 1
+monitor: t=3355816956 ms  samples=140  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=145 last=40 from core 1
+monitor: t=3355818506 ms  samples=145  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=150 last=90 from core 1
+monitor: t=3355820056 ms  samples=150  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=155 last=60 from core 1
+monitor: t=3355821606 ms  samples=155  min=0 max=100 avg=50  free slots=4  free blocks=4
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+monitor: I am task 7
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] S2-U03 PASS  encoder pulses convert to mm
+[TEST] S2-U04 PASS  still wheels: counts steady, speed 0
+[TEST] S2-U05 PASS  GPIO dispatcher refuses a second handler on GP5
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355771866 ms  samples=4  min=0 max=30 avg=15  free slots=1  free blocks=1
+[TEST] S2-U06 note: 23663 timer ticks in 1000 ms (expect 1000000)
+[TEST] S2-U06 FAIL  encoder timer counts at 1 MHz (+/- 2 percent)   (../app_program/subsystem2/subsystem2_test.c:95)
+[TEST] subsystem2 SUMMARY 5 passed, 1 failed
+[B2] encoder pulse count: 4 steps of 15 s, starting in 10 s.  Wheels off the ground, motors off.
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355773876 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+[TEST] INT-01 FAIL  samples flow from subsystem 2 to subsystem 3   (../app_program/subsystem3/subsystem3_test.c:34)
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 1 passed, 1 failed
+[TEST] S4-U01 PASS  message buffer max line = S4_SUMMARY_MAX
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355775886 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+monitor: batch  n=5 last=40 from core 1
+monitor: t=3355776346 ms  samples=8  min=0 max=70 avg=35  free slots=3  free blocks=4
+monitor: batch  n=10 last=90 from core 1
+monitor: t=3355776656 ms  samples=10  min=0 max=90 avg=45  free slots=4  free blocks=4
+[TEST] INT-02 PASS  summary lines flow from subsystem 3 to subsystem 4
+[TEST] subsystem4 SUMMARY 2 passed, 0 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+monitor: batch  n=15 last=60 from core 1
+monitor: t=3355778206 ms  samples=15  min=0 max=100 avg=56  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=20 last=10 from core 1
+monitor: t=3355779756 ms  samples=20  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=25 last=40 from core 1
+monitor: t=3355781306 ms  samples=25  min=0 max=100 avg=44  free slots=4  free blocks=4
+[B2] step 1: turn the LEFT (GP5) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=30 last=90 from core 1
+monitor: t=3355782856 ms  samples=30  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2]   L=1 R=0
+monitor: batch  n=35 last=60 from core 1
+monitor: t=3355784406 ms  samples=35  min=0 max=100 avg=52  free slots=4  free blocks=4
+[B2]   L=2 R=0
+monitor: batch  n=40 last=10 from core 1
+monitor: t=3355785956 ms  samples=40  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=45 last=40 from core 1
+monitor: t=3355787506 ms  samples=45  min=0 max=100 avg=46  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+[B2]   L=3 R=0
+monitor: batch  n=50 last=90 from core 1
+monitor: t=3355789056 ms  samples=50  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=55 last=60 from core 1
+monitor: t=3355790606 ms  samples=55  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=4 R=0
+monitor: batch  n=60 last=10 from core 1
+monitor: t=3355792156 ms  samples=60  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=5 R=0
+monitor: batch  n=65 last=40 from core 1
+monitor: t=3355793706 ms  samples=65  min=0 max=100 avg=47  free slots=4  free blocks=4
+monitor: batch  n=70 last=90 from core 1
+monitor: t=3355795256 ms  samples=70  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=75 last=60 from core 1
+monitor: t=3355796806 ms  samples=75  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=80 last=10 from core 1
+monitor: t=3355798356 ms  samples=80  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=85 last=40 from core 1
+monitor: t=3355799906 ms  samples=85  min=0 max=100 avg=48  free slots=4  free blocks=4
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+monitor: I am task 7
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] S2-U03 PASS  encoder pulses convert to mm
+[TEST] S2-U04 PASS  still wheels: counts steady, speed 0
+[TEST] S2-U05 PASS  GPIO dispatcher refuses a second handler on GP5
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355771866 ms  samples=4  min=0 max=30 avg=15  free slots=1  free blocks=1
+[TEST] S2-U06 note: 23663 timer ticks in 1000 ms (expect 1000000)
+[TEST] S2-U06 FAIL  encoder timer counts at 1 MHz (+/- 2 percent)   (../app_program/subsystem2/subsystem2_test.c:95)
+[TEST] subsystem2 SUMMARY 5 passed, 1 failed
+[B2] encoder pulse count: 4 steps of 15 s, starting in 10 s.  Wheels off the ground, motors off.
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355773876 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+[TEST] INT-01 FAIL  samples flow from subsystem 2 to subsystem 3   (../app_program/subsystem3/subsystem3_test.c:34)
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 1 passed, 1 failed
+[TEST] S4-U01 PASS  message buffer max line = S4_SUMMARY_MAX
+monitor: alarm -- no batch for 2000 ms
+monitor: t=3355775886 ms  samples=4  min=0 max=30 avg=15  free slots=0  free blocks=0
+monitor: batch  n=5 last=40 from core 1
+monitor: t=3355776346 ms  samples=8  min=0 max=70 avg=35  free slots=3  free blocks=4
+monitor: batch  n=10 last=90 from core 1
+monitor: t=3355776656 ms  samples=10  min=0 max=90 avg=45  free slots=4  free blocks=4
+[TEST] INT-02 PASS  summary lines flow from subsystem 3 to subsystem 4
+[TEST] subsystem4 SUMMARY 2 passed, 0 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+monitor: batch  n=15 last=60 from core 1
+monitor: t=3355778206 ms  samples=15  min=0 max=100 avg=56  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=20 last=10 from core 1
+monitor: t=3355779756 ms  samples=20  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=25 last=40 from core 1
+monitor: t=3355781306 ms  samples=25  min=0 max=100 avg=44  free slots=4  free blocks=4
+[B2] step 1: turn the LEFT (GP5) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=30 last=90 from core 1
+monitor: t=3355782856 ms  samples=30  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=35 last=60 from core 1
+monitor: t=3355784406 ms  samples=35  min=0 max=100 avg=52  free slots=4  free blocks=4
+monitor: batch  n=40 last=10 from core 1
+monitor: t=3355785956 ms  samples=40  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=45 last=40 from core 1
+monitor: t=3355787506 ms  samples=45  min=0 max=100 avg=46  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=50 last=90 from core 1
+monitor: t=3355789056 ms  samples=50  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=1 R=0
+monitor: batch  n=55 last=60 from core 1
+monitor: t=3355790606 ms  samples=55  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=2 R=0
+monitor: batch  n=60 last=10 from core 1
+monitor: t=3355792156 ms  samples=60  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=3 R=0
+[B2]   L=4 R=0
+monitor: batch  n=65 last=40 from core 1
+monitor: t=3355793706 ms  samples=65  min=0 max=100 avg=47  free slots=4  free blocks=4
+[B2]   L=5 R=0
+[B2]   L=6 R=0
+[B2]   L=7 R=0
+monitor: batch  n=70 last=90 from core 1
+monitor: t=3355795256 ms  samples=70  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=8 R=0
+[B2]   L=9 R=0
+[B2]   L=10 R=0
+monitor: batch  n=75 last=60 from core 1
+monitor: t=3355796806 ms  samples=75  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+[B2]   L=11 R=0
+[B2]   L=12 R=0
+monitor: batch  n=80 last=10 from core 1
+monitor: t=3355798356 ms  samples=80  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=13 R=0
+monitor: batch  n=85 last=40 from core 1
+monitor: t=3355799906 ms  samples=85  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=90 last=90 from core 1
+monitor: t=3355801456 ms  samples=90  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=95 last=60 from core 1
+monitor: t=3355803006 ms  samples=95  min=0 max=100 avg=51  free slots=4  free blocks=4
+monitor: batch  n=100 last=10 from core 1
+monitor: t=3355804556 ms  samples=100  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] result step 1, LEFT (GP5) forwards: L=13 R=0 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=1616 R=0
+[B2] step 2: turn the LEFT (GP5) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=105 last=40 from core 1
+monitor: t=3355806106 ms  samples=105  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=110 last=90 from core 1
+monitor: t=3355807656 ms  samples=110  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=115 last=60 from core 1
+monitor: t=3355809206 ms  samples=115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=120 last=10 from core 1
+monitor: t=3355810756 ms  samples=120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=125 last=40 from core 1
+monitor: t=3355812306 ms  samples=125  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=130 last=90 from core 1
+monitor: t=3355813856 ms  samples=130  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: batch  n=135 last=60 from core 1
+monitor: t=3355815406 ms  samples=135  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+monitor: I am task 7
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] S2-U03 PASS  encoder pulses convert to mm
+[TEST] S2-U04 PASS  still wheels: counts steady, speed 0
+[TEST] S2-U05 PASS  GPIO dispatcher refuses a second handler on GP5
+monitor: batch  n=5 last=40 from core 1
+monitor: t=3355771096 ms  samples=5  min=0 max=40 avg=20  free slots=4  free blocks=4
+[TEST] S2-U06 note: 1009429 timer ticks in 1000 ms (expect 1000000)
+[TEST] S2-U06 PASS  encoder timer counts at 1 MHz (+/- 2 percent)
+[TEST] subsystem2 SUMMARY 6 passed, 0 failed
+[B2] encoder pulse count: 4 steps of 15 s, starting in 10 s.  Wheels off the ground, motors off.
+monitor: batch  n=10 last=90 from core 1
+monitor: t=3355772646 ms  samples=10  min=0 max=90 avg=45  free slots=4  free blocks=4
+[TEST] INT-01 PASS  samples flow from subsystem 2 to subsystem 3
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 2 passed, 0 failed
+[TEST] S4-U01 PASS  message buffer max line = S4_SUMMARY_MAX
+monitor: batch  n=15 last=60 from core 1
+monitor: t=3355774196 ms  samples=15  min=0 max=100 avg=56  free slots=4  free blocks=4
+monitor: batch  n=20 last=10 from core 1
+monitor: t=3355775746 ms  samples=20  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=25 last=40 from core 1
+monitor: t=3355777296 ms  samples=25  min=0 max=100 avg=44  free slots=4  free blocks=4
+[TEST] INT-02 PASS  summary lines flow from subsystem 3 to subsystem 4
+[TEST] subsystem4 SUMMARY 2 passed, 0 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+monitor: batch  n=30 last=90 from core 1
+monitor: t=3355778846 ms  samples=30  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=35 last=60 from core 1
+monitor: t=3355780396 ms  samples=35  min=0 max=100 avg=52  free slots=4  free blocks=4
+monitor: batch  n=40 last=10 from core 1
+monitor: t=3355781946 ms  samples=40  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2] step 1: turn the LEFT (GP5) wheel ONE revolution forwards now (15 s)
+[B2]   L=2 R=0
+[B2]   L=6 R=0
+[B2]   L=11 R=0
+[B2]   L=17 R=0
+[B2]   L=23 R=0
+[B2]   L=29 R=0
+[B2]   L=33 R=0
+[B2]   L=36 R=0
+[B2]   L=39 R=0
+[B2]   L=40 R=0
+[B2]   L=41 R=0
+[B2]   L=42 R=0
+[B2]   L=43 R=0
+[B2]   L=44 R=0
+[B2]   L=45 R=0
+[B2]   L=46 R=0
+[B2]   L=47 R=0
+[B2]   L=49 R=0
+[B2]   L=51 R=0
+[B2]   L=53 R=0
+[B2]   L=55 R=0
+[B2]   L=56 R=0
+[B2]   L=58 R=0
+[B2]   L=59 R=0
+monitor: batch  n=45 last=40 from core 1
+monitor: t=3355783496 ms  samples=45  min=0 max=100 avg=46  free slots=4  free blocks=4
+[B2]   L=60 R=0
+[B2]   L=61 R=0
+[B2]   L=62 R=0
+[B2]   L=64 R=0
+[B2]   L=66 R=0
+[B2]   L=67 R=0
+[B2]   L=68 R=0
+[B2]   L=70 R=0
+[B2]   L=71 R=0
+[B2]   L=72 R=0
+[B2]   L=74 R=0
+[B2]   L=76 R=0
+[B2]   L=77 R=0
+[B2]   L=79 R=0
+[B2]   L=80 R=0
+[B2]   L=81 R=0
+[B2]   L=83 R=0
+[B2]   L=84 R=0
+[B2]   L=86 R=0
+[B2]   L=88 R=0
+[B2]   L=89 R=0
+[B2]   L=91 R=0
+[B2]   L=92 R=0
+[B2]   L=94 R=0
+[B2]   L=96 R=0
+[B2]   L=98 R=0
+[B2]   L=100 R=0
+[B2]   L=102 R=0
+[B2]   L=105 R=0
+[B2]   L=107 R=0
+[B2]   L=109 R=0
+[B2]   L=111 R=0
+[B2]   L=113 R=0
+[B2]   L=115 R=0
+[B2]   L=117 R=0
+[B2]   L=119 R=0
+[B2]   L=122 R=0
+[B2]   L=124 R=0
+[B2]   L=127 R=0
+[B2]   L=131 R=0
+[B2]   L=135 R=0
+[B2]   L=139 R=0
+[B2]   L=142 R=0
+[B2]   L=144 R=0
+[B2]   L=146 R=0
+monitor: batch  n=50 last=90 from core 1
+monitor: t=3355785046 ms  samples=50  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=149 R=0
+[B2]   L=154 R=0
+[B2]   L=157 R=0
+[B2]   L=160 R=0
+[B2]   L=166 R=0
+[B2]   L=170 R=0
+[B2]   L=172 R=0
+[B2]   L=173 R=0
+[B2]   L=174 R=0
+[B2]   L=175 R=0
+[B2]   L=176 R=0
+[B2]   L=177 R=0
+[B2]   L=182 R=0
+[B2]   L=186 R=0
+[B2]   L=187 R=0
+monitor: batch  n=55 last=60 from core 1
+monitor: t=3355786596 ms  samples=55  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=188 R=0
+[B2]   L=191 R=0
+[B2]   L=194 R=0
+[B2]   L=199 R=0
+[B2]   L=200 R=0
+[B2]   L=202 R=0
+[B2]   L=205 R=0
+[B2]   L=208 R=0
+[B2]   L=210 R=0
+[B2]   L=211 R=0
+[B2]   L=215 R=0
+monitor: batch  n=60 last=10 from core 1
+monitor: t=3355788146 ms  samples=60  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+[B2]   L=217 R=0
+[B2]   L=219 R=0
+monitor: batch  n=65 last=40 from core 1
+monitor: t=3355789696 ms  samples=65  min=0 max=100 avg=47  free slots=4  free blocks=4
+[B2]   L=220 R=0
+[B2]   L=221 R=0
+[B2]   L=226 R=0
+[B2]   L=227 R=0
+[B2]   L=228 R=0
+monitor: batch  n=70 last=90 from core 1
+monitor: t=3355791246 ms  samples=70  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=229 R=0
+[B2]   L=233 R=0
+[B2]   L=236 R=0
+[B2]   L=237 R=0
+[B2]   L=239 R=0
+[B2]   L=243 R=0
+[B2]   L=244 R=0
+[B2]   L=245 R=0
+monitor: batch  n=75 last=60 from core 1
+monitor: t=3355792796 ms  samples=75  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=247 R=0
+[B2]   L=250 R=0
+[B2]   L=251 R=0
+[B2]   L=252 R=0
+monitor: batch  n=80 last=10 from core 1
+monitor: t=3355794346 ms  samples=80  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=253 R=0
+[B2]   L=255 R=0
+[B2]   L=258 R=0
+[B2]   L=259 R=0
+[B2]   L=260 R=0
+[B2]   L=265 R=0
+[B2]   L=267 R=0
+monitor: batch  n=85 last=40 from core 1
+monitor: t=3355795896 ms  samples=85  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2]   L=268 R=0
+[B2]   L=272 R=0
+[B2]   L=275 R=0
+monitor: batch  n=90 last=90 from core 1
+monitor: t=3355797446 ms  samples=90  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+monitor: batch  n=95 last=60 from core 1
+monitor: t=3355798996 ms  samples=95  min=0 max=100 avg=51  free slots=4  free blocks=4
+[B2]   L=276 R=0
+[B2]   L=277 R=0
+[B2]   L=281 R=0
+[B2]   L=283 R=0
+monitor: batch  n=100 last=10 from core 1
+monitor: t=3355800546 ms  samples=100  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=105 last=40 from core 1
+monitor: t=3355802096 ms  samples=105  min=0 max=100 avg=48  free slots=4  free blocks=4
+monitor: batch  n=110 last=90 from core 1
+monitor: t=3355803646 ms  samples=110  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2] result step 1, LEFT (GP5) forwards: L=283 R=0 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=6764 R=0
+[B2] step 2: turn the LEFT (GP5) wheel ONE revolution backwards now (15 s)
+monitor: batch  n=115 last=60 from core 1
+monitor: t=3355805196 ms  samples=115  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: batch  n=120 last=10 from core 1
+monitor: t=3355806746 ms  samples=120  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=125 last=40 from core 1
+monitor: t=3355808296 ms  samples=125  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2]   L=1 R=0
+[B2]   L=3 R=0
+[B2]   L=6 R=0
+[B2]   L=7 R=0
+[B2]   L=12 R=0
+[B2]   L=13 R=0
+[B2]   L=14 R=0
+monitor: batch  n=130 last=90 from core 1
+monitor: t=3355809846 ms  samples=130  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=19 R=0
+[B2]   L=21 R=0
+[B2]   L=23 R=0
+[B2]   L=25 R=0
+[B2]   L=29 R=0
+[B2]   L=30 R=0
+[B2]   L=31 R=0
+[B2]   L=33 R=0
+[B2]   L=36 R=0
+[B2]   L=37 R=0
+monitor: batch  n=135 last=60 from core 1
+monitor: t=3355811396 ms  samples=135  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=38 R=0
+[B2]   L=43 R=0
+[B2]   L=45 R=0
+[B2]   L=46 R=0
+monitor: batch  n=140 last=10 from core 1
+monitor: t=3355812946 ms  samples=140  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=47 R=0
+[B2]   L=51 R=0
+[B2]   L=54 R=0
+monitor: batch  n=145 last=40 from core 1
+monitor: t=3355814496 ms  samples=145  min=0 max=100 avg=48  free slots=4  free blocks=4
+[B2]   L=55 R=0
+[B2]   L=59 R=0
+[B2]   L=61 R=0
+[B2]   L=62 R=0
+monitor: batch  n=150 last=90 from core 1
+monitor: t=3355816046 ms  samples=150  min=0 max=100 avg=49  free slots=4  free blocks=4
+monitor: LED task paused, state=WAIT+SUSPEND, pri=13
+[B2]   L=63 R=0
+[B2]   L=68 R=0
+[B2]   L=69 R=0
+[B2]   L=70 R=0
+[B2]   L=74 R=0
+[B2]   L=76 R=0
+[B2]   L=79 R=0
+[B2]   L=82 R=0
+[B2]   L=83 R=0
+[B2]   L=85 R=0
+[B2]   L=89 R=0
+[B2]   L=90 R=0
+[B2]   L=91 R=0
+monitor: batch  n=155 last=60 from core 1
+monitor: t=3355817596 ms  samples=155  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=94 R=0
+[B2]   L=97 R=0
+[B2]   L=98 R=0
+[B2]   L=99 R=0
+[B2]   L=104 R=0
+[B2]   L=105 R=0
+monitor: batch  n=160 last=10 from core 1
+monitor: t=3355819146 ms  samples=160  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=106 R=0
+[B2]   L=108 R=0
+[B2]   L=113 R=0
+[B2]   L=116 R=0
+monitor: batch  n=165 last=40 from core 1
+monitor: t=3355820696 ms  samples=165  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=117 R=0
+[B2]   L=121 R=0
+[B2]   L=127 R=0
+[B2]   L=132 R=0
+[B2]   L=136 R=0
+[B2]   L=140 R=0
+[B2]   L=143 R=0
+[B2]   L=147 R=0
+[B2]   L=151 R=0
+[B2]   L=155 R=0
+[B2]   L=160 R=0
+[B2]   L=163 R=0
+[B2]   L=166 R=0
+[B2]   L=169 R=0
+[B2]   L=171 R=0
+[B2]   L=173 R=0
+[B2]   L=174 R=0
+[B2]   L=175 R=0
+[B2]   L=177 R=0
+[B2]   L=182 R=0
+[B2]   L=189 R=0
+[B2]   L=191 R=0
+[B2]   L=197 R=0
+[B2]   L=203 R=0
+[B2]   L=208 R=0
+[B2]   L=213 R=0
+[B2]   L=217 R=0
+[B2]   L=219 R=0
+[B2]   L=221 R=0
+[B2]   L=222 R=0
+[B2]   L=226 R=0
+[B2]   L=231 R=0
+[B2]   L=236 R=0
+[B2]   L=242 R=0
+monitor: batch  n=170 last=90 from core 1
+monitor: t=3355822246 ms  samples=170  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2]   L=248 R=0
+[B2]   L=254 R=0
+[B2]   L=259 R=0
+[B2]   L=264 R=0
+[B2]   L=269 R=0
+[B2]   L=273 R=0
+[B2]   L=278 R=0
+[B2]   L=284 R=0
+[B2]   L=289 R=0
+[B2]   L=295 R=0
+[B2]   L=302 R=0
+[B2]   L=308 R=0
+[B2]   L=313 R=0
+[B2]   L=317 R=0
+[B2]   L=321 R=0
+[B2]   L=325 R=0
+[B2]   L=330 R=0
+[B2]   L=334 R=0
+[B2]   L=339 R=0
+[B2]   L=343 R=0
+[B2]   L=348 R=0
+[B2]   L=352 R=0
+[B2]   L=354 R=0
+[B2]   L=356 R=0
+[B2]   L=358 R=0
+[B2]   L=362 R=0
+[B2]   L=365 R=0
+[B2]   L=368 R=0
+[B2]   L=370 R=0
+[B2]   L=371 R=0
+monitor: batch  n=175 last=60 from core 1
+monitor: t=3355823796 ms  samples=175  min=0 max=100 avg=50  free slots=4  free blocks=4
+[B2]   L=372 R=0
+[B2]   L=375 R=0
+[B2]   L=378 R=0
+[B2]   L=381 R=0
+[B2]   L=384 R=0
+[B2]   L=387 R=0
+[B2]   L=389 R=0
+[B2]   L=391 R=0
+[B2]   L=393 R=0
+[B2]   L=396 R=0
+[B2]   L=398 R=0
+[B2]   L=401 R=0
+[B2]   L=403 R=0
+[B2]   L=406 R=0
+[B2]   L=409 R=0
+[B2]   L=411 R=0
+[B2]   L=412 R=0
+monitor: batch  n=180 last=10 from core 1
+monitor: t=3355825346 ms  samples=180  min=0 max=100 avg=50  free slots=4  free blocks=4
+monitor: LED task resumed, state=RUN, pri=12
+monitor: batch  n=185 last=40 from core 1
+monitor: t=3355826896 ms  samples=185  min=0 max=100 avg=49  free slots=4  free blocks=4
+[B2] result step 2, LEFT (GP5) backwards: L=412 R=0 (expect 20 on the turned wheel, 0 on the other); chatter rejected L=7361 R=0
+[B2] step 3: turn the RIGHT (GP7) wheel ONE revolution forwards now (15 s)
+monitor: batch  n=190 last=90 from core 1
+monitor: t=3355828446 ms  samples=190  min=0 max=100 avg=49  free slots=4  free blocks=4

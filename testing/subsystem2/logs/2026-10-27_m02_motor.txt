@@ -1,0 +1,15 @@
+[M02] LEFT motor (M1: GP8/GP9) in 3 s: watch which wheel turns, and which way
+[M02]   forwards 40 %: L=2057 R=0; second half 1066 / 0 pulses/s; rejected L=0 R=0
+[M02]   brake: L=49 R=0; second half 0 / 0 pulses/s; rejected L=0 R=0
+[M02]   backwards 40 %: L=2045 R=0; second half 1056 / 0 pulses/s; rejected L=0 R=0
+[M02]   brake: L=50 R=0; second half 0 / 0 pulses/s; rejected L=0 R=0
+[M02]   forwards 100 %: L=4774 R=0; second half 2481 / 0 pulses/s; rejected L=0 R=0
+[M02]   brake: L=141 R=0; second half 0 / 0 pulses/s; rejected L=1 R=0
+[M02] RIGHT motor (M2: GP10/GP11) in 3 s: watch which wheel turns, and which way
+[M02]   forwards 40 %: L=0 R=1984; second half 0 / 1024 pulses/s; rejected L=0 R=0
+[M02]   brake: L=0 R=42; second half 0 / 0 pulses/s; rejected L=0 R=0
+[M02]   backwards 40 %: L=0 R=1993; second half 0 / 1030 pulses/s; rejected L=0 R=0
+[M02]   brake: L=0 R=42; second half 0 / 0 pulses/s; rejected L=0 R=0
+[M02]   forwards 100 %: L=0 R=4811; second half 0 / 2501 pulses/s; rejected L=0 R=0
+[M02]   brake: L=0 R=129; second half 0 / 0 pulses/s; rejected L=0 R=0
+[M02] done.  For each motor note which wheel turned and whether 'forwards' turned it the car's forward way.
