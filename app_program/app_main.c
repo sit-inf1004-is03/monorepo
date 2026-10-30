@@ -54,6 +54,7 @@
  */
 
 #include "app.h"
+#include "navigation/navigation.h"	/* Navigation / Vehicle Controller */
 
 /*
  * Create and start one task (declared in app.h for every subsystem).
@@ -113,6 +114,7 @@ EXPORT INT usermain(void)
 	CHECK(subsystem3_init(), "subsystem3_init");
 	CHECK(subsystem4_init(), "subsystem4_init");
 	CHECK(subsystem5_init(), "subsystem5_init");
+	CHECK(navigation_init(), "navigation_init");
 
 	/* Phase 2: every subsystem starts its tasks */
 	CHECK(subsystem1_start(), "subsystem1_start");
@@ -120,6 +122,7 @@ EXPORT INT usermain(void)
 	CHECK(subsystem3_start(), "subsystem3_start");
 	CHECK(subsystem4_start(), "subsystem4_start");
 	CHECK(subsystem5_start(), "subsystem5_start");
+	CHECK(navigation_start(), "navigation_start");
 
 	tm_printf((UB*)"all subsystems started\n\n");
 
@@ -133,6 +136,7 @@ EXPORT INT usermain(void)
 	subsystem3_test();
 	subsystem4_test();
 	subsystem5_test();
+	navigation_test();
 	tm_printf((UB*)"[TEST] === test run end ===\n");
 #endif
 

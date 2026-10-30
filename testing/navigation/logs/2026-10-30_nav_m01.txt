@@ -1,0 +1,49 @@
+(Console excerpt pasted by Glenn, 2026-10-30. Lines before "test run end" were not included.)
+[TEST] === test run end ===
+[NAV-M01] mission script starts in 10 s.  Car on a stand, USB power only.
+[NAV] state LINE_FOLLOW (reason 0, faults 0x00)
+[NAV-M01] PASS  START -> LINE_FOLLOW
+[NAV] state JUNCTION (reason 0, faults 0x00)
+[NAV-M01] PASS  barcode B -> JUNCTION (slowing)
+[NAV] state LINE_FOLLOW (reason 0, faults 0x00)
+[NAV-M01] PASS  B: pivot right
+[NAV-M01] PASS  B: back to LINE_FOLLOW
+[NAV] state JUNCTION (reason 0, faults 0x00)
+[NAV-M01] PASS  barcode D -> JUNCTION
+[NAV-M01] PASS  D: U-turn pivot 1
+[NAV] state LINE_FOLLOW (reason 0, faults 0x00)
+[NAV-M01] PASS  D: U-turn pivot 2
+[NAV-M01] PASS  D: back to LINE_FOLLOW
+[NAV] state JUNCTION (reason 0, faults 0x00)
+[NAV-M01] PASS  barcode C -> JUNCTION
+[NAV] state LINE_FOLLOW (reason 0, faults 0x00)
+[NAV-M01] PASS  C: LINE_FOLLOW
+[NAV-M01] PASS  C: still driving, no stop
+[NAV] state JUNCTION (reason 0, faults 0x00)
+[NAV-M01] PASS  barcode A -> JUNCTION
+[NAV] state LINE_FOLLOW (reason 0, faults 0x00)
+[NAV-M01] PASS  A: pivot left without a junction
+[NAV-M01] PASS  A: back to LINE_FOLLOW
+[NAV] state OBSTACLE (reason 0, faults 0x00)
+[NAV-M01] PASS  obstacle -> OBSTACLE
+[NAV-M01] PASS  obstacle: braked
+[NAV] state BYPASS (reason 0, faults 0x00)
+[NAV-M01] PASS  plan -> BYPASS
+[NAV-M01] PASS  bypass: pivot out
+[NAV-M01] PASS  bypass: pivot back
+[NAV-M01] PASS  bypass: creeping to the line
+[NAV] state LINE_FOLLOW (reason 0, faults 0x00)
+[NAV-M01] PASS  bypass: align on the line
+[NAV-M01] PASS  bypass: back to LINE_FOLLOW
+[NAV] state STOPPED (reason 4, faults 0x00)
+[NAV-M01] PASS  STOP -> STOPPED
+[NAV-M01] PASS  STOP: braked
+[NAV] state LINE_FOLLOW (reason 0, faults 0x00)
+[NAV-M01] PASS  START again -> LINE_FOLLOW
+[NAV] state FAULT (reason 1, faults 0x10)
+[NAV-M01] PASS  ESTOP -> FAULT
+[NAV-M01] PASS  ESTOP: braked, bit and reason recorded
+[NAV-M01] PASS  FAULT: START refused
+[NAV] state IDLE (reason 0, faults 0x00)
+[NAV-M01] PASS  CLEAR -> IDLE
+[NAV-M01] done: 29 passed, 0 failed.  Longest task_motion step 555 usec.
