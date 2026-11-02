@@ -21,7 +21,7 @@ subsystem, ask its owner or open a pull request for them to review.
 | 2 | *example:* Producer: makes a sample every 300 ms | | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
 | 4 | *example:* Monitor: prints reports, pauses the LED | | | `app_program/subsystem4/` | `testing/subsystem4/` |
-| 5 | | | | `app_program/subsystem5/` | `testing/subsystem5/` |
+| 5 | Obstacle Scan & Avoidance: ultrasonic + scan servo, bypass plan | 2502821 | | `app_program/subsystem5/` | `testing/subsystem5/` |
 
 Shared files (`app_program/app_main.c`, `app_program/app.h`, this file)
 are changed only by agreement of the team. The exception is claiming an empty
@@ -60,12 +60,12 @@ fixed.
 | GP9 | S2 | motor M1B (PWM 4B, `drv_motor`) |
 | GP10 | S2 | motor M2A (PWM 5A, `drv_motor`) |
 | GP11 | S2 | motor M2B (PWM 5B, `drv_motor`) |
-| GP12 | | |
+| GP12 | S5 | scan servo signal (PWM 6A, 50 Hz, `drv_servo`) |
 | GP13 | | |
 | GP14 | | |
 | GP15 | | |
-| GP16 | | |
-| GP17 | | |
+| GP16 | S5 | ultrasonic TRIG (output, Grove port 4, `drv_ultrasonic`) |
+| GP17 | S5 | ultrasonic ECHO (input, both edges via `gpio_irq`, Grove port 4) |
 | GP18 | | |
 | GP19 | *example:* S1 | external LED (LED + 330 Ω to GND) |
 | GP20 | | |
@@ -112,7 +112,8 @@ the drivers have no locking to stop it.
 | SPI1 | | | |
 | ADC | | | GP26–GP28 |
 | PWM slices 4, 5 | S2 | `task_motion`; `s2_test_motor_task` in `TEST=1` builds with `S2_MANUAL_M02` (task_motion leaves the motors alone while idle) | GP8–GP11. The port leaves the whole PWM block in reset (`USE_PTMR` is 0); `drv_motor_init()` releases it and never resets it again, so other slices (servo, slice 6) can rely on that |
-| GPIO interrupt (IO_IRQ_BANK0) | *shared* (`app_program/gpio_irq.c`) | interrupt on the core that runs usermain | one handler per pin, registered from `_init()`; S2: GP5, GP7 |
+| PWM slice 6 | S5 | `obstacle_scan_task` (`servo_init()` in `subsystem5_init()`) | GP12 (scan servo). `servo_init()` also releases the PWM reset, harmless after `drv_motor_init()` |
+| GPIO interrupt (IO_IRQ_BANK0) | *shared* (`app_program/gpio_irq.c`) | interrupt on the core that runs usermain | one handler per pin, registered from `_init()`; S2: GP5, GP7; S5: GP17 |
 | WiFi radio, TCP/IP, MQTT | *kernel* | `cyw43_utk_task` (built in) | GP23–25, GP29 |
 
 ### WiFi and MQTT are special
@@ -151,7 +152,7 @@ change it only by team agreement. Write down every task you create.
 | 2 | 14–15 | task_motion – 14 – core 1 (away from Wi-Fi's priority 4 task on core 0); *example:* producer_task – 14 – core 1; one of s2_test_b2_task, s2_test_motor_task, s2_test_motion_task – 15 – core 0 (`TEST=1` builds only) |
 | 3 | 16–17 | *example:* consumer_task – 16 – core 0 |
 | 4 | 18–19 | *example:* monitor_task – 18 – any |
-| 5 | 20–21 | |
+| 5 | 20–21 | obstacle_scan_task – 20 – any |
 | Navigation | 10–11 (*proposed*) | task_navigation – 10 – core 1 (with task_motion); nav_test_m01_task – 11 – core 0 (`TEST=1` builds only) |
 
 Core: `TP_PRC1` = core 0, `TP_PRC2` = core 1, or "any".
@@ -189,7 +190,7 @@ limit there. The numbers below are the example's usage.
 
 | Object | Limit | S1 | S2 | S3 | S4 | S5 |
 |---|---|---|---|---|---|---|
-| Task | 32 | 1 | 1 | 1 | 1 | |
+| Task | 32 | 1 | 1 | 1 | 1 | 1 |
 | Semaphore | 16 | | 1 | | | |
 | Event flag | 16 | | | | 1 | |
 | Mailbox | 12 | | | 1 | | |
