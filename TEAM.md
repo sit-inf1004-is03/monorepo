@@ -130,15 +130,14 @@ What students *can* do:
   T_CYW43_UTK_STATUS st;
   cyw43_utk_get_status(&st);   /* st.ready, st.link_status, st.ip_addr, ... */
   ```
-- **Send or receive data over the network** by adding code that *runs
-  inside the service task*. The MQTT client is in
-  `lib/liblwip/sysdepend/pico_rp2040/mqtt_utk.c`. It publishes a heartbeat
-  today. A "cloud / reporting" subsystem would add a kernel object
-  (e.g. a message buffer) that application tasks fill. The MQTT code then
-  reads it with `TMO_POL` (never blocking) and publishes it.
-  Because this changes shared library code, **agree it with the team and
-  the instructor first**, and record it as an interface in section 5.
-  It needs the `NET=lwip MQTT=1` build (README section 3).
+- **Send or receive data over the network** through the Wi-Fi / MQTT
+  bridge (`app_program/net/`, owner: Rifa), which runs inside the service
+  task without changing any kernel file. Tasks only touch message buffers:
+  `comms_publish()` / `comms_log()` queue a message for the broker, and
+  `comms_subscribe(topic, my_mbf)` in your `_init()` delivers a topic's
+  messages to your own message buffer (`app_program/comms/comms.h`).
+  Record each new topic as an interface in section 5. It needs the
+  `NET=lwip` build, **not** `MQTT=1` (`MQTT.md`, `KERNEL_ISSUES.md`).
 
 ## 4. Task priorities
 
@@ -153,6 +152,7 @@ change it only by team agreement. Write down every task you create.
 | 4 | 18–19 | *example:* monitor_task – 18 – any |
 | 5 | 20–21 | |
 | Navigation | 10–11 (*proposed*) | task_navigation – 10 – core 1 (with task_motion); nav_test_m01_task – 11 – core 0 (`TEST=1` builds only) |
+| Wi-Fi / MQTT (Rifa) | 22–23 (*proposed*); 5 at start-up only | remote_task – 22 – any; telemetry_task – 23 – any; net_start – 5 – core 0 (runs once at start-up, then exits; must sit just below WiFi's 4, on its core). The bridge itself runs inside the kernel's WiFi task (4) |
 
 Core: `TP_PRC1` = core 0, `TP_PRC2` = core 1, or "any".
 
@@ -178,6 +178,9 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-12 | any → Navigation | event flag (owned by Navigation until G1/G2) | `nav_raise_fault()` | the agreed fault bits 0–7, each raised only by its owner; stop mask = all but Wi-Fi loss (G10) | *proposed* |
 | IF-13 | Wi-Fi / MQTT → Navigation | event flag + one-writer word | `nav_post_remote()` | START, STOP, CLEAR | *proposed* |
 | IF-14 | Navigation → any (telemetry, Obstacle Scan) | shared data, read only | `nav_get_state()`, `nav_get_faults()`, `nav_get_reason()` | vehicle state (3 bits): IDLE, LINE_FOLLOW, JUNCTION, OBSTACLE (Obstacle Scan's cue to scan), BYPASS, STOPPED, FAULT | *proposed* |
+| IF-15 | dashboard ↔ car (Wi-Fi / MQTT) | MQTT topics `robocar/<id>/…`, via the bridge's message buffers | `comms_subscribe()`, `comms_publish()` in `comms/comms.h`; `mbf_remote`, `mbf_telemetry` | topics, commands (PING, START, STOP, CLEAR) and the 64-bit telemetry layout in `app_program/protocol.h`; the dashboard's copy is `mqtt-web-interface/src/shared/protocol.ts` | *proposed* |
+| IF-16 | S3 (Line Following), S5 (Obstacle Scan) → telemetry | shared data, read only | `line_get_state()` (S3), `ultrasonic_last_reading()` (S5) | line state (2 bits); nearest obstacle in cm (9 bits) or no echo. Linked weakly, so telemetry reports "not reported" until the function exists | *proposed* |
+| IF-17 | any → Wi-Fi / MQTT | message buffer (owned by comms) | `comms_log()`, `comms_telemetry()`, `comms_publish()` | one line of text / a packed telemetry word / any payload ≤ 128 bytes; never blocks, dropped when the queue is full | *proposed* |
 
 Each interface is tested by at least one integration test
 (`testing/integration/TEST_LOG.md`).

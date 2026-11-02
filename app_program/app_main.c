@@ -55,6 +55,9 @@
 
 #include "app.h"
 #include "navigation/navigation.h"	/* Navigation / Vehicle Controller */
+#include "comms/comms.h"		/* Wi-Fi / MQTT: comms, remote, telemetry */
+#include "remote/remote.h"
+#include "telemetry/telemetry.h"
 
 /*
  * Create and start one task (declared in app.h for every subsystem).
@@ -115,6 +118,9 @@ EXPORT INT usermain(void)
 	CHECK(subsystem4_init(), "subsystem4_init");
 	CHECK(subsystem5_init(), "subsystem5_init");
 	CHECK(navigation_init(), "navigation_init");
+	CHECK(comms_init(), "comms_init");	/* before remote and telemetry, */
+	CHECK(remote_init(), "remote_init");	/* which subscribe with it */
+	CHECK(telemetry_init(), "telemetry_init");
 
 	/* Phase 2: every subsystem starts its tasks */
 	CHECK(subsystem1_start(), "subsystem1_start");
@@ -123,6 +129,10 @@ EXPORT INT usermain(void)
 	CHECK(subsystem4_start(), "subsystem4_start");
 	CHECK(subsystem5_start(), "subsystem5_start");
 	CHECK(navigation_start(), "navigation_start");
+	CHECK(remote_start(), "remote_start");
+	CHECK(telemetry_start(), "telemetry_start");
+	CHECK(comms_start(), "comms_start");	/* last: hands the buffers to
+						   the network bridge */
 
 	tm_printf((UB*)"all subsystems started\n\n");
 
@@ -137,6 +147,9 @@ EXPORT INT usermain(void)
 	subsystem4_test();
 	subsystem5_test();
 	navigation_test();
+	comms_test();
+	remote_test();
+	telemetry_test();
 	tm_printf((UB*)"[TEST] === test run end ===\n");
 #endif
 
