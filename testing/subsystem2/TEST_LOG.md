@@ -10,8 +10,8 @@ Define a test here before running it. Test IDs never change.
 
 | ID | What is tested | Requirement / interface | Method | Steps / how | Expected result |
 |---|---|---|---|---|---|
-| S2-U01 | sample values stay within 0..100 | | auto | `subsystem2_test.c` | `[TEST] S2-U01 PASS` |
-| S2-U02 | free slots and free blocks within pool size | IF-02 | auto | `subsystem2_test.c` | `[TEST] S2-U02 PASS` |
+| S2-U01 | *retired:* sample values stay within 0..100 (template example, removed) | | auto | `subsystem2_test.c` | `[TEST] S2-U01 PASS` |
+| S2-U02 | *retired:* free slots and free blocks within pool size (template example, removed) | IF-02 | auto | `subsystem2_test.c` | `[TEST] S2-U02 PASS` |
 | S2-U03 | encoder pulses convert to mm (0.330 mm/pulse, 637 per revolution) | | auto | `subsystem2_test.c` | `[TEST] S2-U03 PASS` |
 | S2-U04 | still wheels: counts steady, speed 0 | IF-06 | auto | `subsystem2_test.c`, car on the bench, motors off | `[TEST] S2-U04 PASS` |
 | S2-U05 | GPIO dispatcher refuses a second handler on GP5 | | auto | `subsystem2_test.c` | `[TEST] S2-U05 PASS` |
