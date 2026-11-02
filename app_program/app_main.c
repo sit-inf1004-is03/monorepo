@@ -122,15 +122,15 @@ EXPORT INT usermain(void)
 	   here in the initial task, while the system is running.  Tests may
 	   call tk_dly_tsk() to let the other tasks work for a while. */
 	tm_printf((UB*)"[TEST] === test run start ===\n");
+	comms_test();		/* Wi-Fi / MQTT first: quick, never drive */
+	remote_test();		/* the car, and done before NAV-M01 starts */
+	telemetry_test();
 	subsystem1_test();
 	subsystem2_test();
 	subsystem3_test();
 	subsystem4_test();
 	subsystem5_test();
 	navigation_test();
-	comms_test();
-	remote_test();
-	telemetry_test();
 	tm_printf((UB*)"[TEST] === test run end ===\n");
 #endif
 
