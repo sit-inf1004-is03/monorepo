@@ -10,7 +10,8 @@
  *                                     nav_post_junction(),
  *                                     nav_set_line_state()
  *   Obstacle Scan (Ruien):            nav_post_obstacle(),
- *                                     nav_post_bypass_plan()
+ *                                     nav_post_bypass_plan(),
+ *                                     nav_post_bypass_passed()
  *   Any subsystem, its own bits only: nav_raise_fault()
  *   Wi-Fi / MQTT commands (Rifa):     nav_post_remote()
  *   Everyone (telemetry, scan arm):   nav_get_state(), nav_get_faults(),
@@ -103,6 +104,7 @@ ER       nav_set_line_state(uint32_t state);
 ER       nav_post_obstacle(void);
 ER       nav_post_bypass_plan(uint32_t side, uint32_t out_cm,
                               uint32_t past_cm, uint32_t back_cm);
+ER       nav_post_bypass_passed(void);
 ER       nav_raise_fault(uint32_t bits);
 ER       nav_post_remote(uint32_t command);
 

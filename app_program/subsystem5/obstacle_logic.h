@@ -45,18 +45,29 @@
 // drive "past" until the whole car is beyond the obstacle; pivot in at
 // OBS_REJOIN_STEP and creep at most "back" to find the line.
 //
-#define OBS_CAR_HALF_WIDTH_CM   (10u)   // TODO: measure the real car.
-#define OBS_SIDE_MARGIN_CM      (3u)
+#define OBS_CAR_HALF_WIDTH_CM   (8u)    // TODO: measure the real car.
+#define OBS_SIDE_MARGIN_CM      (2u)
 
 // The sensor only sees the obstacle's front face, so its depth is an
 // assumption: set it to the deepest obstacle on the track.
 //
 #define OBS_DEPTH_CM            (8u)    // A bottle.
 
-// Sensor (front of the car) to the back of the car.  The past leg ends
-// when the back of the car is past the back of the obstacle.
+// Ultrasonic sensor to the wheel axle (the pivot centre).  The past leg
+// ends when the axle is OBS_PAST_MARGIN_CM past the obstacle's back: the
+// turn in swings the rear of the car away from the obstacle, and the
+// diagonal then moves the car along its own length, so its side never
+// closes on the obstacle's corner.
 //
-#define OBS_CAR_LENGTH_CM       (20u)   // TODO: measure the real car.
+// The obstacle's back is MEASURED: in the past leg the sensor looks
+// sideways at it, and once it is gone the car drives sensor-to-axle +
+// margin more.  obs_past_cm() (with OBS_DEPTH_CM) is only the estimate
+// used if the side scan never sees the obstacle; Navigation's limit is
+// that estimate + OBS_PAST_SCAN_EXTRA_CM, for deeper obstacles.
+//
+#define OBS_SENSOR_TO_AXLE_CM   (8u)    // TODO: measure the real car.
+#define OBS_PAST_MARGIN_CM      (2u)    // Buffer after the axle is past.
+#define OBS_PAST_SCAN_EXTRA_CM  (15u)
 
 // Half the distance between the two wheel centres: turns a pivot angle
 // into wheel travel for the encoders.  If the car turns too little, make
@@ -64,10 +75,13 @@
 //
 #define OBS_HALF_TRACK_MM       (70u)   // TODO: measure the real car.
 
-// Limits for a small track: the bypass never turns out more than
-// OBS_PIVOT_MAX_STEP x 15 deg nor drives the out leg more than
-// OBS_OUT_MAX_CM.
+// Pivot-out angle range (x 15 deg).  The steepest turn gives the
+// shortest out diagonal for the same sideways distance (the straight is
+// measured, so the forward distance lost costs nothing), so MIN = MAX =
+// 45 deg.  Lower MIN to let a far obstacle get a gentler turn.  The out
+// leg never drives more than OBS_OUT_MAX_CM.
 //
+#define OBS_PIVOT_MIN_STEP      (3u)    // 45 deg.
 #define OBS_PIVOT_MAX_STEP      (3u)    // 45 deg.
 #define OBS_OUT_MAX_CM          (40u)
 

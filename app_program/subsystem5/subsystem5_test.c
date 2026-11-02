@@ -75,29 +75,29 @@ subsystem5_test(void)
                "side choice: bottle left/right, wall right, boxed in");
 
     // Edge and sideways distance: first clear step 45 deg, so the edge
-    // is taken at 37.5 deg; 25 cm ahead -> 25 x 0.77 = 20 + 10 + 3 cm.
+    // is taken at 37.5 deg; 25 cm ahead -> 25 x 0.77 = 20 + 8 + 2 cm.
     TEST_CHECK("S5-U05",
                (3u == obs_find_edge(make_profile(fine_left,
                                                  OBS_FINE_COUNT), CLEAR_CM))
-               && (33u == obs_lateral_cm(25u, 3u)),
+               && (30u == obs_lateral_cm(25u, 3u)),
                "fine scan edge step and lateral distance");
 
     // Three legs, 25 cm ahead, 24 cm sideways, 45 deg out:
-    // out 24 / 0.71 = 34; past 25 + 8 + 20 - 34 x 0.71 (24) = 29;
+    // out 24 / 0.71 = 34; past 25 + 8 + 8 + 2 - 34 x 0.71 (24) = 19;
     // back 34 x 0.71 / sin 30 deg (49) + 15 slack = 64.  The out leg is
     // capped at OBS_OUT_MAX_CM; the past leg is never 0.
     TEST_CHECK("S5-U08", (34u == obs_out_cm(24u, 3u)) &&
-               (29u == obs_past_cm(25u, 34u, 3u)) &&
+               (19u == obs_past_cm(25u, 34u, 3u)) &&
                (64u == obs_back_cm(34u, 3u)) &&
                (OBS_OUT_MAX_CM == obs_out_cm(100u, 1u)) &&
                (1u == obs_past_cm(0u, 40u, 1u)),
                "bypass legs: out, past and back lengths, limits");
 
-    // Pivot angle: 17 cm sideways at 30 cm needs 30 x tan >= 17 ->
-    // 30 deg; 33 cm at 25 cm would need 60 deg, capped at
-    // OBS_PIVOT_MAX_STEP.  The wheel arc for 45 deg is 0.786 rad x half
+    // Pivot angle: never below OBS_PIVOT_MIN_STEP (17 cm sideways at
+    // 30 cm would allow 30 deg); 33 cm at 25 cm would need 60 deg, capped
+    // at OBS_PIVOT_MAX_STEP.  The wheel arc for 45 deg is 0.786 rad x half
     // the track.
-    TEST_CHECK("S5-U09", (2u == obs_pivot_step(30u, 17u)) &&
+    TEST_CHECK("S5-U09", (OBS_PIVOT_MIN_STEP == obs_pivot_step(30u, 17u)) &&
                (OBS_PIVOT_MAX_STEP == obs_pivot_step(25u, 33u)) &&
                (((786u * OBS_HALF_TRACK_MM) + 500u) / 1000u ==
                 obs_pivot_arc_mm(3u)),

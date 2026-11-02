@@ -224,19 +224,21 @@ obs_lateral_cm(uint16_t front_cm, uint16_t edge_step)
 }
 
 /*!
- * @brief  Pivot-out angle: the smallest 15-degree step that reaches the
- *         sideways distance before the car reaches the obstacle's front:
- *         front x tan(pivot) >= lateral.
+ * @brief  Pivot-out angle: the smallest 15-degree step, from
+ *         OBS_PIVOT_MIN_STEP, that reaches the sideways distance before
+ *         the car reaches the obstacle's front: front x tan(pivot) >=
+ *         lateral.
  * @param  front_cm    Distance to the obstacle straight ahead.
  * @param  lateral_cm  From obs_lateral_cm().
- * @return Pivot step 1..OBS_PIVOT_MAX_STEP (x 15 deg); the maximum if
+ * @return Pivot step OBS_PIVOT_MIN_STEP..OBS_PIVOT_MAX_STEP (x 15 deg);
+ *         the maximum if
  *         even that is not enough.
  */
 uint16_t
 obs_pivot_step(uint16_t front_cm, uint16_t lateral_cm)
 {
     uint32_t const need = (uint32_t)lateral_cm * TAN_SCALE;
-    uint16_t       step = 1u;
+    uint16_t       step = OBS_PIVOT_MIN_STEP;
 
     while ((step < OBS_PIVOT_MAX_STEP) &&
            (((uint32_t)front_cm * g_tan_x100[step]) < need))
@@ -293,11 +295,11 @@ obs_out_cm(uint16_t lateral_cm, uint16_t pivot_step)
 }
 
 /*!
- * @brief  Past leg: parallel to the line until the back of the car is
- *         past the back of the obstacle.  From the start the car's front
- *         must go front + depth + car length; the out leg already went
- *         out x cos(pivot) of that (rounded down: the past leg errs
- *         long).
+ * @brief  Past leg: parallel to the line until the wheel axle is
+ *         OBS_PAST_MARGIN_CM past the back of the obstacle.  From the
+ *         start the axle must go front + depth + sensor-to-axle + margin;
+ *         the out leg already went out x cos(pivot) of that (rounded
+ *         down: the past leg errs long).
  * @param  front_cm    Distance to the obstacle straight ahead.
  * @param  out_cm      From obs_out_cm().
  * @param  pivot_step  Pivot step, 1..4 (x 15 deg).
@@ -307,7 +309,7 @@ uint16_t
 obs_past_cm(uint16_t front_cm, uint16_t out_cm, uint16_t pivot_step)
 {
     uint32_t const need = (uint32_t)front_cm + OBS_DEPTH_CM +
-                          OBS_CAR_LENGTH_CM;
+                          OBS_SENSOR_TO_AXLE_CM + OBS_PAST_MARGIN_CM;
     uint32_t const done = ((uint32_t)out_cm *
                            g_cos_x100[clamp_step(pivot_step)]) / TAN_SCALE;
     uint32_t       dist = 1u;

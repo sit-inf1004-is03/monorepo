@@ -16,10 +16,12 @@
  *   - Obstacle: brake and wait for Obstacle Scan's bypass plan, then run
  *     three legs (every pivot ended by Obstacle Scan's StopTurn):
  *     pivot out, drive "out" cm (sideways clear of the obstacle); pivot
- *     back parallel to the line, drive "past" cm (beside the obstacle
- *     until the car is past it); pivot in towards the line and creep at
- *     most "back" cm until the line is on (else LINE_NOT_FOUND); brake
- *     and pivot onto it.
+ *     back parallel to the line, drive beside the obstacle until Obstacle
+ *     Scan reports it passed (nav_post_bypass_passed()), or at most
+ *     "past" cm; pivot in towards the line and creep at
+ *     most "back" cm until the line is on (else LINE_NOT_FOUND); creep
+ *     NAV_CROSS_MM more so the axle is on the line, brake and pivot onto
+ *     it.
  *   - A stop fault brakes and holds until a remote CLEAR.
  *
  * Navigation sends Motion one command at a time and always waits for its
@@ -48,6 +50,12 @@
                                         // barcode with no junction.
 #define NAV_BYPASS_MM_S     (60u)
 #define NAV_REACQUIRE_MM_S  (50u)       // Limit: the plan's "back" field.
+#define NAV_CROSS_MM        (80u)       // Line seen: creep this much more
+                                        // before the align pivot, so the
+                                        // wheel axle (the pivot centre) is
+                                        // on the line, not just the line
+                                        // sensor.  = line sensor to axle;
+                                        // TODO measure the real car.
 #define NAV_UTURN_PIVOTS    (2u)        // StopTurns in a U-turn; check on
                                         // the track's junctions.
 #define NAV_UTURN_DIR       (MOTION_DIR_LEFT)
@@ -61,13 +69,15 @@
 #define EVT_OBSTACLE        (1u << 11)
 #define EVT_PLAN            (1u << 12)
 #define EVT_REMOTE          (1u << 13)
+#define EVT_PASSED          (1u << 14)
 #define EVT_ALL             (EVT_BARCODE | EVT_JUNCTION | EVT_OBSTACLE |    \
-                             EVT_PLAN | EVT_REMOTE)
+                             EVT_PLAN | EVT_REMOTE | EVT_PASSED)
 #define WAIT_ALL            (EVT_ALL | NAV_FLT_ALL)
 
 // Bypass plan, 29 bits in a uint32_t (PROPOSED bit order, Ruien owns
-// it): bits 0-1 side, bits 2-10 out leg, bits 11-19 past leg, bits 20-28
-// back leg (most it may creep to find the line), each in cm (0-511);
+// it): bits 0-1 side, bits 2-10 out leg, bits 11-19 past leg (the
+// most: the side scan usually ends it with nav_post_bypass_passed()),
+// bits 20-28 back leg (most it may creep to find the line), each in cm (0-511);
 // bits 29-31 reserved (0).
 //
 #define FIELD_MASK(bits)    ((1u << (bits)) - 1u)
@@ -92,9 +102,10 @@
 #define P_BYPASS_PAST       (9u)    // Straight: the past leg.
 #define P_BYPASS_BACK       (10u)   // Pivot back, towards the line.
 #define P_REACQUIRE         (11u)   // Straight: at most the back leg.
-#define P_ALIGN             (12u)
-#define P_HALTING           (13u)   // Brake sent; then P_HALTED.
-#define P_HALTED            (14u)
+#define P_CROSS             (12u)   // Line seen: same straight, creep on.
+#define P_ALIGN             (13u)
+#define P_HALTING           (14u)   // Brake sent; then P_HALTED.
+#define P_HALTED            (15u)
 
 typedef struct
 {
@@ -104,7 +115,8 @@ typedef struct
     uint32_t barcode;           // Command waiting for the junction.
     uint32_t turn_dir;          // MOTION_DIR_ of the junction pivots.
     uint32_t turns_left;        // Pivots still to run at this junction.
-    uint32_t start_left;        // Encoder counts when the barcode was read.
+    uint32_t start_left;        // Encoder counts when the barcode was read
+                                // (P_APPROACH) or the line seen (P_CROSS).
     uint32_t start_right;
     uint32_t plan;              // Bypass plan being run.
     bool     b_barcode;         // Inputs not yet handled.
@@ -112,6 +124,7 @@ typedef struct
     bool     b_obstacle;
     bool     b_plan;
     bool     b_remote;
+    bool     b_passed;
 } nav_ctx_t;
 
 static ID                g_flg_id   = 0;
@@ -143,6 +156,7 @@ static void nav_process(void);
 static void nav_on_remote(uint32_t command);
 static void nav_at_junction(void);
 static bool nav_approach_too_long(void);
+static bool nav_driven_mm(uint32_t distance_mm);
 static void nav_enter(uint32_t phase);
 static void nav_brake_then(uint32_t phase, uint32_t state);
 static void nav_halt(uint32_t state, uint32_t reason);
@@ -286,6 +300,18 @@ nav_post_bypass_plan (uint32_t side, uint32_t out_cm, uint32_t past_cm,
     }
 
     return (result);
+}
+
+/*!
+ * @brief The car is past the obstacle (Ruien: side scan during the past
+ *        leg).  Navigation brakes and pivots in; ignored outside that leg.
+ *
+ * @return E_OK, or the error from tk_set_flg().
+ */
+ER
+nav_post_bypass_passed (void)
+{
+    return (nav_post(EVT_PASSED));
 }
 
 /*!
@@ -472,6 +498,7 @@ nav_take_events (UINT pattern)
     g_ctx.b_obstacle = (g_ctx.b_obstacle || (0u != (bits & EVT_OBSTACLE)));
     g_ctx.b_plan     = (g_ctx.b_plan || (0u != (bits & EVT_PLAN)));
     g_ctx.b_remote   = (g_ctx.b_remote || (0u != (bits & EVT_REMOTE)));
+    g_ctx.b_passed   = (g_ctx.b_passed || (0u != (bits & EVT_PASSED)));
 
     if ((0u != (fresh & NAV_FLT_STOP_MASK)) &&
         (NAV_STATE_FAULT != g_state))
@@ -588,6 +615,10 @@ nav_on_move_done (void)
             nav_halt(NAV_STATE_FAULT, NAV_REASON_LINE_NOT_FOUND);
             break;
 
+        case P_CROSS:
+            nav_enter(P_ALIGN);     // Back limit ran out while creeping.
+            break;
+
         case P_ALIGN:
             nav_enter(P_FOLLOW);
             break;
@@ -677,9 +708,30 @@ nav_process (void)
         }
     }
 
+    // The scan saw the obstacle go by: end the past leg now.  Only
+    // meaningful in that leg; dropped otherwise.
+    //
+    if (g_ctx.b_passed)
+    {
+        g_ctx.b_passed = false;
+
+        if (P_BYPASS_PAST == g_ctx.phase)
+        {
+            nav_brake_then(P_BYPASS_BACK, NAV_STATE_BYPASS);
+        }
+    }
+
     if ((P_REACQUIRE == g_ctx.phase) && (NAV_LINE_ON == g_line_state))
     {
+        nav_enter(P_CROSS);
+    }
+    else if ((P_CROSS == g_ctx.phase) && nav_driven_mm(NAV_CROSS_MM))
+    {
         nav_brake_then(P_ALIGN, NAV_STATE_BYPASS);
+    }
+    else
+    {
+        // Not re-acquiring.
     }
 }
 
@@ -763,13 +815,25 @@ nav_at_junction (void)
 static bool
 nav_approach_too_long (void)
 {
+    return (nav_driven_mm(NAV_APPROACH_MAX_MM));
+}
+
+/*!
+ * @brief True once the car has driven distance_mm (mean of both wheels)
+ *        since the encoder snapshot in start_left / start_right.
+ *
+ * @param[in] distance_mm  Distance to check.
+ */
+static bool
+nav_driven_mm (uint32_t distance_mm)
+{
     uint32_t const left  = drv_encoder_get_count(DRV_ENCODER_LEFT) -
                            g_ctx.start_left;
     uint32_t const right = drv_encoder_get_count(DRV_ENCODER_RIGHT) -
                            g_ctx.start_right;
 
     return (((left / 2u) + (right / 2u)) >=
-            drv_encoder_mm_to_pulses(NAV_APPROACH_MAX_MM));
+            drv_encoder_mm_to_pulses(distance_mm));
 }
 
 /*!
@@ -842,6 +906,12 @@ nav_enter (uint32_t phase)
                               (nav_plan_back_cm(g_ctx.plan) * MM_PER_CM));
             break;
 
+        case P_CROSS:
+            // The re-acquire straight keeps running; measure from here.
+            g_ctx.start_left  = drv_encoder_get_count(DRV_ENCODER_LEFT);
+            g_ctx.start_right = drv_encoder_get_count(DRV_ENCODER_RIGHT);
+            break;
+
         case P_ALIGN:
             nav_send_pivot(out);    // The line runs the original way.
             break;
@@ -890,6 +960,7 @@ nav_halt (uint32_t state, uint32_t reason)
     g_ctx.b_junction = false;
     g_ctx.b_obstacle = false;
     g_ctx.b_plan     = false;
+    g_ctx.b_passed   = false;
     nav_set_state(state);
 
     if (g_ctx.b_motion_busy)

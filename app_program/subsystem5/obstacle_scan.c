@@ -16,7 +16,12 @@
  *     |                     BYPASS     follows Navigation's three legs
  *     |                           |    and StopTurns each pivot (leg):
  *     |                           |    OUT      pivot out, the pivot angle
- *     |                           |    PARALLEL pivot back, the same angle
+ *     |                           |    PARALLEL pivot back, the same angle;
+ *     |                           |             then the servo looks
+ *     |                           |             sideways at the obstacle
+ *     |                           |             and, once it has gone by
+ *     |                           |             + sensor-to-axle + margin,
+ *     |                           |             nav_post_bypass_passed()
  *     |                           |    IN       pivot in, OBS_REJOIN_STEP
  *     |                           |    ALIGN    re-align on the line, the
  *     |                           v             rejoin angle again
@@ -33,7 +38,8 @@
  * explicit masks (rule 5.5.b: no bit-fields):
  *
  *   bits 15..14  chosen side (OBS_SIDE_)    2 bits
- *   bits 13..11  print divider              3 bits  (0..4)
+ *   bits 13..11  WATCH: print divider       3 bits  (0..4)
+ *                BYPASS: side watch (PASS_) (the two never coexist)
  *   bits 10..9   failed scans               2 bits  (0..3)
  *   bits  8..5   consecutive silent pings   4 bits  (0..10)
  *   bits  4..3   WATCH: "near" pings        2 bits  (0..2)
@@ -88,6 +94,10 @@
 #define BRAKE_WAIT_POLLS        (31u)   // ~2 s for Navigation to brake.
 #define PIVOT_POLL_MS           (10)    // Encoder check rate in a pivot.
 #define PIVOT_MAX_POLLS         (250u)  // 2.5 s bound on one pivot.
+#define SIDE_LOOK_STEP          (6u)    // Past leg: servo 6 x 15 = 90 deg
+                                        // off centre, at the obstacle.
+#define SIDE_NEAR_CM            (30u)   // Sideways closer = the obstacle.
+#define BUFFER_CM               (OBS_SENSOR_TO_AXLE_CM + OBS_PAST_MARGIN_CM)
 
 // ---- Scan geometry ----
 #define CENTRE_DEG              (90u)
@@ -109,6 +119,14 @@
 #define LEG_IN                  (2u)    // After the past leg: rejoin angle.
 #define LEG_ALIGN               (3u)    // On the line: rejoin angle.
 
+// ---- Side watch in the past leg (3 bits) ----
+#define PASS_IDLE               (0u)    // Straight not started yet.
+#define PASS_LOOK               (1u)    // Waiting to see the obstacle.
+#define PASS_SEEN               (2u)    // Obstacle beside the sensor.
+#define PASS_CLEAR_1            (3u)    // One clear ping after it.
+#define PASS_BUFFER             (4u)    // Gone: drive axle + margin more.
+#define PASS_POSTED             (5u)    // Navigation told; wait.
+
 // ---- Packed state word fields ----
 #define F_STATE_SHIFT           (0u)
 #define F_STATE_MASK            (0x7u)
@@ -122,6 +140,8 @@
 #define F_RETRY_MASK            (0x3u)
 #define F_PRINT_SHIFT           (11u)
 #define F_PRINT_MASK            (0x7u)
+#define F_PASS_SHIFT            (11u)   // Same bits as F_PRINT: BYPASS only.
+#define F_PASS_MASK             (0x7u)
 #define F_SIDE_SHIFT            (14u)
 #define F_SIDE_MASK             (0x3u)
 
@@ -138,6 +158,8 @@ typedef struct
     uint32_t start_sum;         // Both encoder counts at pivot start.
     uint16_t pivot_pulses;      // Pivot-out angle, in pulses per wheel;
                                 // 0 once the bypass's pivots are done.
+    uint16_t past_pulses;       // Estimated past leg (obs_past_cm()),
+                                // used if the side scan never sees it.
     uint8_t  polls;             // Wait-loop counter (0..255).
     bool     b_seen;            // Phase flag: straight seen.
     bool     b_turning;         // Phase flag: tracked pivot started.
@@ -148,6 +170,8 @@ static void     on_wait_brake(scan_ctx_t * p_ctx);
 static void     on_coarse(scan_ctx_t * p_ctx);
 static void     on_fine(scan_ctx_t * p_ctx);
 static void     on_bypass(scan_ctx_t * p_ctx);
+static void     watch_past(scan_ctx_t * p_ctx);
+static void     post_passed(uint16_t pass);
 static void     on_error(scan_ctx_t * p_ctx);
 static void     enter(scan_ctx_t * p_ctx, uint16_t state);
 static void     scan_failed(scan_ctx_t * p_ctx);
@@ -181,6 +205,7 @@ obstacle_scan_task(INT stacd, void * p_exinf)
     ctx.coarse      = 0u;
     ctx.start_sum    = 0u;
     ctx.pivot_pulses = 0u;
+    ctx.past_pulses  = 0u;
     ctx.polls        = 0u;
     ctx.b_seen       = false;
     ctx.b_turning    = false;
@@ -394,9 +419,13 @@ on_fine(scan_ctx_t * p_ctx)
 #if (0 == S5_STANDALONE)
         (void)nav_post_bypass_plan((OBS_SIDE_LEFT == side) ?
                                    NAV_SIDE_LEFT : NAV_SIDE_RIGHT,
-                                   out_cm, past_cm, back_cm);
+                                   out_cm,
+                                   (uint32_t)past_cm + OBS_PAST_SCAN_EXTRA_CM,
+                                   back_cm);
         p_ctx->pivot_pulses = (uint16_t)drv_encoder_mm_to_pulses(
                                   obs_pivot_arc_mm(pivot_step));
+        p_ctx->past_pulses  = (uint16_t)drv_encoder_mm_to_pulses(
+                                  (uint32_t)past_cm * 10u);
 #endif
     }
 }
@@ -442,10 +471,16 @@ on_bypass(scan_ctx_t * p_ctx)
             log_text(g_log);
         }
 
-        // Clears every counter, the side and the leg (which shares the
-        // near-ping bits).
+        // Clears every counter, the side, the leg and the side watch
+        // (which share the near-ping and print bits).
+        servo_set_angle_deg((uint8_t)CENTRE_DEG);
         p_ctx->state_word   = ST_WATCH;
         p_ctx->pivot_pulses = 0u;
+    }
+    else if ((LEG_IN == leg) && p_ctx->b_seen && !p_ctx->b_turning &&
+             (MOTION_ACTIVITY_STRAIGHT == motion_get_activity()))
+    {
+        watch_past(p_ctx);              // The past leg is running.
     }
     else if ((0u == p_ctx->pivot_pulses) ||
              ((LEG_OUT != leg) && !p_ctx->b_seen))
@@ -471,6 +506,24 @@ on_bypass(scan_ctx_t * p_ctx)
         }
         else
         {
+            if (LEG_PARALLEL == leg)
+            {
+                // Look at the obstacle while the past leg starts.
+                servo_set_angle_deg(fine_angle(
+                    (OBS_SIDE_LEFT == fld_get(p_ctx->state_word,
+                                              F_SIDE_SHIFT, F_SIDE_MASK)) ?
+                    (uint16_t)OBS_SIDE_RIGHT : (uint16_t)OBS_SIDE_LEFT,
+                    SIDE_LOOK_STEP));
+            }
+            else if (LEG_IN == leg)
+            {
+                servo_set_angle_deg((uint8_t)CENTRE_DEG);
+            }
+            else
+            {
+                // LEG_OUT: the servo stays centred.
+            }
+
             p_ctx->state_word = fld_set(p_ctx->state_word, F_LEG_SHIFT,
                                         F_LEG_MASK, (uint16_t)(leg + 1u));
         }
@@ -480,6 +533,110 @@ on_bypass(scan_ctx_t * p_ctx)
         (void)tk_dly_tsk(PIVOT_POLL_MS);
     }
 #endif
+}
+
+/*!
+ * @brief  Past leg: the servo looks sideways at the obstacle.  Wait to
+ *         see it (closer than SIDE_NEAR_CM), then for two clear pings in
+ *         a row (its back has gone by the sensor), then drive
+ *         sensor-to-axle + OBS_PAST_MARGIN_CM more and tell Navigation to
+ *         turn in.  Never seen by the estimated past length (the sensor
+ *         was already past it): tell Navigation there.
+ */
+static void
+watch_past(scan_ctx_t * p_ctx)
+{
+    uint16_t       pass   = fld_get(p_ctx->state_word, F_PASS_SHIFT,
+                                    F_PASS_MASK);
+    uint32_t const driven = (encoder_sum() - p_ctx->start_sum) / 2u;
+    uint16_t       dist;
+
+    switch (pass)
+    {
+    case PASS_IDLE:
+        // The servo swung sideways at the end of the parallel pivot:
+        // let it settle so no ping is taken mid-swing.
+        (void)tk_dly_tsk(SERVO_SETTLE_MS);
+        p_ctx->start_sum = encoder_sum();   // Straight start.
+        pass = PASS_LOOK;
+    break;
+
+    case PASS_LOOK:
+        dist = ping_cm();
+
+        if (dist < SIDE_NEAR_CM)
+        {
+            (void)tm_sprintf(g_log, (UB *)"[S5] PAST: obstacle beside,"
+                             " %u cm", (UINT)dist);
+            log_text(g_log);
+            pass = PASS_SEEN;
+        }
+        else if (driven >= p_ctx->past_pulses)
+        {
+            post_passed(pass);          // Sensor was already past it.
+            pass = PASS_POSTED;
+        }
+        else
+        {
+            // Not beside it yet.
+        }
+    break;
+
+    case PASS_SEEN:
+    case PASS_CLEAR_1:
+        dist = ping_cm();
+
+        if (dist < SIDE_NEAR_CM)
+        {
+            pass = PASS_SEEN;           // Still beside it.
+        }
+        else if (PASS_SEEN == pass)
+        {
+            pass = PASS_CLEAR_1;
+        }
+        else
+        {
+            (void)tm_sprintf(g_log, (UB *)"[S5] PAST: obstacle ends after"
+                             " %u cm; %u cm more",
+                             (UINT)(drv_encoder_pulses_to_mm(driven) / 10u),
+                             (UINT)BUFFER_CM);
+            log_text(g_log);
+            p_ctx->start_sum = encoder_sum();   // Buffer starts here.
+            pass = PASS_BUFFER;
+        }
+    break;
+
+    case PASS_BUFFER:
+        if (driven >= drv_encoder_mm_to_pulses(BUFFER_CM * 10u))
+        {
+            post_passed(pass);
+            pass = PASS_POSTED;
+        }
+    break;
+
+    default:
+        // PASS_POSTED: Navigation is braking; nothing to do.
+    break;
+    }
+
+    p_ctx->state_word = fld_set(p_ctx->state_word, F_PASS_SHIFT,
+                                F_PASS_MASK, pass);
+    (void)tk_dly_tsk(PING_GAP_MS);
+}
+
+/*!
+ * @brief  End the past leg: centre the servo (ready for WATCH) and tell
+ *         Navigation to turn in.
+ * @param  pass  Side-watch step that ended it, for the log.
+ */
+static void
+post_passed(uint16_t pass)
+{
+    servo_set_angle_deg((uint8_t)CENTRE_DEG);
+    (void)nav_post_bypass_passed();
+    (void)tm_sprintf(g_log, (UB *)"[S5] PAST: passed (%s), turning in",
+                     (PASS_LOOK == pass) ? "estimate" : "measured");
+    log_text(g_log);
 }
 
 /*!
