@@ -56,6 +56,15 @@
 #define LINE_LEVEL_STEP (1)       /* max turn-level change per 20 ms loop  */
 #define LINE_LOST_SIDE  (0.20f)   /* |error| at loss above this => that side */
 #define LINE_LOST_LEVEL (2)       /* turn level used to swing back to line */
+#define LINE_JUNC_SAMPLES (3U)    /* LOCAL: both black this many loops in a
+                                   * row after a barcode = the T junction */
+#define LINE_JUNC_BLACK (0.65f)   /* LOCAL: "black" for the T check (both
+                                   * sensors); lower = easier to trigger */
+#define LINE_JUNC_SEEN  (0.35f)   /* LOCAL debug: both sensors above this
+                                   * = something across the line; its
+                                   * darkest point is printed after */
+#define LINE_JUNC_PRINT (10U)     /* LOCAL: after a barcode, print the two
+                                   * sensors every 10 loops (200 ms) */
 
 static ID           g_adc_dd     = -1;
 static line_state_t g_state      = LINE_SEARCHING;
@@ -65,6 +74,11 @@ static float        g_err_prev   = 0.0f;   /* last loop's one  */
 static bool         g_b_resync   = true;   /* LOCAL: next ON sample has no
                                             * valid previous error: skip D */
 static bool         g_b_was_follow = false;  /* LOCAL: hand-back edge */
+static uint8_t      g_both_count   = 0U;     /* LOCAL: both-black loops */
+static bool         g_b_in_pivot   = false;  /* LOCAL: junction pivot on */
+static bool         g_b_junc_hold  = false;  /* LOCAL: T posted: drive
+                                              * straight until the pivot */
+static bool         g_b_pivot_armed = false; /* LOCAL: white seen in it */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -118,7 +132,14 @@ static void line_output(int32_t level)
     {
         uint32_t const nav = nav_get_state();
 
-        if ((NAV_STATE_LINE_FOLLOW == nav) || (NAV_STATE_JUNCTION == nav))
+        if (g_b_junc_hold)
+        {
+            /* LOCAL: creeping over the T's crossbar: no steering, so the
+             * pivot starts square to it. */
+            motion_set_turn_level(0);
+        }
+        else if ((NAV_STATE_LINE_FOLLOW == nav) ||
+                 (NAV_STATE_JUNCTION == nav))
         {
             motion_set_turn_level(LINE_STEER_SIGN * level);
         }
@@ -213,6 +234,122 @@ EXPORT void line_task(INT stacd, void * exinf)
         uint16_t raw_r = line_read(LINE_R_CHAN);
         float    c     = blackness(raw_c, WHITE_LEVEL_C, BLACK_LEVEL_C);
         float    r     = blackness(raw_r, WHITE_LEVEL_R, BLACK_LEVEL_R);
+
+        /* LOCAL: barcode junctions.  Navigation is JUNCTION after a
+         * barcode.  (1) While it still drives the line, both sensors
+         * black for LINE_JUNC_SAMPLES loops = the T's crossbar: report
+         * the junction once.  (2) In its turn pivot, StopTurn when a
+         * sensor sees the line after having seen white (so not on the
+         * line the pivot starts on). */
+        {
+            bool const b_junc  = (NAV_STATE_JUNCTION == nav_get_state());
+            uint32_t const act = motion_get_activity();
+            bool const b_on    = ((c >= LINE_LOST_FRAC) ||
+                                  (r >= LINE_LOST_FRAC));
+
+            static uint8_t s_print = 0U;
+
+            if (b_junc && (MOTION_ACTIVITY_STRAIGHT == act))
+            {
+                s_print++;
+
+                if (s_print >= LINE_JUNC_PRINT)
+                {
+                    s_print = 0U;
+                    tm_printf((UB*)"[LINE] waiting for T: c=%d r=%d"
+                              " (both > %d)\n", (int)(c * 100.0f),
+                              (int)(r * 100.0f),
+                              (int)(LINE_JUNC_BLACK * 100.0f));
+                }
+            }
+
+            /* Debug, always: how dark did BOTH sensors get together? */
+            {
+                static int32_t s_peak = -1;     /* -1 = nothing across */
+                float const    both   = (c < r) ? c : r;
+
+                if (both >= LINE_JUNC_SEEN)
+                {
+                    if ((int32_t)(both * 100.0f) > s_peak)
+                    {
+                        s_peak = (int32_t)(both * 100.0f);
+                    }
+                }
+                else if (s_peak >= 0)
+                {
+                    tm_printf((UB*)"[LINE] crossbar? both sensors reached"
+                              " %d (T needs > %d)%s\n", (int)s_peak,
+                              (int)(LINE_JUNC_BLACK * 100.0f),
+                              b_junc ? "" : " [no barcode: ignored]");
+                    s_peak = -1;
+                }
+                else
+                {
+                    /* Nothing across the line. */
+                }
+            }
+
+            if ((c > LINE_JUNC_BLACK) && (r > LINE_JUNC_BLACK))
+            {
+                if (g_both_count < LINE_JUNC_SAMPLES)
+                {
+                    g_both_count++;
+
+                    if (LINE_JUNC_SAMPLES == g_both_count)
+                    {
+                        if (b_junc && (MOTION_ACTIVITY_STRAIGHT == act))
+                        {
+                            (void)nav_post_junction();
+                            g_b_junc_hold = true;
+                            tm_printf((UB*)"[LINE] T junction\n");
+                        }
+                        else
+                        {
+                            tm_printf((UB*)"[LINE] T seen, no barcode:"
+                                      " straight on\n");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                g_both_count = 0U;
+            }
+
+            if ((!b_junc) || (MOTION_ACTIVITY_PIVOT == act))
+            {
+                g_b_junc_hold = false;  /* Pivot started, or not a T. */
+            }
+
+            if (b_junc && (MOTION_ACTIVITY_PIVOT == act))
+            {
+                if (!g_b_in_pivot)
+                {
+                    g_b_in_pivot    = true;
+                    g_b_pivot_armed = false;
+                }
+
+                if (!b_on)
+                {
+                    g_b_pivot_armed = true;
+                }
+                else if (g_b_pivot_armed)
+                {
+                    (void)motion_stop_turn();
+                    g_b_pivot_armed = false;    /* Once per pivot. */
+                    g_b_resync      = true;
+                    tm_printf((UB*)"[LINE] turn: line found\n");
+                }
+                else
+                {
+                    /* Still on the line it started on. */
+                }
+            }
+            else
+            {
+                g_b_in_pivot = false;
+            }
+        }
 
         int32_t level;
 

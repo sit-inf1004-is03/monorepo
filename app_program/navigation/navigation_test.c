@@ -35,6 +35,7 @@
 #define M01_STATE_MSEC      (500u)  // Time allowed for a state change.
 #define M01_PIVOT_WAIT_MSEC (5000u) // Time allowed for a pivot to start.
 #define M01_TURN_MSEC       (1000u) // Pivot time before StopTurn.
+#define M01_FORGET_MSEC     (40000u) // LOCAL: 1 m at 40 mm/s + margin.
 #define M01_BYPASS_CM       (20u)    // Each leg: < 5 s at 60 mm/s.
 
 static uint32_t g_m01_pass = 0u;
@@ -139,7 +140,8 @@ m01_task (INT start_code, void * p_ext_info)
     m01_expect_state("START -> LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
     (void) tk_dly_tsk(2000u);
 
-    // 2. Barcode B, junction: brake, pivot right until StopTurn.
+    // 2. Barcode B, junction: creep NAV_CROSS_MM, brake, pivot right
+    //    until StopTurn (LOCAL: the creep).
     //
     (void) nav_post_barcode(NAV_BARCODE_RIGHT);
     m01_expect_state("barcode B -> JUNCTION (slowing)", NAV_STATE_JUNCTION);
@@ -149,15 +151,13 @@ m01_task (INT start_code, void * p_ext_info)
     m01_expect_state("B: back to LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
     (void) tk_dly_tsk(2000u);
 
-    // 3. Barcode D, junction: U-turn, two pivots.
+    // 3. Barcode D, junction: LOCAL, for now straight on like C.
     //
     (void) nav_post_barcode(NAV_BARCODE_UTURN);
     m01_expect_state("barcode D -> JUNCTION", NAV_STATE_JUNCTION);
     (void) tk_dly_tsk(500u);
     (void) nav_post_junction();
-    m01_stop_turn_after("D: U-turn pivot 1", M01_TURN_MSEC);
-    m01_stop_turn_after("D: U-turn pivot 2", M01_TURN_MSEC);
-    m01_expect_state("D: back to LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
+    m01_expect_state("D: straight on, LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
     (void) tk_dly_tsk(2000u);
 
     // 4. Barcode C, junction: drive on without stopping.
@@ -171,12 +171,13 @@ m01_task (INT start_code, void * p_ext_info)
               (MOTION_ACTIVITY_STRAIGHT == motion_get_activity()));
     (void) tk_dly_tsk(2000u);
 
-    // 5. Barcode A with no junction: turns after NAV_APPROACH_MAX_MM.
+    // 5. Barcode A with no junction: LOCAL, forgotten after
+    //    NAV_APPROACH_MAX_MM (1 m, 25 s at 40 mm/s), no turn.
     //
     (void) nav_post_barcode(NAV_BARCODE_LEFT);
     m01_expect_state("barcode A -> JUNCTION", NAV_STATE_JUNCTION);
-    m01_stop_turn_after("A: pivot left without a junction", M01_TURN_MSEC);
-    m01_expect_state("A: back to LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
+    m01_check("A: no junction, forgotten, LINE_FOLLOW",
+              m01_wait_state(NAV_STATE_LINE_FOLLOW, M01_FORGET_MSEC));
     (void) tk_dly_tsk(2000u);
 
     // 6. Obstacle: brake, plan, bypass, reacquire, align.

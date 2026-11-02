@@ -35,6 +35,11 @@
 //
 #define MOTION_CMD_STRAIGHT     (1u)
 #define MOTION_CMD_PIVOT        (2u)
+#define MOTION_CMD_SWING        (3u)        // LOCAL (s5-local-test): turn
+                                            // on one wheel: the inner wheel
+                                            // held, the outer one forward.
+                                            // Ended by StopTurn, like a
+                                            // pivot (activity PIVOT).
 #define MOTION_DIR_FORWARDS     (0u)        // MOTION_CMD_STRAIGHT
 #define MOTION_DIR_BACKWARDS    (1u)
 #define MOTION_DIR_LEFT         (0u)        // MOTION_CMD_PIVOT

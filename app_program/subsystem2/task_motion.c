@@ -579,7 +579,8 @@ motion_cmd_valid (motion_cmd_t const * p_cmd)
                    (p_cmd->distance_mm >= 1u) &&
                    (p_cmd->distance_mm <= MOTION_DISTANCE_MAX_MM));
     }
-    else if (MOTION_CMD_PIVOT == p_cmd->type)
+    else if ((MOTION_CMD_PIVOT == p_cmd->type) ||
+             (MOTION_CMD_SWING == p_cmd->type))
     {
         // LOCAL (s5-local-test): speed_mm_s 0 = PIVOT_SPEED_MM_S, else
         // that speed (the bypass line search pivots slowly).
@@ -704,6 +705,25 @@ motion_pivot_step (uint32_t now_usec, float dt_sec)
         g_faults = MOTION_FAULT_STALL;
         motion_finish(MOTION_FAULT, MOTION_REASON_STALL);
     }
+    else if (MOTION_CMD_SWING == g_move.cmd.type)
+    {
+        // LOCAL: one-wheel turn.  The inner wheel is held (duty 0 =
+        // brake), the outer one drives forwards at the pivot speed.
+        //
+        float const target = ((0u == g_move.cmd.speed_mm_s) ?
+                              PIVOT_SPEED_MM_S :
+                              (float) g_move.cmd.speed_mm_s);
+        float const speed  = motion_ramp(dt_sec, target);
+        bool const  b_left = (MOTION_DIR_LEFT == g_move.cmd.direction);
+        uint32_t const outer = b_left ? DRV_ENCODER_RIGHT :
+                                        DRV_ENCODER_LEFT;
+        int32_t const duty = motion_wheel_duty(outer, speed, dt_sec);
+
+        (void) drv_motor_set((b_left ? DRV_MOTOR_LEFT : DRV_MOTOR_RIGHT),
+                             0);
+        (void) drv_motor_set((b_left ? DRV_MOTOR_RIGHT : DRV_MOTOR_LEFT),
+                             duty);
+    }
     else
     {
         uint32_t const left   = motion_moved(DRV_ENCODER_LEFT);
@@ -743,7 +763,16 @@ motion_stalled (uint32_t now_usec)
     {
         for (uint32_t wheel = 0u; wheel < DRV_ENCODER_WHEELS; wheel++)
         {
-            if (drv_encoder_get_idle_usec(wheel) >= STALL_USEC)
+            // LOCAL: a swing turn holds its inner wheel still on purpose.
+            //
+            bool const b_held =
+                ((STATE_PIVOT == g_move.state) &&
+                 (MOTION_CMD_SWING == g_move.cmd.type) &&
+                 (wheel == ((MOTION_DIR_LEFT == g_move.cmd.direction) ?
+                            DRV_ENCODER_LEFT : DRV_ENCODER_RIGHT)));
+
+            if ((!b_held) &&
+                (drv_encoder_get_idle_usec(wheel) >= STALL_USEC))
             {
                 b_stalled = true;
             }

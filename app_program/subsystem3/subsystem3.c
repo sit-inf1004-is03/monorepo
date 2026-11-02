@@ -14,13 +14,22 @@
 
 EXPORT ER subsystem3_init(void)
 {
-	return line_init();		/* opens "adca", sets up line state */
+	ER er = line_init();		/* opens "adca", sets up line state */
+
+	if (er >= E_OK) {
+		er = barcode_init();	/* LOCAL: GP28 barcode, same "adca" */
+	}
+	return er;
 }
 
 EXPORT ER subsystem3_start(void)
 {
 	ID tid = app_start_task(line_task, S3_PRI_LINE, TP_PRC1, "line_task");
 
+	if (tid >= E_OK) {		/* LOCAL: barcode reader too */
+		tid = app_start_task(barcode_task, S3_PRI_BARCODE, TP_PRC1,
+				     "barcode_task");
+	}
 	return (tid < E_OK) ? tid : E_OK;
 }
 

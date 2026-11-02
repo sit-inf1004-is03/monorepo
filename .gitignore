@@ -24,3 +24,4 @@ config/wifi_secrets.h
 
 # macOS
 .DS_Store
+config/wifi_secrets.h

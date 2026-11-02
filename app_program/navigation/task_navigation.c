@@ -48,10 +48,22 @@
 
 // Mission tuning.  PROVISIONAL until the track tests.
 //
-#define NAV_CRUISE_MM_S     (60u)
-#define NAV_JUNCTION_MM_S   (80u)      // Speed cap after a barcode.
-#define NAV_APPROACH_MAX_MM (300u)      // Act anyway this far after a
-                                        // barcode with no junction.
+#define NAV_CRUISE_MM_S     (40u)
+#define NAV_JUNCTION_MM_S   (40u)      // Speed cap after a barcode.
+#define NAV_JUNC_SWING      (1)         // LOCAL: 1 = turn at a T on one
+                                        // wheel (inner wheel held), 0 =
+                                        // pivot on the spot.
+#define NAV_HALF_TRACK_MM   (70u)       // Wheel to car centre (= S5's
+                                        // OBS_HALF_TRACK_MM, TODO measure).
+#if (1 == NAV_JUNC_SWING)
+// A swing moves the axle centre forwards by the half track, so stop that
+// much short: sensors on the crossbar -> creep the rest only.
+#define NAV_JUNC_CREEP_MM   (NAV_CROSS_MM - NAV_HALF_TRACK_MM)
+#else
+#define NAV_JUNC_CREEP_MM   (NAV_CROSS_MM)
+#endif
+#define NAV_APPROACH_MAX_MM (1000u)     // LOCAL: no T this far after a
+                                        // barcode: forget it, go on.
 #define NAV_BYPASS_MM_S     (60u)
 #define NAV_REACQUIRE_MM_S  (50u)       // Limit: the plan's "back" field.
 #define NAV_SEARCH_PIVOT_MM_S (60u)     // Slow: the line sensor (read
@@ -119,6 +131,8 @@
 #define P_SEARCH_PIVOT      (15u)   // One search pivot.
 #define P_HALTING           (16u)   // Brake sent; then P_HALTED.
 #define P_HALTED            (17u)
+#define P_JUNC_CREEP        (18u)   // LOCAL: at the T, creep NAV_CROSS_MM
+                                    // (axle onto the crossbar), then turn.
 
 typedef struct
 {
@@ -630,6 +644,7 @@ nav_on_move_done (void)
     {
         case P_FOLLOW:
         case P_APPROACH:
+        case P_JUNC_CREEP:
             nav_drive_line();       // The long straight ran out: go on.
             break;
 
@@ -720,7 +735,14 @@ nav_process (void)
         if ((P_FOLLOW == g_ctx.phase) || (P_APPROACH == g_ctx.phase))
         {
             g_ctx.barcode = g_barcode_in;
+            tm_printf((UB *) "[NAV] barcode %c kept: waiting for the T\n",
+                      (INT) ('A' + (INT) g_ctx.barcode));
             nav_enter(P_APPROACH);
+        }
+        else
+        {
+            tm_printf((UB *) "[NAV] barcode ignored (phase %lu, not"
+                      " following)\n", g_ctx.phase);
         }
     }
 
@@ -732,10 +754,18 @@ nav_process (void)
         {
             nav_at_junction();
         }
+        else
+        {
+            tm_printf((UB *) "[NAV] junction ignored (phase %lu)\n",
+                      g_ctx.phase);
+        }
     }
     else if ((P_APPROACH == g_ctx.phase) && nav_approach_too_long())
     {
-        nav_at_junction();
+        // LOCAL: no T after the barcode: forget it, follow straight on.
+        tm_printf((UB *) "[NAV] no T within %u mm: barcode forgotten\n",
+                  (UINT) NAV_APPROACH_MAX_MM);
+        nav_enter(P_FOLLOW);
     }
     else
     {
@@ -808,6 +838,15 @@ nav_process (void)
     else if ((P_CROSS == g_ctx.phase) && nav_driven_mm(NAV_CROSS_MM))
     {
         nav_brake_then(P_ALIGN, NAV_STATE_BYPASS);
+    }
+    else if ((P_JUNC_CREEP == g_ctx.phase) &&
+             nav_driven_mm(NAV_JUNC_CREEP_MM))
+    {
+        // LOCAL: axle on the T's crossbar: brake, then pivot (Line
+        // Following stops the pivot when a sensor finds the line).
+        tm_printf((UB *) "[NAV] on the crossbar: brake, pivot %s\n",
+                  (MOTION_DIR_LEFT == g_ctx.turn_dir) ? "left" : "right");
+        nav_brake_then(P_TURNING, NAV_STATE_JUNCTION);
     }
     else
     {
@@ -887,34 +926,31 @@ nav_on_remote (uint32_t command)
 }
 
 /*!
- * @brief At the junction: drive on for C, else brake and turn.
+ * @brief At the junction (LOCAL): A turns left and B right, after a creep
+ *        of NAV_CROSS_MM so the axle is on the crossbar.  C, and for now
+ *        D, drive straight on (as with no barcode at all).
  */
 static void
 nav_at_junction (void)
 {
-    if (NAV_BARCODE_STRAIGHT == g_ctx.barcode)
+    if ((NAV_BARCODE_LEFT == g_ctx.barcode) ||
+        (NAV_BARCODE_RIGHT == g_ctx.barcode))
     {
-        nav_enter(P_FOLLOW);
+        g_ctx.turns_left = 1u;
+        g_ctx.turn_dir   = ((NAV_BARCODE_LEFT == g_ctx.barcode) ?
+                            MOTION_DIR_LEFT : MOTION_DIR_RIGHT);
+        tm_printf((UB *) "[NAV] T: turn %s, creep %u mm, stop, then"
+                  " %s\n",
+                  (NAV_BARCODE_LEFT == g_ctx.barcode) ? "left" : "right",
+                  (UINT) NAV_JUNC_CREEP_MM,
+                  (1 == NAV_JUNC_SWING) ? "one-wheel turn" : "pivot");
+        nav_enter(P_JUNC_CREEP);
     }
     else
     {
-        g_ctx.turns_left = 1u;
-
-        if (NAV_BARCODE_LEFT == g_ctx.barcode)
-        {
-            g_ctx.turn_dir = MOTION_DIR_LEFT;
-        }
-        else if (NAV_BARCODE_RIGHT == g_ctx.barcode)
-        {
-            g_ctx.turn_dir = MOTION_DIR_RIGHT;
-        }
-        else
-        {
-            g_ctx.turn_dir   = NAV_UTURN_DIR;
-            g_ctx.turns_left = NAV_UTURN_PIVOTS;
-        }
-
-        nav_brake_then(P_TURNING, NAV_STATE_JUNCTION);
+        tm_printf((UB *) "[NAV] T: barcode %c, straight on\n",
+                  (INT) ('A' + (INT) g_ctx.barcode));
+        nav_enter(P_FOLLOW);
     }
 }
 
@@ -979,10 +1015,27 @@ nav_enter (uint32_t phase)
             nav_drive_line();
             break;
 
+        case P_JUNC_CREEP:
+            // The line straight keeps running; measure from here.
+            g_ctx.start_left  = drv_encoder_get_count(DRV_ENCODER_LEFT);
+            g_ctx.start_right = drv_encoder_get_count(DRV_ENCODER_RIGHT);
+            break;
+
         case P_TURNING:
             nav_set_state(NAV_STATE_JUNCTION);
             motion_set_speed_cap(0u);
+#if (1 == NAV_JUNC_SWING)
+            {
+                // LOCAL: one-wheel turn, ended by Line Following's
+                // StopTurn when a sensor finds the crossbar line.
+                motion_cmd_t const cmd = { MOTION_CMD_SWING, g_ctx.turn_dir,
+                                           0u, 0u };
+
+                nav_send(&cmd);
+            }
+#else
             nav_send_pivot(g_ctx.turn_dir, 0u);
+#endif
             break;
 
         case P_WAIT_PLAN:
