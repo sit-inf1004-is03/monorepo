@@ -57,6 +57,19 @@
 #include "../subsystem2/motion.h"
 #include "../subsystem2/drv_encoder.h"
 
+// Event lines also go to the dashboard's log (robocar/<id>/log) when the
+// team's comms module is in the build; otherwise they are only printed.
+//
+#if defined(__has_include)
+#if __has_include("../comms/comms.h")
+#include "../comms/comms.h"
+#define S5_HAS_COMMS            (1)
+#endif
+#endif
+#ifndef S5_HAS_COMMS
+#define S5_HAS_COMMS            (0)
+#endif
+
 // 1 = bench test on its own (prints only), 0 = full mission with
 // Navigation.
 //
@@ -112,6 +125,10 @@
 #define F_SIDE_SHIFT            (14u)
 #define F_SIDE_MASK             (0x3u)
 
+// Event line being built (written only by obstacle_scan_task).
+//
+static UB g_log[LINE_LEN];
+
 // Task context: on the task's stack, passed by pointer.
 //
 typedef struct
@@ -141,6 +158,7 @@ static bool     is_bypass_over(void);
 static bool     track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses);
 static uint32_t encoder_sum(void);
 static uint32_t rejoin_pulses(void);
+static void     log_text(UB const * p_text);
 static uint16_t ping_cm(void);
 static uint16_t ping_median_cm(void);
 static uint64_t coarse_scan(void);
@@ -168,8 +186,10 @@ obstacle_scan_task(INT stacd, void * p_exinf)
     ctx.b_turning    = false;
 
     servo_set_angle_deg((uint8_t)CENTRE_DEG);
-    (void)tm_printf((UB *)"[S5] obstacle scan running (standalone=%d)\n",
-                    S5_STANDALONE);
+    (void)tm_sprintf(g_log,
+                     (UB *)"[S5] obstacle scan running (standalone=%d)",
+                     S5_STANDALONE);
+    log_text(g_log);
 
     for (;;)
     {
@@ -250,7 +270,8 @@ on_watch(scan_ctx_t * p_ctx)
 
     if ((CONFIRM_PINGS == near) && is_nav_driving())
     {
-        (void)tm_printf((UB *)"[S5] OBSTACLE at %u cm\n", (UINT)dist);
+        (void)tm_sprintf(g_log, (UB *)"[S5] OBSTACLE at %u cm", (UINT)dist);
+        log_text(g_log);
         p_ctx->state_word = fld_set(p_ctx->state_word, F_NEAR_SHIFT,
                                     F_NEAR_MASK, 0u);
 #if (1 == S5_STANDALONE)
@@ -279,7 +300,9 @@ on_wait_brake(scan_ctx_t * p_ctx)
     }
     else if (p_ctx->polls >= BRAKE_WAIT_POLLS)
     {
-        (void)tm_printf((UB *)"[S5] Navigation did not brake; watching\n");
+        (void)tm_sprintf(g_log,
+                         (UB *)"[S5] Navigation did not brake; watching");
+        log_text(g_log);
         enter(p_ctx, ST_WATCH);
     }
     else
@@ -302,14 +325,16 @@ on_coarse(scan_ctx_t * p_ctx)
 
     if (OBS_SIDE_NONE == side)
     {
-        (void)tm_printf((UB *)"[S5] COARSE: no side clear (> %u cm)\n",
-                        (UINT)CLEAR_CM);
+        (void)tm_sprintf(g_log, (UB *)"[S5] COARSE: no side clear (> %u cm)",
+                         (UINT)CLEAR_CM);
+        log_text(g_log);
         scan_failed(p_ctx);
     }
     else
     {
-        (void)tm_printf((UB *)"[S5] COARSE: %s side open\n",
-                        (OBS_SIDE_LEFT == side) ? "LEFT" : "RIGHT");
+        (void)tm_sprintf(g_log, (UB *)"[S5] COARSE: %s side open",
+                         (OBS_SIDE_LEFT == side) ? "LEFT" : "RIGHT");
+        log_text(g_log);
         p_ctx->state_word = fld_set(p_ctx->state_word, F_SIDE_SHIFT,
                                     F_SIDE_MASK, side);
         enter(p_ctx, ST_FINE);
@@ -336,7 +361,8 @@ on_fine(scan_ctx_t * p_ctx)
 
     if (0u == edge)
     {
-        (void)tm_printf((UB *)"[S5] FINE: obstacle edge not found\n");
+        (void)tm_sprintf(g_log, (UB *)"[S5] FINE: obstacle edge not found");
+        log_text(g_log);
         scan_failed(p_ctx);
     }
     else
@@ -353,14 +379,15 @@ on_fine(scan_ctx_t * p_ctx)
         out_cm     = obs_out_cm(lateral_cm, pivot_step);
         past_cm    = obs_past_cm(front_cm, out_cm, pivot_step);
         back_cm    = obs_back_cm(out_cm, pivot_step);
-        (void)tm_printf((UB *)"[S5] PLAN: %s, turn %u deg, out %u past %u"
-                        " back <= %u cm (front %u, edge %u deg,"
-                        " side %u cm)\n",
-                        (OBS_SIDE_LEFT == side) ? "LEFT" : "RIGHT",
-                        (UINT)(pivot_step * OBS_FINE_STEP_DEG),
-                        (UINT)out_cm, (UINT)past_cm, (UINT)back_cm,
-                        (UINT)front_cm, (UINT)(edge * OBS_FINE_STEP_DEG),
-                        (UINT)lateral_cm);
+        (void)tm_sprintf(g_log, (UB *)"[S5] PLAN: %s, turn %u deg, out %u"
+                         " past %u back <= %u cm (front %u, edge %u deg,"
+                         " side %u cm)",
+                         (OBS_SIDE_LEFT == side) ? "LEFT" : "RIGHT",
+                         (UINT)(pivot_step * OBS_FINE_STEP_DEG),
+                         (UINT)out_cm, (UINT)past_cm, (UINT)back_cm,
+                         (UINT)front_cm, (UINT)(edge * OBS_FINE_STEP_DEG),
+                         (UINT)lateral_cm);
+        log_text(g_log);
         enter(p_ctx, ST_BYPASS);
         p_ctx->state_word = fld_set(p_ctx->state_word, F_LEG_SHIFT,
                                     F_LEG_MASK, LEG_OUT);
@@ -387,7 +414,8 @@ on_bypass(scan_ctx_t * p_ctx)
 #if (1 == S5_STANDALONE)
     if (ping_median_cm() > CLEAR_CM)
     {
-        (void)tm_printf((UB *)"[S5] front clear, watching\n");
+        (void)tm_sprintf(g_log, (UB *)"[S5] front clear, watching");
+        log_text(g_log);
         p_ctx->state_word = ST_WATCH;   // Clears every counter and side.
     }
     else
@@ -404,12 +432,14 @@ on_bypass(scan_ctx_t * p_ctx)
     {
         if (0u == p_ctx->pivot_pulses)
         {
-            (void)tm_printf((UB *)"[S5] bypass done, watching\n");
+            (void)tm_sprintf(g_log, (UB *)"[S5] bypass done, watching");
+            log_text(g_log);
         }
         else
         {
-            (void)tm_printf((UB *)"[S5] bypass ended at leg %u, watching\n",
-                            (UINT)leg);
+            (void)tm_sprintf(g_log, (UB *)"[S5] bypass ended at leg %u,"
+                             " watching", (UINT)leg);
+            log_text(g_log);
         }
 
         // Clears every counter, the side and the leg (which shares the
@@ -489,13 +519,28 @@ track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses)
             }
 
             (void)motion_stop_turn();
-            (void)tm_printf((UB *)"[S5] StopTurn after %u of %u pulses\n",
-                            (UINT)turned, (UINT)target_pulses);
+            (void)tm_sprintf(g_log, (UB *)"[S5] StopTurn after %u of %u pulses",
+                             (UINT)turned, (UINT)target_pulses);
+            log_text(g_log);
             b_done = true;
         }
     }
 
     return (b_done);
+}
+
+/*!
+ * @brief  Send one event line: to the dashboard log when comms is built
+ *         in (comms_log() prints it too), else to the console only.
+ */
+static void
+log_text(UB const * p_text)
+{
+#if (1 == S5_HAS_COMMS)
+    (void)comms_log((char const *)p_text);
+#else
+    (void)tm_printf((UB *)"%s\n", p_text);
+#endif
 }
 
 /*!
@@ -535,7 +580,8 @@ on_error(scan_ctx_t * p_ctx)
 
     if (b_is_cleared)
     {
-        (void)tm_printf((UB *)"[S5] ERROR cleared, watching\n");
+        (void)tm_sprintf(g_log, (UB *)"[S5] ERROR cleared, watching");
+        log_text(g_log);
         p_ctx->state_word = ST_WATCH;
     }
     else
@@ -574,15 +620,17 @@ scan_failed(scan_ctx_t * p_ctx)
 
     if (SCAN_RETRY_LIMIT == retries)
     {
-        (void)tm_printf((UB *)"[S5] ERROR: %u failed scans\n",
-                        (UINT)retries);
+        (void)tm_sprintf(g_log, (UB *)"[S5] ERROR: %u failed scans",
+                         (UINT)retries);
+        log_text(g_log);
         (void)nav_raise_fault(NAV_FLT_SCAN_ERROR);
         enter(p_ctx, ST_ERROR);
     }
     else
     {
-        (void)tm_printf((UB *)"[S5] retry %u of %u\n", (UINT)retries,
-                        (UINT)SCAN_RETRY_LIMIT);
+        (void)tm_sprintf(g_log, (UB *)"[S5] retry %u of %u", (UINT)retries,
+                         (UINT)SCAN_RETRY_LIMIT);
+        log_text(g_log);
         enter(p_ctx, ST_COARSE);
     }
 }
@@ -605,8 +653,9 @@ update_silence(scan_ctx_t * p_ctx, ultrasonic_reading_t reading)
 
             if (SILENT_LIMIT == silent)
             {
-                (void)tm_printf((UB *)"[S5] sensor silent ~1 s:"
-                                " NO_ECHO fault\n");
+                (void)tm_sprintf(g_log, (UB *)"[S5] sensor silent ~1 s:"
+                                 " NO_ECHO fault");
+                log_text(g_log);
                 (void)nav_raise_fault(NAV_FLT_NO_ECHO);
             }
         }
@@ -708,7 +757,8 @@ coarse_scan(void)
     }
 
     servo_set_angle_deg((uint8_t)CENTRE_DEG);
-    (void)tm_printf((UB *)"%s cm (511 = open)\n", line);
+    (void)tm_sprintf(&line[len], (UB *)" cm (511 = open)");
+    log_text(line);
 
     return (profile);
 }
@@ -738,7 +788,8 @@ fine_scan(uint16_t side)
     }
 
     servo_set_angle_deg((uint8_t)CENTRE_DEG);
-    (void)tm_printf((UB *)"%s cm\n", line);
+    (void)tm_sprintf(&line[len], (UB *)" cm");
+    log_text(line);
 
     return (profile);
 }
