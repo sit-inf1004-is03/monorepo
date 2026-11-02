@@ -51,7 +51,7 @@
 // 1 = bench test on its own (prints only), 0 = full mission with
 // Navigation.
 //
-#define S5_STANDALONE           (0)
+#define S5_STANDALONE           (1)
 
 // ---- Tunable settings (Week 6 design, car bench tests) ----
 #define WATCH_PERIOD_MS         (100)   // Ping rate while driving.
