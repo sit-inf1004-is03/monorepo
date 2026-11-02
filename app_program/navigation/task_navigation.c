@@ -13,10 +13,13 @@
  *   - Barcode read: cap the speed (slow down) and wait for the junction.
  *     At the junction: C drives on at full speed; A, B and D brake, then
  *     pivot until StopTurn (D pivots NAV_UTURN_PIVOTS times).
- *   - Obstacle: brake and wait for Obstacle Scan's bypass plan, then pivot
- *     out (StopTurn from Obstacle Scan), drive the plan's distance, pivot
- *     back (StopTurn from Obstacle Scan), creep forward until the line is
- *     on, brake, and pivot onto it (StopTurn from Line Following).
+ *   - Obstacle: brake and wait for Obstacle Scan's bypass plan, then run
+ *     three legs (every pivot ended by Obstacle Scan's StopTurn):
+ *     pivot out, drive "out" cm (sideways clear of the obstacle); pivot
+ *     back parallel to the line, drive "past" cm (beside the obstacle
+ *     until the car is past it); pivot in towards the line and creep at
+ *     most "back" cm until the line is on (else LINE_NOT_FOUND); brake
+ *     and pivot onto it.
  *   - A stop fault brakes and holds until a remote CLEAR.
  *
  * Navigation sends Motion one command at a time and always waits for its
@@ -39,13 +42,12 @@
 
 // Mission tuning.  PROVISIONAL until the track tests.
 //
-#define NAV_CRUISE_MM_S     (300u)
-#define NAV_JUNCTION_MM_S   (120u)      // Speed cap after a barcode.
+#define NAV_CRUISE_MM_S     (60u)
+#define NAV_JUNCTION_MM_S   (80u)      // Speed cap after a barcode.
 #define NAV_APPROACH_MAX_MM (300u)      // Act anyway this far after a
                                         // barcode with no junction.
-#define NAV_BYPASS_MM_S     (200u)
-#define NAV_REACQUIRE_MM_S  (120u)
-#define NAV_REACQUIRE_MAX_MM (600u)     // Line not found by then: fault.
+#define NAV_BYPASS_MM_S     (60u)
+#define NAV_REACQUIRE_MM_S  (50u)       // Limit: the plan's "back" field.
 #define NAV_UTURN_PIVOTS    (2u)        // StopTurns in a U-turn; check on
                                         // the track's junctions.
 #define NAV_UTURN_DIR       (MOTION_DIR_LEFT)
@@ -63,14 +65,17 @@
                              EVT_PLAN | EVT_REMOTE)
 #define WAIT_ALL            (EVT_ALL | NAV_FLT_ALL)
 
-// Bypass plan, uint16 in a uint32_t (PROPOSED bit order, Ruien owns it):
-// bits 0-1 side, bits 2-10 distance in cm (0-511), bits 11-14 angle
-// (unused since Tribunal 1, always 0), bit 15 reserved (0).
+// Bypass plan, 29 bits in a uint32_t (PROPOSED bit order, Ruien owns
+// it): bits 0-1 side, bits 2-10 out leg, bits 11-19 past leg, bits 20-28
+// back leg (most it may creep to find the line), each in cm (0-511);
+// bits 29-31 reserved (0).
 //
 #define FIELD_MASK(bits)    ((1u << (bits)) - 1u)
 #define PLAN_SIDE_SHIFT     (0u)
 #define PLAN_SIDE_BITS      (2u)
-#define PLAN_DIST_SHIFT     (2u)
+#define PLAN_OUT_SHIFT      (2u)
+#define PLAN_PAST_SHIFT     (11u)
+#define PLAN_BACK_SHIFT     (20u)
 #define PLAN_DIST_BITS      (9u)
 
 // Internal phases.  Several phases share one vehicle state.
@@ -81,13 +86,15 @@
 #define P_BRAKING           (3u)    // Brake sent; then after_brake.
 #define P_TURNING           (4u)
 #define P_WAIT_PLAN         (5u)
-#define P_BYPASS_OUT        (6u)
-#define P_BYPASS_PAST       (7u)
-#define P_BYPASS_BACK       (8u)
-#define P_REACQUIRE         (9u)
-#define P_ALIGN             (10u)
-#define P_HALTING           (11u)   // Brake sent; then P_HALTED.
-#define P_HALTED            (12u)
+#define P_BYPASS_OUT        (6u)    // Pivot out.
+#define P_BYPASS_SIDE       (7u)    // Straight: the out leg.
+#define P_BYPASS_TURN       (8u)    // Pivot back, parallel to the line.
+#define P_BYPASS_PAST       (9u)    // Straight: the past leg.
+#define P_BYPASS_BACK       (10u)   // Pivot back, towards the line.
+#define P_REACQUIRE         (11u)   // Straight: at most the back leg.
+#define P_ALIGN             (12u)
+#define P_HALTING           (13u)   // Brake sent; then P_HALTED.
+#define P_HALTED            (14u)
 
 typedef struct
 {
@@ -253,22 +260,28 @@ nav_post_obstacle (void)
  * @brief The scan's bypass plan (Ruien), in NAV_STATE_OBSTACLE.  A failed
  *        scan raises NAV_FLT_SCAN_ERROR instead.
  *
- * @param[in] side         NAV_SIDE_LEFT or NAV_SIDE_RIGHT.
- * @param[in] distance_cm  How far to drive past the obstacle, 1 to
- *                         NAV_BYPASS_CM_MAX.
+ * @param[in] side     NAV_SIDE_LEFT or NAV_SIDE_RIGHT.
+ * @param[in] out_cm   Out leg: drive after pivoting out.
+ * @param[in] past_cm  Past leg: drive parallel to the line.
+ * @param[in] back_cm  Back leg: the most to creep after pivoting in
+ *                     before LINE_NOT_FOUND.
+ *                     Each distance 1 to NAV_BYPASS_CM_MAX.
  *
  * @return E_OK, E_PAR for a bad side or distance, or the error from
  *         tk_set_flg().
  */
 ER
-nav_post_bypass_plan (uint32_t side, uint32_t distance_cm)
+nav_post_bypass_plan (uint32_t side, uint32_t out_cm, uint32_t past_cm,
+                      uint32_t back_cm)
 {
     ER result = E_PAR;
 
-    if ((side <= NAV_SIDE_RIGHT) && (distance_cm >= 1u) &&
-        (distance_cm <= NAV_BYPASS_CM_MAX))
+    if ((side <= NAV_SIDE_RIGHT) &&
+        (out_cm >= 1u) && (out_cm <= NAV_BYPASS_CM_MAX) &&
+        (past_cm >= 1u) && (past_cm <= NAV_BYPASS_CM_MAX) &&
+        (back_cm >= 1u) && (back_cm <= NAV_BYPASS_CM_MAX))
     {
-        g_plan_in = nav_plan_pack(side, distance_cm);
+        g_plan_in = nav_plan_pack(side, out_cm, past_cm, back_cm);
         result    = nav_post(EVT_PLAN);
     }
 
@@ -349,20 +362,29 @@ nav_get_reason (void)
 /*!
  * @brief Pack a bypass plan (layout above).  Clamps instead of wrapping.
  *
- * @param[in] side         NAV_SIDE_; above NAV_SIDE_RIGHT counts as right.
- * @param[in] distance_cm  Clamped to NAV_BYPASS_CM_MAX.
+ * @param[in] side     NAV_SIDE_; above NAV_SIDE_RIGHT counts as right.
+ * @param[in] out_cm   Each distance is clamped to NAV_BYPASS_CM_MAX.
+ * @param[in] past_cm
+ * @param[in] back_cm
  *
- * @return The packed plan; angle and reserved bits are 0.
+ * @return The packed plan; reserved bits are 0.
  */
 uint32_t
-nav_plan_pack (uint32_t side, uint32_t distance_cm)
+nav_plan_pack (uint32_t side, uint32_t out_cm, uint32_t past_cm,
+               uint32_t back_cm)
 {
     uint32_t const s = ((side > NAV_SIDE_RIGHT) ? NAV_SIDE_RIGHT : side);
-    uint32_t const d = ((distance_cm > NAV_BYPASS_CM_MAX) ?
-                        NAV_BYPASS_CM_MAX : distance_cm);
+    uint32_t const o = ((out_cm > NAV_BYPASS_CM_MAX) ?
+                        NAV_BYPASS_CM_MAX : out_cm);
+    uint32_t const p = ((past_cm > NAV_BYPASS_CM_MAX) ?
+                        NAV_BYPASS_CM_MAX : past_cm);
+    uint32_t const b = ((back_cm > NAV_BYPASS_CM_MAX) ?
+                        NAV_BYPASS_CM_MAX : back_cm);
 
     return (((s & FIELD_MASK(PLAN_SIDE_BITS)) << PLAN_SIDE_SHIFT) |
-            ((d & FIELD_MASK(PLAN_DIST_BITS)) << PLAN_DIST_SHIFT));
+            ((o & FIELD_MASK(PLAN_DIST_BITS)) << PLAN_OUT_SHIFT) |
+            ((p & FIELD_MASK(PLAN_DIST_BITS)) << PLAN_PAST_SHIFT) |
+            ((b & FIELD_MASK(PLAN_DIST_BITS)) << PLAN_BACK_SHIFT));
 }
 
 /*!
@@ -375,12 +397,30 @@ nav_plan_side (uint32_t plan)
 }
 
 /*!
- * @brief Distance field of a packed bypass plan, in cm.
+ * @brief Out leg of a packed bypass plan, in cm.
  */
 uint32_t
-nav_plan_distance_cm (uint32_t plan)
+nav_plan_out_cm (uint32_t plan)
 {
-    return ((plan >> PLAN_DIST_SHIFT) & FIELD_MASK(PLAN_DIST_BITS));
+    return ((plan >> PLAN_OUT_SHIFT) & FIELD_MASK(PLAN_DIST_BITS));
+}
+
+/*!
+ * @brief Past leg of a packed bypass plan, in cm.
+ */
+uint32_t
+nav_plan_past_cm (uint32_t plan)
+{
+    return ((plan >> PLAN_PAST_SHIFT) & FIELD_MASK(PLAN_DIST_BITS));
+}
+
+/*!
+ * @brief Back leg (re-acquire limit) of a packed bypass plan, in cm.
+ */
+uint32_t
+nav_plan_back_cm (uint32_t plan)
+{
+    return ((plan >> PLAN_BACK_SHIFT) & FIELD_MASK(PLAN_DIST_BITS));
 }
 
 /*!
@@ -525,6 +565,14 @@ nav_on_move_done (void)
             break;
 
         case P_BYPASS_OUT:
+            nav_enter(P_BYPASS_SIDE);
+            break;
+
+        case P_BYPASS_SIDE:
+            nav_enter(P_BYPASS_TURN);
+            break;
+
+        case P_BYPASS_TURN:
             nav_enter(P_BYPASS_PAST);
             break;
 
@@ -771,9 +819,18 @@ nav_enter (uint32_t phase)
             nav_send_pivot(out);
             break;
 
+        case P_BYPASS_SIDE:
+            nav_send_straight(NAV_BYPASS_MM_S,
+                              (nav_plan_out_cm(g_ctx.plan) * MM_PER_CM));
+            break;
+
+        case P_BYPASS_TURN:
+            nav_send_pivot(back);
+            break;
+
         case P_BYPASS_PAST:
             nav_send_straight(NAV_BYPASS_MM_S,
-                              (nav_plan_distance_cm(g_ctx.plan) * MM_PER_CM));
+                              (nav_plan_past_cm(g_ctx.plan) * MM_PER_CM));
             break;
 
         case P_BYPASS_BACK:
@@ -781,7 +838,8 @@ nav_enter (uint32_t phase)
             break;
 
         case P_REACQUIRE:
-            nav_send_straight(NAV_REACQUIRE_MM_S, NAV_REACQUIRE_MAX_MM);
+            nav_send_straight(NAV_REACQUIRE_MM_S,
+                              (nav_plan_back_cm(g_ctx.plan) * MM_PER_CM));
             break;
 
         case P_ALIGN:

@@ -50,8 +50,9 @@
 #define MIN_SPEED_MM_S      (80u)       // Speed at the end of the slow zone.
 #define BALANCE_PER_PULSE   (2.0f)      // mm/s per pulse of count difference.
 #define BALANCE_MAX_MM_S    (60.0f)
-#define TURN_STEP_MM_S      (20.0f)     // Speed difference per turn level.
-#define PIVOT_SPEED_MM_S    (150.0f)    // Calibrate with test M1.
+#define TURN_STEP_MM_S      (12.0f)     // Speed difference per turn level.
+#define STEER_SMOOTH        (0.5f)      // LOCAL TEST: 0..1, lower = smoother.
+#define PIVOT_SPEED_MM_S    (80.0f)    // Calibrate with test M1.
 
 #define STALL_USEC          (500000u)   // No pulse for this long: stall.
 #define PIVOT_TIMEOUT_USEC  (5000000u)  // PROVISIONAL: see motion_pivot_step.
@@ -663,7 +664,14 @@ motion_straight_step (uint32_t now_usec, float dt_sec)
 
         bool const b_back = (MOTION_DIR_BACKWARDS == g_move.cmd.direction);
 
-        motion_drive((speed + steer), (speed - steer), b_back, b_back,
+        // LOCAL TEST (smooth steering): never reverse the inner wheel, and
+        // ease the steer in over ~60 ms instead of jumping each period.
+        static float s_steer = 0.0f;
+
+        steer    = motion_clamp(steer, -speed, speed);
+        s_steer += STEER_SMOOTH * (steer - s_steer);
+
+        motion_drive((speed + s_steer), (speed - s_steer), b_back, b_back,
                      dt_sec);
     }
 }

@@ -13,7 +13,7 @@
 #define SLOT_BITS               (9u)
 #define SLOT_MASK               (0x1FFu)
 #define MAX_SLOTS               (7u)        // 7 x 9 = 63 bits of 64.
-#define LATERAL_MAX_CM          (511u)      // 9-bit plan distance.
+#define PLAN_MAX_CM             (511u)      // 9-bit plan distances.
 #define TAN_SCALE               (100u)
 
 // tan(k x 15 deg) x 100, k = 0..4.
@@ -22,6 +22,34 @@ static uint16_t const g_tan_x100[OBS_FINE_COUNT + 1u] =
 {
     0u, 27u, 58u, 100u, 173u
 };
+
+// tan((k - 0.5) x 15 deg) x 100, k = 1..4: the middle of the last
+// blocked fine step and the first clear one, where the obstacle's edge
+// is most likely (the beam is wide, so the first clear step is late).
+//
+static uint16_t const g_tan_edge_x100[OBS_FINE_COUNT + 1u] =
+{
+    0u, 13u, 41u, 77u, 130u
+};
+
+// sin(k x 15 deg) x 100, k = 0..4.
+//
+static uint16_t const g_sin_x100[OBS_FINE_COUNT + 1u] =
+{
+    0u, 26u, 50u, 71u, 87u
+};
+
+// cos(k x 15 deg) x 100, k = 0..4.
+//
+static uint16_t const g_cos_x100[OBS_FINE_COUNT + 1u] =
+{
+    100u, 97u, 87u, 71u, 50u
+};
+
+#define MRAD_PER_STEP           (262u)      // 15 deg = 0.2618 rad.
+
+static uint32_t div_up(uint32_t num, uint32_t den);
+static uint16_t clamp_step(uint16_t step);
 
 /*!
  * @brief  Median of three pings: removes one stray echo.  "Open"
@@ -171,8 +199,10 @@ obs_find_edge(uint64_t fine, uint16_t clear_cm)
 }
 
 /*!
- * @brief  Sideways distance to clear the obstacle:
- *         front x tan(edge angle) + half car width + margin.
+ * @brief  Sideways distance (from the line) the car's centre needs to
+ *         clear the obstacle: front x tan(edge) + half car width +
+ *         margin, with the edge between the last blocked fine step and
+ *         the first clear one.
  * @param  front_cm   Distance to the obstacle straight ahead.
  * @param  edge_step  Fine step of the edge, 1..OBS_FINE_COUNT.
  * @return Distance in cm, saturated to 9 bits.
@@ -180,18 +210,178 @@ obs_find_edge(uint64_t fine, uint16_t clear_cm)
 uint16_t
 obs_lateral_cm(uint16_t front_cm, uint16_t edge_step)
 {
-    uint16_t const step = (edge_step > OBS_FINE_COUNT) ?
-                          (uint16_t)OBS_FINE_COUNT : edge_step;
-    uint32_t       dist = (((uint32_t)front_cm * g_tan_x100[step]) /
-                           TAN_SCALE) + OBS_CAR_HALF_WIDTH_CM +
-                          OBS_SIDE_MARGIN_CM;
+    uint16_t const step = clamp_step(edge_step);
+    uint32_t       dist = div_up((uint32_t)front_cm * g_tan_edge_x100[step],
+                                 TAN_SCALE) +
+                          OBS_CAR_HALF_WIDTH_CM + OBS_SIDE_MARGIN_CM;
 
-    if (dist > LATERAL_MAX_CM)
+    if (dist > PLAN_MAX_CM)
     {
-        dist = LATERAL_MAX_CM;
+        dist = PLAN_MAX_CM;
     }
 
     return ((uint16_t)dist);
+}
+
+/*!
+ * @brief  Pivot-out angle: the smallest 15-degree step that reaches the
+ *         sideways distance before the car reaches the obstacle's front:
+ *         front x tan(pivot) >= lateral.
+ * @param  front_cm    Distance to the obstacle straight ahead.
+ * @param  lateral_cm  From obs_lateral_cm().
+ * @return Pivot step 1..OBS_PIVOT_MAX_STEP (x 15 deg); the maximum if
+ *         even that is not enough.
+ */
+uint16_t
+obs_pivot_step(uint16_t front_cm, uint16_t lateral_cm)
+{
+    uint32_t const need = (uint32_t)lateral_cm * TAN_SCALE;
+    uint16_t       step = 1u;
+
+    while ((step < OBS_PIVOT_MAX_STEP) &&
+           (((uint32_t)front_cm * g_tan_x100[step]) < need))
+    {
+        step++;
+    }
+
+    return (step);
+}
+
+/*!
+ * @brief  Wheel travel for a pivot: angle (rad) x half the wheel track.
+ * @param  pivot_step  Pivot step, 0..4 (x 15 deg).
+ * @return Arc length of each wheel, in mm.
+ */
+uint16_t
+obs_pivot_arc_mm(uint16_t pivot_step)
+{
+    uint16_t const step = (pivot_step > OBS_FINE_COUNT) ?
+                          (uint16_t)OBS_FINE_COUNT : pivot_step;
+
+    return ((uint16_t)((((uint32_t)step * MRAD_PER_STEP *
+                         OBS_HALF_TRACK_MM) + 500u) / 1000u));
+}
+
+/*!
+ * @brief  Out leg: drive at the pivot angle until the car is the
+ *         sideways distance from the line: lateral / sin(pivot), rounded
+ *         up.  No further: going wider only risks other lines.
+ * @param  lateral_cm  From obs_lateral_cm().
+ * @param  pivot_step  Pivot step, 1..4 (x 15 deg).
+ * @return Distance in cm, 1..OBS_OUT_MAX_CM.
+ */
+uint16_t
+obs_out_cm(uint16_t lateral_cm, uint16_t pivot_step)
+{
+    uint32_t dist = div_up((uint32_t)lateral_cm * TAN_SCALE,
+                           g_sin_x100[clamp_step(pivot_step)]);
+
+    if (dist > OBS_OUT_MAX_CM)
+    {
+        dist = OBS_OUT_MAX_CM;
+    }
+    else if (0u == dist)
+    {
+        dist = 1u;
+    }
+    else
+    {
+        // In range.
+    }
+
+    return ((uint16_t)dist);
+}
+
+/*!
+ * @brief  Past leg: parallel to the line until the back of the car is
+ *         past the back of the obstacle.  From the start the car's front
+ *         must go front + depth + car length; the out leg already went
+ *         out x cos(pivot) of that (rounded down: the past leg errs
+ *         long).
+ * @param  front_cm    Distance to the obstacle straight ahead.
+ * @param  out_cm      From obs_out_cm().
+ * @param  pivot_step  Pivot step, 1..4 (x 15 deg).
+ * @return Distance in cm, 1..511 (Navigation needs a move).
+ */
+uint16_t
+obs_past_cm(uint16_t front_cm, uint16_t out_cm, uint16_t pivot_step)
+{
+    uint32_t const need = (uint32_t)front_cm + OBS_DEPTH_CM +
+                          OBS_CAR_LENGTH_CM;
+    uint32_t const done = ((uint32_t)out_cm *
+                           g_cos_x100[clamp_step(pivot_step)]) / TAN_SCALE;
+    uint32_t       dist = 1u;
+
+    if (need > done)
+    {
+        dist = need - done;
+    }
+
+    if (dist > PLAN_MAX_CM)
+    {
+        dist = PLAN_MAX_CM;
+    }
+
+    return ((uint16_t)dist);
+}
+
+/*!
+ * @brief  Back leg: the most Navigation may creep after pivoting in at
+ *         OBS_REJOIN_STEP before it gives up.  The car is out x
+ *         sin(pivot) from the line, so it meets it after that /
+ *         sin(rejoin); OBS_REJOIN_SLACK_CM more covers pivot error.
+ * @param  out_cm      From obs_out_cm().
+ * @param  pivot_step  Pivot step, 1..4 (x 15 deg).
+ * @return Distance in cm, at most 511.
+ */
+uint16_t
+obs_back_cm(uint16_t out_cm, uint16_t pivot_step)
+{
+    uint32_t dist = div_up((uint32_t)out_cm *
+                           g_sin_x100[clamp_step(pivot_step)],
+                           g_sin_x100[clamp_step(OBS_REJOIN_STEP)]) +
+                    OBS_REJOIN_SLACK_CM;
+
+    if (dist > PLAN_MAX_CM)
+    {
+        dist = PLAN_MAX_CM;
+    }
+
+    return ((uint16_t)dist);
+}
+
+/*!
+ * @brief  Limit a 15-degree step to 1..OBS_FINE_COUNT (never 0, so the
+ *         sin tables are never divided by 0).
+ */
+static uint16_t
+clamp_step(uint16_t step)
+{
+    uint16_t result = step;
+
+    if (0u == result)
+    {
+        result = 1u;
+    }
+    else if (result > OBS_FINE_COUNT)
+    {
+        result = OBS_FINE_COUNT;
+    }
+    else
+    {
+        // In range.
+    }
+
+    return (result);
+}
+
+/*!
+ * @brief  Integer division rounded up (den is never 0: cos table).
+ */
+static uint32_t
+div_up(uint32_t num, uint32_t den)
+{
+    return ((num + den - 1u) / den);
 }
 
 /*** end of file ***/

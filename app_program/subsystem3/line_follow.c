@@ -14,6 +14,7 @@
  */
 #include "line_barcode.h"
 #include "../subsystem2/motion.h"
+#include "../navigation/navigation.h"
 
 #define LINE_C_CHAN     (0U)      /* GP26 centre = ADC0 */
 #define LINE_R_CHAN     (1U)      /* GP27 right  = ADC1 */
@@ -29,8 +30,8 @@
 
 /* ---- control --------------------------------------------------------- */
 #define LINE_LOOP_MS    (20)      /* 20 ms loop (NFR1) */
-#define LINE_KP         (5.0f)    /* lower = gentler. error(-1..1)*KP->level */
-#define LINE_SPEED_MMS  (70u)    /* forward speed (of 700 max) */
+#define LINE_KP         (4.0f)    /* was 8: saturated at e>=0.6 (bang-bang) */
+#define LINE_SPEED_MMS  (40u)    /* forward speed (of 700 max) */
 #define LINE_STEER_SIGN (-1)      /* flipped: centre-black now steers left */
 
 /* Set to 1 to run CALIBRATION MODE: the task only reads the sensors and
@@ -48,9 +49,19 @@
  * raise toward ~2.0 if one direction still corrects too little. */
 #define LINE_KP_WEAK    (1.0f)    /* 1.0 = both sides equal; raise if one is weak */
 
+/* ---- smoothing: stops the shake on straights ----------------------- */
+#define LINE_KD         (4.0f)    /* damping: resists fast swings; 0 = off */
+#define LINE_FILTER     (0.6f)    /* 0..1 error smoothing; lower = smoother */
+#define LINE_DEADBAND   (0.10f)  /* |error| below this => drive straight  */
+#define LINE_LEVEL_STEP (1)       /* max turn-level change per 20 ms loop  */
+#define LINE_LOST_SIDE  (0.20f)   /* |error| at loss above this => that side */
+#define LINE_LOST_LEVEL (2)       /* turn level used to swing back to line */
+
 static ID           g_adc_dd     = -1;
 static line_state_t g_state      = LINE_SEARCHING;
 static int32_t      g_last_level = 0;
+static float        g_err_filt   = 0.0f;   /* smoothed error   */
+static float        g_err_prev   = 0.0f;   /* last loop's one  */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -83,6 +94,38 @@ static void drive_forward(void)
     (void)motion_send(&cmd, 100);
 }
 #endif
+
+/* Tell Navigation whether the line is seen (needed to rejoin after a
+ * bypass), and steer only while Navigation is following the line, so the
+ * held turn level does not bend the bypass straights. */
+static void line_output(int32_t level)
+{
+    static line_state_t s_sent = LINE_SEARCHING;
+
+    if (g_state != s_sent)
+    {
+        s_sent = g_state;
+        (void)nav_set_line_state((LINE_ON == g_state) ? NAV_LINE_ON
+                                                      : NAV_LINE_LOST);
+    }
+
+#if LINE_SELF_DRIVE
+    motion_set_turn_level(LINE_STEER_SIGN * level);
+#else
+    {
+        uint32_t const nav = nav_get_state();
+
+        if ((NAV_STATE_LINE_FOLLOW == nav) || (NAV_STATE_JUNCTION == nav))
+        {
+            motion_set_turn_level(LINE_STEER_SIGN * level);
+        }
+        else
+        {
+            motion_set_turn_level(0);
+        }
+    }
+#endif
+}
 
 ER line_init(void)
 {
@@ -155,7 +198,32 @@ EXPORT void line_task(INT stacd, void * exinf)
         if ((c < LINE_LOST_FRAC) && (r < LINE_LOST_FRAC))
         {
             g_state = LINE_LOST;
-            level   = g_last_level;           /* hold last turn to re-acquire */
+
+            /* Lost: turn towards the side the line was last seen on.
+             * Near the middle (line between the sensors on a straight):
+             * drive straight instead of holding an old turn. */
+            if (g_err_filt > LINE_LOST_SIDE)
+            {
+                level = LINE_LOST_LEVEL;
+            }
+            else if (g_err_filt < -LINE_LOST_SIDE)
+            {
+                level = -LINE_LOST_LEVEL;
+            }
+            else
+            {
+                level = 0;
+            }
+
+            if (level > (g_last_level + LINE_LEVEL_STEP))
+            {
+                level = g_last_level + LINE_LEVEL_STEP;
+            }
+            else if (level < (g_last_level - LINE_LEVEL_STEP))
+            {
+                level = g_last_level - LINE_LEVEL_STEP;
+            }
+            g_last_level = level;
         }
         else
         {
@@ -167,7 +235,7 @@ EXPORT void line_task(INT stacd, void * exinf)
             {
                 level = 0;
                 g_last_level = 0;
-                motion_set_turn_level(LINE_STEER_SIGN * level);
+                line_output(level);
 #if LINE_DEBUG
                 tm_printf((UB*)"C=%4u R=%4u e=%d lvl=%d BOTH-BLK\n",
                           (unsigned)raw_c, (unsigned)raw_r,
@@ -189,14 +257,37 @@ EXPORT void line_task(INT stacd, void * exinf)
              * centre+right layout) gets a stronger push so both
              * directions correct more evenly. */
             float kp = (error < 0.0f) ? (LINE_KP * LINE_KP_WEAK) : LINE_KP;
-            float out = kp * error;
+
+            /* 1. Smooth the error: one noisy reading can't jerk the car. */
+            g_err_filt += LINE_FILTER * (error - g_err_filt);
+
+            /* 2. Small errors on a straight: just go straight. */
+            float p_err = g_err_filt;
+            if ((p_err < LINE_DEADBAND) && (p_err > -LINE_DEADBAND))
+            {
+                p_err = 0.0f;
+            }
+
+            /* 3. P + D: D pushes back against a fast swing (overshoot). */
+            float out = (kp * p_err) + (LINE_KD * (g_err_filt - g_err_prev));
+            g_err_prev = g_err_filt;
             level = (int32_t)(out + ((out >= 0.0f) ? 0.5f : -0.5f));
             if (level > MOTION_TURN_LEVEL_MAX)       { level = MOTION_TURN_LEVEL_MAX;  }
             else if (level < -MOTION_TURN_LEVEL_MAX) { level = -MOTION_TURN_LEVEL_MAX; }
+
+            /* 4. Change the turn gradually, one step per loop. */
+            if (level > (g_last_level + LINE_LEVEL_STEP))
+            {
+                level = g_last_level + LINE_LEVEL_STEP;
+            }
+            else if (level < (g_last_level - LINE_LEVEL_STEP))
+            {
+                level = g_last_level - LINE_LEVEL_STEP;
+            }
             g_last_level = level;
         }
 
-        motion_set_turn_level(LINE_STEER_SIGN * level);
+        line_output(level);
 
 #if LINE_DEBUG
         tm_printf((UB*)"C=%4u R=%4u e=%d lvl=%d %s\n",

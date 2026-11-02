@@ -23,10 +23,10 @@
 #include "../app.h"          /* ID, ER, INT and the kernel/bsp API */
 
 /* ===== build switches ================================================= */
-#define LINE_SELF_DRIVE     (1)   /* 1 = line task drives the car itself
+#define LINE_SELF_DRIVE     (0)   /* 1 = line task drives the car itself
                                    * (bring-up).  SET TO 0 once Navigation
                                    * issues the straights, or they fight.  */
-#define LINE_DEBUG          (1)   /* 1 = print line readings to serial     */
+#define LINE_DEBUG          (0)   /* 1 = print line readings to serial     */
 #define BARCODE_ANALOG      (1)   /* 1 = analog GP28, 0 = digital GP4       */
 #define BARCODE_DEBUG       (1)   /* 1 = print barcode patterns/commands   */
 

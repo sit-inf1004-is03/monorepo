@@ -62,7 +62,7 @@
 //
 #define NAV_SIDE_LEFT           (0u)
 #define NAV_SIDE_RIGHT          (1u)
-#define NAV_BYPASS_CM_MAX       (511u)  // 9-bit distance field.
+#define NAV_BYPASS_CM_MAX       (511u)  // 9-bit distance fields.
 
 // Remote commands.
 //
@@ -101,7 +101,8 @@ ER       nav_post_barcode(uint32_t command);
 ER       nav_post_junction(void);
 ER       nav_set_line_state(uint32_t state);
 ER       nav_post_obstacle(void);
-ER       nav_post_bypass_plan(uint32_t side, uint32_t distance_cm);
+ER       nav_post_bypass_plan(uint32_t side, uint32_t out_cm,
+                              uint32_t past_cm, uint32_t back_cm);
 ER       nav_raise_fault(uint32_t bits);
 ER       nav_post_remote(uint32_t command);
 
@@ -109,9 +110,12 @@ uint32_t nav_get_state(void);
 uint32_t nav_get_faults(void);
 uint32_t nav_get_reason(void);
 
-uint32_t nav_plan_pack(uint32_t side, uint32_t distance_cm);
+uint32_t nav_plan_pack(uint32_t side, uint32_t out_cm, uint32_t past_cm,
+                       uint32_t back_cm);
 uint32_t nav_plan_side(uint32_t plan);
-uint32_t nav_plan_distance_cm(uint32_t plan);
+uint32_t nav_plan_out_cm(uint32_t plan);
+uint32_t nav_plan_past_cm(uint32_t plan);
+uint32_t nav_plan_back_cm(uint32_t plan);
 
 #endif /* NAVIGATION_H */
 

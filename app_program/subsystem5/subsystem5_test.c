@@ -74,19 +74,44 @@ subsystem5_test(void)
                     OBS_COARSE_COUNT), CLEAR_CM)),
                "side choice: bottle left/right, wall right, boxed in");
 
-    // Edge and sideways distance: edge at 45 deg, 25 cm ahead -> 40 cm.
+    // Edge and sideways distance: first clear step 45 deg, so the edge
+    // is taken at 37.5 deg; 25 cm ahead -> 25 x 0.77 = 20 + 10 + 3 cm.
     TEST_CHECK("S5-U05",
                (3u == obs_find_edge(make_profile(fine_left,
                                                  OBS_FINE_COUNT), CLEAR_CM))
-               && (40u == obs_lateral_cm(25u, 3u)),
+               && (33u == obs_lateral_cm(25u, 3u)),
                "fine scan edge step and lateral distance");
 
-    // Bypass plan through Navigation's packer: 2 bytes, values kept.
-    plan = nav_plan_pack(NAV_SIDE_RIGHT, 40u);
-    TEST_CHECK("S5-U06", (plan <= 0xFFFFu) &&
+    // Three legs, 25 cm ahead, 24 cm sideways, 45 deg out:
+    // out 24 / 0.71 = 34; past 25 + 8 + 20 - 34 x 0.71 (24) = 29;
+    // back 34 x 0.71 / sin 30 deg (49) + 15 slack = 64.  The out leg is
+    // capped at OBS_OUT_MAX_CM; the past leg is never 0.
+    TEST_CHECK("S5-U08", (34u == obs_out_cm(24u, 3u)) &&
+               (29u == obs_past_cm(25u, 34u, 3u)) &&
+               (64u == obs_back_cm(34u, 3u)) &&
+               (OBS_OUT_MAX_CM == obs_out_cm(100u, 1u)) &&
+               (1u == obs_past_cm(0u, 40u, 1u)),
+               "bypass legs: out, past and back lengths, limits");
+
+    // Pivot angle: 17 cm sideways at 30 cm needs 30 x tan >= 17 ->
+    // 30 deg; 33 cm at 25 cm would need 60 deg, capped at
+    // OBS_PIVOT_MAX_STEP.  The wheel arc for 45 deg is 0.786 rad x half
+    // the track.
+    TEST_CHECK("S5-U09", (2u == obs_pivot_step(30u, 17u)) &&
+               (OBS_PIVOT_MAX_STEP == obs_pivot_step(25u, 33u)) &&
+               (((786u * OBS_HALF_TRACK_MM) + 500u) / 1000u ==
+                obs_pivot_arc_mm(3u)),
+               "pivot angle clears the car body, encoder arc");
+
+    // Bypass plan through Navigation's packer: 2 + 3 x 9 = 29 bits,
+    // values kept.
+    plan = nav_plan_pack(NAV_SIDE_RIGHT, 40u, 29u, 64u);
+    TEST_CHECK("S5-U06", (plan <= 0x1FFFFFFFu) &&
                (NAV_SIDE_RIGHT == nav_plan_side(plan)) &&
-               (40u == nav_plan_distance_cm(plan)),
-               "bypass plan fits 16 bits and unpacks unchanged");
+               (40u == nav_plan_out_cm(plan)) &&
+               (29u == nav_plan_past_cm(plan)) &&
+               (64u == nav_plan_back_cm(plan)),
+               "bypass plan fits 29 bits and unpacks unchanged");
 
     // Hardware: the sensor answers (needs it wired and powered).
     reading = ultrasonic_read();

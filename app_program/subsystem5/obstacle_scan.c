@@ -10,13 +10,20 @@
  *     |   retry (< 3)          COARSE  5 angles, median of 3 pings
  *     |      +---------------->   |  side found
  *     |      |                    v
- *     |      +-- edge missing  FINE    15 deg steps -> nav_post_bypass_plan()
- *     |                           v
- *     |                    PIVOT_OUT   StopTurn once the front is clear
- *     |                           v
- *     |                    PIVOT_BACK  StopTurn after the same time
- *     |                           v
- *     +<-------------------- WAIT_DONE  until Navigation leaves BYPASS
+ *     |      +-- edge missing  FINE    15 deg steps: edge -> pivot angle
+ *     |                           |    and drive-out length ->
+ *     |                           v    nav_post_bypass_plan()
+ *     |                     BYPASS     follows Navigation's three legs
+ *     |                           |    and StopTurns each pivot (leg):
+ *     |                           |    OUT      pivot out, the pivot angle
+ *     |                           |    PARALLEL pivot back, the same angle
+ *     |                           |    IN       pivot in, OBS_REJOIN_STEP
+ *     |                           |    ALIGN    re-align on the line, the
+ *     |                           v             rejoin angle again
+ *     +<------- Navigation leaves BYPASS
+ *
+ *   Pivot angles are measured with the wheel encoders (IF-06): each wheel
+ *   travels angle x OBS_HALF_TRACK_MM.
  *
  *   3 failed scans: nav_raise_fault(NAV_FLT_SCAN_ERROR), ERROR state.
  *   ~1 s of a SILENT sensor: nav_raise_fault(NAV_FLT_NO_ECHO).
@@ -29,8 +36,9 @@
  *   bits 13..11  print divider              3 bits  (0..4)
  *   bits 10..9   failed scans               2 bits  (0..3)
  *   bits  8..5   consecutive silent pings   4 bits  (0..10)
- *   bits  4..3   consecutive "near" pings   2 bits  (0..2)
- *   bits  2..0   state                      3 bits  (8 states)
+ *   bits  4..3   WATCH: "near" pings        2 bits  (0..2)
+ *                BYPASS: leg (OUT..ALIGN)   (the two never coexist)
+ *   bits  2..0   state                      3 bits  (6 states)
  *
  * Set S5_STANDALONE to 1 for a bench test without Navigation running a
  * mission: the task then scans on its own and only prints its decisions.
@@ -47,11 +55,12 @@
 #include "drv_servo.h"
 #include "../navigation/navigation.h"
 #include "../subsystem2/motion.h"
+#include "../subsystem2/drv_encoder.h"
 
 // 1 = bench test on its own (prints only), 0 = full mission with
 // Navigation.
 //
-#define S5_STANDALONE           (1)
+#define S5_STANDALONE           (0)
 
 // ---- Tunable settings (Week 6 design, car bench tests) ----
 #define WATCH_PERIOD_MS         (100)   // Ping rate while driving.
@@ -64,9 +73,8 @@
 #define SCAN_RETRY_LIMIT        (3u)
 #define PRINT_EVERY             (5u)    // WATCH: print every 5th ping.
 #define BRAKE_WAIT_POLLS        (31u)   // ~2 s for Navigation to brake.
-#define PIVOT_MAX_POLLS         (46u)   // ~3 s bound on one pivot.
-#define PIVOT_EXTRA_POLLS       (2u)    // Turn ~130 ms past the edge.
-#define CLEAR_PINGS             (2u)
+#define PIVOT_POLL_MS           (10)    // Encoder check rate in a pivot.
+#define PIVOT_MAX_POLLS         (250u)  // 2.5 s bound on one pivot.
 
 // ---- Scan geometry ----
 #define CENTRE_DEG              (90u)
@@ -79,16 +87,22 @@
 #define ST_WAIT_BRAKE           (1u)
 #define ST_COARSE               (2u)
 #define ST_FINE                 (3u)
-#define ST_PIVOT_OUT            (4u)
-#define ST_PIVOT_BACK           (5u)
-#define ST_WAIT_DONE            (6u)
-#define ST_ERROR                (7u)
+#define ST_BYPASS               (4u)
+#define ST_ERROR                (5u)
+
+// ---- Bypass legs (2 bits): the pivot Obstacle Scan stops next ----
+#define LEG_OUT                 (0u)    // Pivot out: pivot angle.
+#define LEG_PARALLEL            (1u)    // After the out leg: pivot angle.
+#define LEG_IN                  (2u)    // After the past leg: rejoin angle.
+#define LEG_ALIGN               (3u)    // On the line: rejoin angle.
 
 // ---- Packed state word fields ----
 #define F_STATE_SHIFT           (0u)
 #define F_STATE_MASK            (0x7u)
 #define F_NEAR_SHIFT            (3u)
 #define F_NEAR_MASK             (0x3u)
+#define F_LEG_SHIFT             (3u)    // Same bits as F_NEAR: BYPASS only.
+#define F_LEG_MASK              (0x3u)
 #define F_SILENT_SHIFT          (5u)
 #define F_SILENT_MASK           (0xFu)
 #define F_RETRY_SHIFT           (9u)
@@ -104,18 +118,19 @@ typedef struct
 {
     uint16_t state_word;        // Packed: see the file header.
     uint64_t coarse;            // 5 x 9-bit coarse profile.
+    uint32_t start_sum;         // Both encoder counts at pivot start.
+    uint16_t pivot_pulses;      // Pivot-out angle, in pulses per wheel;
+                                // 0 once the bypass's pivots are done.
     uint8_t  polls;             // Wait-loop counter (0..255).
-    uint8_t  pivot_polls;       // Length of the pivot out, in polls.
-    bool     b_seen;            // Phase flag: pivot / straight seen.
+    bool     b_seen;            // Phase flag: straight seen.
+    bool     b_turning;         // Phase flag: tracked pivot started.
 } scan_ctx_t;
 
 static void     on_watch(scan_ctx_t * p_ctx);
 static void     on_wait_brake(scan_ctx_t * p_ctx);
 static void     on_coarse(scan_ctx_t * p_ctx);
 static void     on_fine(scan_ctx_t * p_ctx);
-static void     on_pivot_out(scan_ctx_t * p_ctx);
-static void     on_pivot_back(scan_ctx_t * p_ctx);
-static void     on_wait_done(scan_ctx_t * p_ctx);
+static void     on_bypass(scan_ctx_t * p_ctx);
 static void     on_error(scan_ctx_t * p_ctx);
 static void     enter(scan_ctx_t * p_ctx, uint16_t state);
 static void     scan_failed(scan_ctx_t * p_ctx);
@@ -123,6 +138,9 @@ static void     update_silence(scan_ctx_t * p_ctx,
                                ultrasonic_reading_t reading);
 static bool     is_nav_driving(void);
 static bool     is_bypass_over(void);
+static bool     track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses);
+static uint32_t encoder_sum(void);
+static uint32_t rejoin_pulses(void);
 static uint16_t ping_cm(void);
 static uint16_t ping_median_cm(void);
 static uint64_t coarse_scan(void);
@@ -143,9 +161,11 @@ obstacle_scan_task(INT stacd, void * p_exinf)
 
     ctx.state_word  = ST_WATCH;
     ctx.coarse      = 0u;
-    ctx.polls       = 0u;
-    ctx.pivot_polls = 0u;
-    ctx.b_seen      = false;
+    ctx.start_sum    = 0u;
+    ctx.pivot_pulses = 0u;
+    ctx.polls        = 0u;
+    ctx.b_seen       = false;
+    ctx.b_turning    = false;
 
     servo_set_angle_deg((uint8_t)CENTRE_DEG);
     (void)tm_printf((UB *)"[S5] obstacle scan running (standalone=%d)\n",
@@ -171,16 +191,8 @@ obstacle_scan_task(INT stacd, void * p_exinf)
             on_fine(&ctx);
         break;
 
-        case ST_PIVOT_OUT:
-            on_pivot_out(&ctx);
-        break;
-
-        case ST_PIVOT_BACK:
-            on_pivot_back(&ctx);
-        break;
-
-        case ST_WAIT_DONE:
-            on_wait_done(&ctx);
+        case ST_BYPASS:
+            on_bypass(&ctx);
         break;
 
         case ST_ERROR:
@@ -188,7 +200,7 @@ obstacle_scan_task(INT stacd, void * p_exinf)
         break;
 
         default:
-            ctx.state_word = ST_WATCH;  // Unreachable: 3-bit state.
+            ctx.state_word = ST_WATCH;  // 6, 7: not used.
         break;
         }
     }
@@ -306,7 +318,8 @@ on_coarse(scan_ctx_t * p_ctx)
 
 /*!
  * @brief  FINE: find the obstacle's edge on the chosen side, then send
- *         the bypass plan (side + sideways distance) to Navigation.
+ *         the three-leg bypass plan (side, out, past and back lengths)
+ *         to Navigation.
  */
 static void
 on_fine(scan_ctx_t * p_ctx)
@@ -315,7 +328,11 @@ on_fine(scan_ctx_t * p_ctx)
                                   F_SIDE_MASK);
     uint16_t const edge = obs_find_edge(fine_scan(side), CLEAR_CM);
     uint16_t       front_cm;
-    uint16_t       travel_cm;
+    uint16_t       lateral_cm;
+    uint16_t       pivot_step;
+    uint16_t       out_cm;
+    uint16_t       past_cm;
+    uint16_t       back_cm;
 
     if (0u == edge)
     {
@@ -331,49 +348,140 @@ on_fine(scan_ctx_t * p_ctx)
             front_cm = TRIGGER_CM;      // Centre missed: assume 30 cm.
         }
 
-        travel_cm = obs_lateral_cm(front_cm, edge);
-        (void)tm_printf((UB *)"[S5] PLAN: %s, %u cm (edge %u deg, front"
-                        " %u cm)\n", (OBS_SIDE_LEFT == side) ? "LEFT"
-                        : "RIGHT", (UINT)travel_cm,
-                        (UINT)(edge * OBS_FINE_STEP_DEG), (UINT)front_cm);
-#if (1 == S5_STANDALONE)
-        enter(p_ctx, ST_WAIT_DONE);
-#else
+        lateral_cm = obs_lateral_cm(front_cm, edge);
+        pivot_step = obs_pivot_step(front_cm, lateral_cm);
+        out_cm     = obs_out_cm(lateral_cm, pivot_step);
+        past_cm    = obs_past_cm(front_cm, out_cm, pivot_step);
+        back_cm    = obs_back_cm(out_cm, pivot_step);
+        (void)tm_printf((UB *)"[S5] PLAN: %s, turn %u deg, out %u past %u"
+                        " back <= %u cm (front %u, edge %u deg,"
+                        " side %u cm)\n",
+                        (OBS_SIDE_LEFT == side) ? "LEFT" : "RIGHT",
+                        (UINT)(pivot_step * OBS_FINE_STEP_DEG),
+                        (UINT)out_cm, (UINT)past_cm, (UINT)back_cm,
+                        (UINT)front_cm, (UINT)(edge * OBS_FINE_STEP_DEG),
+                        (UINT)lateral_cm);
+        enter(p_ctx, ST_BYPASS);
+        p_ctx->state_word = fld_set(p_ctx->state_word, F_LEG_SHIFT,
+                                    F_LEG_MASK, LEG_OUT);
+#if (0 == S5_STANDALONE)
         (void)nav_post_bypass_plan((OBS_SIDE_LEFT == side) ?
                                    NAV_SIDE_LEFT : NAV_SIDE_RIGHT,
-                                   travel_cm);
-        enter(p_ctx, ST_PIVOT_OUT);
+                                   out_cm, past_cm, back_cm);
+        p_ctx->pivot_pulses = (uint16_t)drv_encoder_mm_to_pulses(
+                                  obs_pivot_arc_mm(pivot_step));
 #endif
     }
 }
 
 /*!
- * @brief  PIVOT_OUT: Navigation pivots away from the obstacle; send
- *         StopTurn once the front has been clear for CLEAR_PINGS pings,
- *         plus a little extra.  Bounded by PIVOT_MAX_POLLS.
+ * @brief  BYPASS: Navigation runs the legs; StopTurn each of its four
+ *         pivots with the encoders.  Every pivot but the first follows a
+ *         straight, so wait for that straight first.  Back to WATCH when
+ *         Navigation leaves BYPASS (done, or a fault / LINE_NOT_FOUND).
+ *         Standalone: nothing moves; wait until the front is clear.
  */
 static void
-on_pivot_out(scan_ctx_t * p_ctx)
+on_bypass(scan_ctx_t * p_ctx)
 {
-    bool const b_is_pivot = (MOTION_ACTIVITY_PIVOT == motion_get_activity());
-
-    if (is_bypass_over())
+#if (1 == S5_STANDALONE)
+    if (ping_median_cm() > CLEAR_CM)
     {
-        enter(p_ctx, ST_WATCH);
-    }
-    else if (!p_ctx->b_seen)
-    {
-        p_ctx->b_seen = b_is_pivot;     // Wait for the pivot to start.
-        (void)tk_dly_tsk(POLL_MS);
+        (void)tm_printf((UB *)"[S5] front clear, watching\n");
+        p_ctx->state_word = ST_WATCH;   // Clears every counter and side.
     }
     else
     {
-        p_ctx->polls++;
-        p_ctx->pivot_polls = (ping_cm() > CLEAR_CM) ?
-                             (uint8_t)(p_ctx->pivot_polls + 1u) : 0u;
+        (void)tk_dly_tsk(POLL_MS);
+    }
+#else
+    uint16_t const leg = fld_get(p_ctx->state_word, F_LEG_SHIFT,
+                                 F_LEG_MASK);
+    uint32_t const target = (leg <= LEG_PARALLEL) ?
+                            (uint32_t)p_ctx->pivot_pulses : rejoin_pulses();
 
-        if ((p_ctx->pivot_polls >= (CLEAR_PINGS + PIVOT_EXTRA_POLLS)) ||
-            (p_ctx->polls >= PIVOT_MAX_POLLS))
+    if (is_bypass_over())
+    {
+        if (0u == p_ctx->pivot_pulses)
+        {
+            (void)tm_printf((UB *)"[S5] bypass done, watching\n");
+        }
+        else
+        {
+            (void)tm_printf((UB *)"[S5] bypass ended at leg %u, watching\n",
+                            (UINT)leg);
+        }
+
+        // Clears every counter, the side and the leg (which shares the
+        // near-ping bits).
+        p_ctx->state_word   = ST_WATCH;
+        p_ctx->pivot_pulses = 0u;
+    }
+    else if ((0u == p_ctx->pivot_pulses) ||
+             ((LEG_OUT != leg) && !p_ctx->b_seen))
+    {
+        // Done, or waiting for the straight before this pivot.
+        if (!p_ctx->b_seen)
+        {
+            p_ctx->b_seen = (MOTION_ACTIVITY_STRAIGHT ==
+                             motion_get_activity());
+        }
+
+        (void)tk_dly_tsk(PIVOT_POLL_MS);
+    }
+    else if (track_pivot(p_ctx, target))
+    {
+        p_ctx->polls     = 0u;
+        p_ctx->b_seen    = false;
+        p_ctx->b_turning = false;
+
+        if (LEG_ALIGN == leg)
+        {
+            p_ctx->pivot_pulses = 0u;   // All four pivots done.
+        }
+        else
+        {
+            p_ctx->state_word = fld_set(p_ctx->state_word, F_LEG_SHIFT,
+                                        F_LEG_MASK, (uint16_t)(leg + 1u));
+        }
+    }
+    else
+    {
+        (void)tk_dly_tsk(PIVOT_POLL_MS);
+    }
+#endif
+}
+
+/*!
+ * @brief  Follow one pivot with the encoders: start counting when Motion
+ *         starts pivoting, StopTurn when each wheel has gone
+ *         target_pulses (or after PIVOT_MAX_POLLS: SCAN_ERROR fault).
+ * @param  p_ctx          Task context (b_turning, start_sum, polls).
+ * @param  target_pulses  Pulses per wheel for the angle.
+ * @return true once StopTurn has been sent.
+ */
+static bool
+track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses)
+{
+    bool     b_done = false;
+    uint32_t turned;
+
+    if (!p_ctx->b_turning)
+    {
+        if (MOTION_ACTIVITY_PIVOT == motion_get_activity())
+        {
+            p_ctx->b_turning = true;
+            p_ctx->start_sum = encoder_sum();
+            p_ctx->polls     = 0u;
+        }
+    }
+    else
+    {
+        // Both wheels count up in a pivot: the sum is 2 x one wheel.
+        turned = (encoder_sum() - p_ctx->start_sum) / 2u;
+        p_ctx->polls++;
+
+        if ((turned >= target_pulses) || (p_ctx->polls >= PIVOT_MAX_POLLS))
         {
             if (p_ctx->polls >= PIVOT_MAX_POLLS)
             {
@@ -381,80 +489,34 @@ on_pivot_out(scan_ctx_t * p_ctx)
             }
 
             (void)motion_stop_turn();
-            p_ctx->pivot_polls = p_ctx->polls;  // Remember the turn time.
-            (void)tm_printf((UB *)"[S5] StopTurn out after %u polls\n",
-                            (UINT)p_ctx->polls);
-            p_ctx->polls  = 0u;
-            p_ctx->b_seen = false;
-            p_ctx->state_word = fld_set(p_ctx->state_word, F_STATE_SHIFT,
-                                        F_STATE_MASK, ST_PIVOT_BACK);
-        }
-        else
-        {
-            (void)tk_dly_tsk(POLL_MS);
+            (void)tm_printf((UB *)"[S5] StopTurn after %u of %u pulses\n",
+                            (UINT)turned, (UINT)target_pulses);
+            b_done = true;
         }
     }
+
+    return (b_done);
 }
 
 /*!
- * @brief  PIVOT_BACK: after the straight past the obstacle, Navigation
- *         pivots back; stop it after the same time as the pivot out.
+ * @brief  Pulses per wheel for the rejoin angle (OBS_REJOIN_STEP x
+ *         15 deg).
  */
-static void
-on_pivot_back(scan_ctx_t * p_ctx)
+static uint32_t
+rejoin_pulses(void)
 {
-    uint32_t const activity = motion_get_activity();
-
-    if (is_bypass_over())
-    {
-        enter(p_ctx, ST_WATCH);
-    }
-    else if (!p_ctx->b_seen)
-    {
-        // Wait for the straight past the obstacle to start.
-        p_ctx->b_seen = (MOTION_ACTIVITY_STRAIGHT == activity);
-        (void)tk_dly_tsk(POLL_MS);
-    }
-    else if (MOTION_ACTIVITY_PIVOT != activity)
-    {
-        (void)tk_dly_tsk(POLL_MS);      // Straight still running.
-    }
-    else if (p_ctx->polls < p_ctx->pivot_polls)
-    {
-        p_ctx->polls++;
-        (void)tk_dly_tsk(POLL_MS);
-    }
-    else
-    {
-        (void)motion_stop_turn();
-        (void)tm_printf((UB *)"[S5] StopTurn back after %u polls\n",
-                        (UINT)p_ctx->polls);
-        enter(p_ctx, ST_WAIT_DONE);
-    }
+    return (drv_encoder_mm_to_pulses(obs_pivot_arc_mm(OBS_REJOIN_STEP)));
 }
 
 /*!
- * @brief  WAIT_DONE: Line Following finds the line and Navigation leaves
- *         BYPASS.  Standalone: wait until the front is clear again.
+ * @brief  Sum of both wheels' encoder counts (wraps safely: only the
+ *         difference of two sums is used).
  */
-static void
-on_wait_done(scan_ctx_t * p_ctx)
+static uint32_t
+encoder_sum(void)
 {
-#if (1 == S5_STANDALONE)
-    bool const b_is_done = (ping_median_cm() > CLEAR_CM);
-#else
-    bool const b_is_done = is_bypass_over();
-#endif
-
-    if (b_is_done)
-    {
-        (void)tm_printf((UB *)"[S5] bypass done, watching\n");
-        p_ctx->state_word = ST_WATCH;   // Clears every counter and side.
-    }
-    else
-    {
-        (void)tk_dly_tsk(POLL_MS);
-    }
+    return (drv_encoder_get_count(DRV_ENCODER_LEFT) +
+            drv_encoder_get_count(DRV_ENCODER_RIGHT));
 }
 
 /*!
@@ -488,11 +550,12 @@ on_error(scan_ctx_t * p_ctx)
 static void
 enter(scan_ctx_t * p_ctx, uint16_t state)
 {
-    p_ctx->polls       = 0u;
-    p_ctx->pivot_polls = 0u;
-    p_ctx->b_seen      = false;
-    p_ctx->state_word  = fld_set(p_ctx->state_word, F_STATE_SHIFT,
-                                 F_STATE_MASK, state);
+    p_ctx->polls        = 0u;
+    p_ctx->pivot_pulses = 0u;
+    p_ctx->b_seen       = false;
+    p_ctx->b_turning    = false;
+    p_ctx->state_word   = fld_set(p_ctx->state_word, F_STATE_SHIFT,
+                                  F_STATE_MASK, state);
 }
 
 /*!
