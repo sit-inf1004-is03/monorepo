@@ -131,15 +131,14 @@ What students *can* do:
   T_CYW43_UTK_STATUS st;
   cyw43_utk_get_status(&st);   /* st.ready, st.link_status, st.ip_addr, ... */
   ```
-- **Send or receive data over the network** by adding code that *runs
-  inside the service task*. The MQTT client is in
-  `lib/liblwip/sysdepend/pico_rp2040/mqtt_utk.c`. It publishes a heartbeat
-  today. A "cloud / reporting" subsystem would add a kernel object
-  (e.g. a message buffer) that application tasks fill. The MQTT code then
-  reads it with `TMO_POL` (never blocking) and publishes it.
-  Because this changes shared library code, **agree it with the team and
-  the instructor first**, and record it as an interface in section 5.
-  It needs the `NET=lwip MQTT=1` build (README section 3).
+- **Send or receive data over the network** through the Wi-Fi / MQTT
+  bridge (`app_program/net/`, owner: Rifa), which runs inside the service
+  task without changing any kernel file. Tasks only touch message buffers:
+  `comms_publish()` / `comms_log()` queue a message for the broker, and
+  `comms_subscribe(topic, my_mbf)` in your `_init()` delivers a topic's
+  messages to your own message buffer (`app_program/comms/comms.h`).
+  Record each new topic as an interface in section 5. It needs the
+  `NET=lwip` build, **not** `MQTT=1` (`MQTT.md`, `KERNEL_ISSUES.md`).
 
 ## 4. Task priorities
 
@@ -149,11 +148,12 @@ change it only by team agreement. Write down every task you create.
 | Subsystem | Priority band | Tasks (name – priority – core) |
 |---|---|---|
 | 1 | 12–13 | *example:* led_task – 12 – any |
-| 2 | 14–15 | task_motion – 14 – core 1 (away from Wi-Fi's priority 4 task on core 0); *example:* producer_task – 14 – core 1; one of s2_test_b2_task, s2_test_motor_task, s2_test_motion_task – 15 – core 0 (`TEST=1` builds only) |
-| 3 | 16–17 | *example:* consumer_task – 16 – core 0 |
+| 2 | 14–15 | task_motion – 14 – core 1 (away from Wi-Fi's priority 4 task on core 0); one of s2_test_b2_task, s2_test_motor_task, s2_test_motion_task – 15 – core 0 (`TEST=1` builds only) |
+| 3 | 16–17 | line_task – 16 – core 0 (barcode_task – 16, not started yet) |
 | 4 | 18–19 | *example:* monitor_task – 18 – any |
 | 5 | 20–21 | obstacle_scan_task – 20 – any |
 | Navigation | 10–11 (*proposed*) | task_navigation – 10 – core 1 (with task_motion); nav_test_m01_task – 11 – core 0 (`TEST=1` builds only) |
+| Wi-Fi / MQTT (Rifa) | 22–23 (*proposed*); 5 at start-up only | remote_task – 22 – any; telemetry_task – 23 – any; net_start – 5 – core 0 (runs once at start-up, then exits; must sit just below WiFi's 4, on its core). The bridge itself runs inside the kernel's WiFi task (4) |
 
 Core: `TP_PRC1` = core 0, `TP_PRC2` = core 1, or "any".
 
@@ -165,11 +165,11 @@ sends to it or waits on it. Agree on the data format before coding.
 
 | ID | From → To | Mechanism | Object ID name | Data / meaning | Agreed by |
 |---|---|---|---|---|---|
-| IF-01 | S2 → S3 | mailbox (owned by S3) | `mbx_samples` | `SAMPLE_MSG` in `subsystem2.h` | *example* |
-| IF-02 | S3 → S2 | semaphore + fixed memory pool (owned by S2) | `sem_slots`, `mpf_samples` | receiver returns the block, then 1 slot | *example* |
-| IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *example* |
-| IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *example* |
-| IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *example* |
+| IF-01 | S2 → S3 | mailbox (owned by S3) | `mbx_samples` | `SAMPLE_MSG` in `subsystem2.h` | *retired*: the template example was removed |
+| IF-02 | S3 → S2 | semaphore + fixed memory pool (owned by S2) | `sem_slots`, `mpf_samples` | receiver returns the block, then 1 slot | *retired*: the template example was removed |
+| IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *retired*: the template example was removed |
+| IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *retired*: the template example was removed |
+| IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *retired*: the template example was removed |
 | IF-06 | S2 → any (IMU, telemetry) | shared data, read only (owned by S2) | `drv_encoder_get_count()`, `drv_encoder_get_speed()` (mm/s) in `drv_encoder.h` | 32-bit pulses per wheel since boot, never reset, 637 per wheel revolution (0.330 mm/pulse); subtract snapshots as `UW` | *proposed* |
 | IF-07 | Navigation → S2, S2 → Navigation | 2 message buffers + event flag (owned by S2), one command at a time | `motion_send()`, `motion_wait_reply()`, `motion_brake()`, `motion_set_speed_cap()` in `motion.h` | `motion_cmd_t`: straight (direction, speed mm/s, distance mm) or pivot (direction). One `motion_reply_t` each: DONE, BRAKED (ended by `motion_brake()`), or FAULT + reason. Speed cap slows a straight (junction approach). The brake command replaces Tribunal 1's "no stop command". Layout open (G10); moves to `include/msg_formats.h` once agreed | *proposed* |
 | IF-08 | S3 (Line Following) → S2 | shared data, one writer | `motion_set_turn_level()` in `motion.h` | turn level −7..+7, every 20 ms; width open (M3) | *proposed* |
@@ -179,6 +179,9 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-12 | any → Navigation | event flag (owned by Navigation until G1/G2) | `nav_raise_fault()` | the agreed fault bits 0–7, each raised only by its owner; stop mask = all but Wi-Fi loss (G10) | *proposed* |
 | IF-13 | Wi-Fi / MQTT → Navigation | event flag + one-writer word | `nav_post_remote()` | START, STOP, CLEAR | *proposed* |
 | IF-14 | Navigation → any (telemetry, Obstacle Scan) | shared data, read only | `nav_get_state()`, `nav_get_faults()`, `nav_get_reason()` | vehicle state (3 bits): IDLE, LINE_FOLLOW, JUNCTION, OBSTACLE (Obstacle Scan's cue to scan), BYPASS, STOPPED, FAULT | *proposed* |
+| IF-15 | dashboard ↔ car (Wi-Fi / MQTT) | MQTT topics `robocar/<id>/…`, via the bridge's message buffers | `comms_subscribe()`, `comms_publish()` in `comms/comms.h`; `mbf_remote`, `mbf_telemetry` | topics, commands (PING, START, STOP, CLEAR) and the 64-bit telemetry layout in `app_program/protocol.h`; the dashboard's copy is `mqtt-web-interface/src/shared/protocol.ts` | *proposed* |
+| IF-16 | S3 (Line Following), S5 (Obstacle Scan) → telemetry | shared data, read only | `line_get_state()` (S3), `ultrasonic_last_reading()` (S5) | line state (2 bits); nearest obstacle in cm (9 bits) or no echo. Linked weakly, so telemetry reports "not reported" until the function exists | *proposed* |
+| IF-17 | any → Wi-Fi / MQTT | message buffer (owned by comms) | `comms_log()`, `comms_telemetry()`, `comms_publish()` | one line of text / a packed telemetry word / any payload ≤ 128 bytes; never blocks, dropped when the queue is full | *proposed* |
 
 Each interface is tested by at least one integration test
 (`testing/integration/TEST_LOG.md`).

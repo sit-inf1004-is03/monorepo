@@ -16,45 +16,29 @@
  *	and then puts the initial task to sleep forever.
  *	If usermain() RETURNS, the kernel shuts the whole system down.
  *
- *	The example system: one subsystem per folder, one task each
- *	------------------------------------------------------------
- *	  subsystem1/  LED       blinks GP19, paced by a cyclic handler
- *	  subsystem2/  Producer  makes a "sample" every 300 ms     (core 1)
- *	  subsystem3/  Consumer  collects samples into statistics  (core 0)
- *	  subsystem4/  Monitor   prints reports, pauses/resumes the LED
- *	  subsystem5/  (empty template for the fifth student)
+ *	The subsystems (owners and interfaces: TEAM.md sections 1 and 5)
+ *	-----------------------------------------------------------------
+ *	  subsystem1/  example LED: blinks GP19, paced by a cyclic handler
+ *	  subsystem2/  Motion control: encoders, motors, PID, task_motion
+ *	  subsystem3/  Line Following + Barcode
+ *	  subsystem4/  (empty template)
+ *	  subsystem5/  (empty template)
+ *	  navigation/  Navigation / Vehicle Controller: the only module that
+ *	               commands Motion
+ *	The template's example producer -> consumer -> monitor chain
+ *	(S2 -> S3 -> S4, IF-01 .. IF-05) has been retired.
  *
- *	How they talk to each other (the interfaces, see TEAM.md section 5):
- *	  IF-01  S2 -> S3  mailbox mbx_samples      (owned by S3)
- *	  IF-02  S3 -> S2  semaphore sem_slots + memory pool mpf_samples
- *	                   (owned by S2: S3 hands slots and blocks back)
- *	  IF-03  S3 -> S4  message buffer mbf_summary + event flag flg_events
- *	                   (owned by S4)
- *	  IF-04  S4 -> S3  reads app_stats under mutex mtx_stats (owned by S3)
- *	  IF-05  S4 -> S1  suspends/resumes the LED task tid_led (owned by S1)
  *	The subsystem that RECEIVES or OWNS the data creates the object and
  *	publishes its ID in its header; the other side just uses it.
- *
- *	micro T-Kernel APIs used, and where to find them:
- *	  tasks       tk_cre_tsk tk_sta_tsk tk_slp_tsk tk_wup_tsk tk_can_wup
- *	              tk_dly_tsk tk_sus_tsk tk_rsm_tsk tk_chg_pri tk_ref_tsk
- *	              tk_get_tid tk_get_prc                         app_main.c, S1-S4
- *	  semaphore   tk_cre_sem tk_wai_sem tk_sig_sem tk_ref_sem       S2, S3, S4
- *	  mem. pool   tk_cre_mpf tk_get_mpf tk_rel_mpf tk_ref_mpf       S2, S3, S4
- *	  mailbox     tk_cre_mbx tk_snd_mbx tk_rcv_mbx                  S2, S3
- *	  mutex       tk_cre_mtx tk_loc_mtx tk_unl_mtx                  S3, S4
- *	  msg buffer  tk_cre_mbf tk_snd_mbf tk_rcv_mbf                  S3, S4
- *	  event flag  tk_cre_flg tk_set_flg tk_wai_flg                  S3, S4
- *	  cyclic      tk_cre_cyc tk_ref_cyc                             S1
- *	  alarm       tk_cre_alm tk_sta_alm tk_stp_alm                  S4
- *	  time        tk_get_tim                                        S2, S4
- *	  system      tk_ref_ver                                        app_main.c
  *
  *	Output appears on the USB serial port (115200 8N1 in any terminal).
  */
 
 #include "app.h"
 #include "navigation/navigation.h"	/* Navigation / Vehicle Controller */
+#include "comms/comms.h"		/* Wi-Fi / MQTT: comms, remote, telemetry */
+#include "remote/remote.h"
+#include "telemetry/telemetry.h"
 
 /*
  * Create and start one task (declared in app.h for every subsystem).
@@ -115,6 +99,9 @@ EXPORT INT usermain(void)
 	CHECK(subsystem4_init(), "subsystem4_init");
 	CHECK(subsystem5_init(), "subsystem5_init");
 	CHECK(navigation_init(), "navigation_init");
+	CHECK(comms_init(), "comms_init");	/* before remote and telemetry, */
+	CHECK(remote_init(), "remote_init");	/* which subscribe with it */
+	CHECK(telemetry_init(), "telemetry_init");
 
 	/* Phase 2: every subsystem starts its tasks */
 	CHECK(subsystem1_start(), "subsystem1_start");
@@ -123,6 +110,10 @@ EXPORT INT usermain(void)
 	CHECK(subsystem4_start(), "subsystem4_start");
 	CHECK(subsystem5_start(), "subsystem5_start");
 	CHECK(navigation_start(), "navigation_start");
+	CHECK(remote_start(), "remote_start");
+	CHECK(telemetry_start(), "telemetry_start");
+	CHECK(comms_start(), "comms_start");	/* last: hands the buffers to
+						   the network bridge */
 
 	tm_printf((UB*)"all subsystems started\n\n");
 
@@ -135,6 +126,9 @@ EXPORT INT usermain(void)
 	   here in the initial task, while the system is running.  Tests may
 	   call tk_dly_tsk() to let the other tasks work for a while. */
 	tm_printf((UB*)"[TEST] === test run start ===\n");
+	comms_test();		/* Wi-Fi / MQTT first: quick, never drive */
+	remote_test();		/* the car, and done before NAV-M01 starts */
+	telemetry_test();
 	subsystem1_test();
 	subsystem2_test();
 	subsystem3_test();
