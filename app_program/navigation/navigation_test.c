@@ -68,6 +68,8 @@ navigation_test (void)
                (E_PAR == nav_post_bypass_plan(NAV_SIDE_LEFT, 9u, 0u, 9u)) &&
                (E_PAR == nav_post_bypass_plan(NAV_SIDE_RIGHT, 9u, 9u,
                                               512u)) &&
+               (E_PAR == nav_post_search(0u)) &&
+               (E_PAR == nav_post_search(NAV_SEARCH_FAILED + 1u)) &&
                (E_PAR == nav_raise_fault(0u)) &&
                (E_PAR == nav_raise_fault(1u << 8)) &&
                (E_PAR == nav_post_remote(0u)) &&
@@ -197,6 +199,10 @@ m01_task (INT start_code, void * p_ext_info)
     (void) tk_dly_tsk(1000u);
     (void) nav_set_line_state(NAV_LINE_ON);
     m01_stop_turn_after("bypass: align on the line", 500u);
+    (void) tk_dly_tsk(200u);
+    m01_check("bypass: waiting for the search verdict",
+              nav_is_search_wait());
+    (void) nav_post_search(NAV_SEARCH_FOUND);
     m01_expect_state("bypass: back to LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
     (void) tk_dly_tsk(2000u);
 

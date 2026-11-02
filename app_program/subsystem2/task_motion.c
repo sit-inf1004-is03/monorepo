@@ -581,7 +581,10 @@ motion_cmd_valid (motion_cmd_t const * p_cmd)
     }
     else if (MOTION_CMD_PIVOT == p_cmd->type)
     {
-        b_valid = (p_cmd->direction <= MOTION_DIR_RIGHT);
+        // LOCAL (s5-local-test): speed_mm_s 0 = PIVOT_SPEED_MM_S, else
+        // that speed (the bypass line search pivots slowly).
+        b_valid = ((p_cmd->direction <= MOTION_DIR_RIGHT) &&
+                   (p_cmd->speed_mm_s <= MOTION_SPEED_MAX_MM_S));
     }
     else
     {
@@ -709,7 +712,10 @@ motion_pivot_step (uint32_t now_usec, float dt_sec)
         // Cast: as in motion_straight_step().
         //
         int32_t const difference = (int32_t) left - (int32_t) right;
-        float const   speed      = motion_ramp(dt_sec, PIVOT_SPEED_MM_S);
+        float const   target     = ((0u == g_move.cmd.speed_mm_s) ?
+                                    PIVOT_SPEED_MM_S :
+                                    (float) g_move.cmd.speed_mm_s);
+        float const   speed      = motion_ramp(dt_sec, target);
         float const   steer      =
             motion_clamp((-BALANCE_PER_PULSE * (float) difference),
                          -BALANCE_MAX_MM_S, BALANCE_MAX_MM_S);

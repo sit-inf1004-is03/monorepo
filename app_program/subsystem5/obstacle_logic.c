@@ -47,6 +47,8 @@ static uint16_t const g_cos_x100[OBS_FINE_COUNT + 1u] =
 };
 
 #define MRAD_PER_STEP           (262u)      // 15 deg = 0.2618 rad.
+#define URAD_PER_DEG            (17453u)    // 1 deg = 0.017453 rad.
+#define UM_PER_MM_X_URAD        (1000000u)  // urad x mm -> mm.
 
 static uint32_t div_up(uint32_t num, uint32_t den);
 static uint16_t clamp_step(uint16_t step);
@@ -202,7 +204,9 @@ obs_find_edge(uint64_t fine, uint16_t clear_cm)
  * @brief  Sideways distance (from the line) the car's centre needs to
  *         clear the obstacle: front x tan(edge) + half car width +
  *         margin, with the edge between the last blocked fine step and
- *         the first clear one.
+ *         the first clear one, and front x tan(edge) (the obstacle's
+ *         half-width) limited to OBS_MIN_HALF_WIDTH_CM ..
+ *         OBS_MAX_HALF_WIDTH_CM.
  * @param  front_cm   Distance to the obstacle straight ahead.
  * @param  edge_step  Fine step of the edge, 1..OBS_FINE_COUNT.
  * @return Distance in cm, saturated to 9 bits.
@@ -212,8 +216,22 @@ obs_lateral_cm(uint16_t front_cm, uint16_t edge_step)
 {
     uint16_t const step = clamp_step(edge_step);
     uint32_t       dist = div_up((uint32_t)front_cm * g_tan_edge_x100[step],
-                                 TAN_SCALE) +
-                          OBS_CAR_HALF_WIDTH_CM + OBS_SIDE_MARGIN_CM;
+                                 TAN_SCALE);
+
+    if (dist < OBS_MIN_HALF_WIDTH_CM)
+    {
+        dist = OBS_MIN_HALF_WIDTH_CM;   // Never narrower than a box.
+    }
+    else if (dist > OBS_MAX_HALF_WIDTH_CM)
+    {
+        dist = OBS_MAX_HALF_WIDTH_CM;   // Beam spread, not a wider box.
+    }
+    else
+    {
+        // Measured width is believable.
+    }
+
+    dist += OBS_CAR_HALF_WIDTH_CM + OBS_SIDE_MARGIN_CM;
 
     if (dist > PLAN_MAX_CM)
     {
@@ -350,6 +368,49 @@ obs_back_cm(uint16_t out_cm, uint16_t pivot_step)
     }
 
     return ((uint16_t)dist);
+}
+
+/*!
+ * @brief  Wheel travel for a pivot of any angle: angle (rad) x half the
+ *         wheel track (the line search is not in 15-degree steps).
+ * @param  angle_deg  Pivot angle, 0..360 deg.
+ * @return Arc length of each wheel, in mm, rounded.
+ */
+uint16_t
+obs_deg_arc_mm(uint16_t angle_deg)
+{
+    // 360 x 17453 x 70 = 4.4e8: fits 32 bits.
+    return ((uint16_t)((((uint32_t)angle_deg * URAD_PER_DEG *
+                         OBS_HALF_TRACK_MM) + (UM_PER_MM_X_URAD / 2u)) /
+                       UM_PER_MM_X_URAD));
+}
+
+/*!
+ * @brief  Line search zig-zag: heading to reach on search step `step`,
+ *         relative to the heading the search started at.  Odd steps go
+ *         one way (+), even steps the other (-), each 1 x step_deg further
+ *         out: +start, -(start + step), +(start + 2 step), ...
+ * @param  step       Search step, 1..; 0 gives 0 (the start heading).
+ * @param  start_deg  Size of the first target.
+ * @param  step_deg   How much further each target is.
+ * @return Target heading in degrees, signed (+ = the first direction).
+ */
+int16_t
+obs_search_target_deg(uint16_t step, uint16_t start_deg, uint16_t step_deg)
+{
+    int16_t target = 0;
+
+    if (step > 0u)
+    {
+        target = (int16_t)(start_deg + ((step - 1u) * step_deg));
+
+        if (0u == (step % 2u))
+        {
+            target = (int16_t)(-target);
+        }
+    }
+
+    return (target);
 }
 
 /*!

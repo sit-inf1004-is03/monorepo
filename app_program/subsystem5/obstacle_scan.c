@@ -3,7 +3,7 @@
  * @brief Obstacle Scan task (Subsystem 5): Week 6 statechart (Figure 4),
  *        joined to Navigation (IF-11, IF-12, IF-14) and Motion (IF-09).
  *
- *   WATCH ---2 pings < 30 cm---> nav_post_obstacle()
+ *   WATCH ---2 pings < 15 cm---> nav_post_obstacle()
  *     |                               |
  *     |                       WAIT_BRAKE (Navigation -> OBSTACLE)
  *     |                               v
@@ -23,8 +23,19 @@
  *     |                           |             + sensor-to-axle + margin,
  *     |                           |             nav_post_bypass_passed()
  *     |                           |    IN       pivot in, OBS_REJOIN_STEP
- *     |                           |    ALIGN    re-align on the line, the
- *     |                           v             rejoin angle again
+ *     |                           |    ALIGN    slow pivot the original
+ *     |                           |             way until a line sensor
+ *     |                           |             sees white then black (the
+ *     |                           |             line's own heading, straight
+ *     |                           |             or curved), at most
+ *     |                           |             ALIGN_MAX_DEG
+ *     |                           |    SEARCH   Navigation waits after the
+ *     |                           |             align (or when the back limit
+ *     |                           |             ran out): line on -> FOUND;
+ *     |                           |             else zig-zag pivots to +15,
+ *     |                           |             -30, +45 ... deg (encoders),
+ *     |                           |             StopTurn at once on the line;
+ *     |                           v             past SEARCH_MAX_DEG -> FAILED
  *     +<------- Navigation leaves BYPASS
  *
  *   Pivot angles are measured with the wheel encoders (IF-06): each wheel
@@ -39,7 +50,9 @@
  *
  *   bits 15..14  chosen side (OBS_SIDE_)    2 bits
  *   bits 13..11  WATCH: print divider       3 bits  (0..4)
- *                BYPASS: side watch (PASS_) (the two never coexist)
+ *                BYPASS past leg: side watch (PASS_)
+ *                BYPASS align/search: search step (0..SEARCH_STEPS,
+ *                SEARCH_DONE)               (none of these coexist)
  *   bits 10..9   failed scans               2 bits  (0..3)
  *   bits  8..5   consecutive silent pings   4 bits  (0..10)
  *   bits  4..3   WATCH: "near" pings        2 bits  (0..2)
@@ -62,6 +75,7 @@
 #include "../navigation/navigation.h"
 #include "../subsystem2/motion.h"
 #include "../subsystem2/drv_encoder.h"
+#include "../subsystem3/line_barcode.h"     // line_get_state(), read only.
 
 // Event lines also go to the dashboard's log (robocar/<id>/log) when the
 // team's comms module is in the build; otherwise they are only printed.
@@ -85,7 +99,7 @@
 #define WATCH_PERIOD_MS         (100)   // Ping rate while driving.
 #define POLL_MS                 (65)    // Wait loops; > 60 ms ping cooldown.
 #define PING_GAP_MS             (65)
-#define TRIGGER_CM              (30u)   // Obstacle closer than this...
+#define TRIGGER_CM              (15u)   // Obstacle closer than this...
 #define CONFIRM_PINGS           (2u)    // ...on this many pings in a row.
 #define CLEAR_CM                (50u)   // A direction is open beyond this.
 #define SILENT_LIMIT            (10u)   // ~1 s of silence -> NO_ECHO fault.
@@ -94,6 +108,37 @@
 #define BRAKE_WAIT_POLLS        (31u)   // ~2 s for Navigation to brake.
 #define PIVOT_POLL_MS           (10)    // Encoder check rate in a pivot.
 #define PIVOT_MAX_POLLS         (250u)  // 2.5 s bound on one pivot.
+
+// ---- Line search after the bypass (tune on the mat) ----
+// Targets, from the heading the search starts at: +START, -(START +
+// STEP), +(START + 2 STEP), ... up to +/-SEARCH_MAX_DEG.  "+" is towards
+// the original line (the turn-in direction) when SEARCH_FIRST_TOWARD_LINE
+// is 1.  The pivot speed is Navigation's NAV_SEARCH_PIVOT_MM_S (60).
+//
+#define SEARCH_START_DEG        (15u)
+#define SEARCH_STEP_DEG         (15u)
+#define SEARCH_MAX_DEG          (90u)
+#define SEARCH_FIRST_TOWARD_LINE (1)
+#define SEARCH_STEPS            ((((SEARCH_MAX_DEG - SEARCH_START_DEG) /  \
+                                   SEARCH_STEP_DEG)) + 1u)
+#define SEARCH_DONE             (7u)    // Verdict posted (3-bit field).
+#define SEARCH_MAX_POLLS        (600u)  // 6 s bound on one slow sweep.
+
+
+// Align pivot: stops on the line (white, then black) or at this angle.
+// A straight line is met at the rejoin angle (30 deg); a line curving
+// away later, one curving back earlier.
+//
+#define ALIGN_MAX_DEG           (75u)
+
+// Parallel pivot: turn back this much more than the out angle, so the
+// past leg points slightly towards the line (0 = parallel).
+//
+#define PARALLEL_IN_DEG         (10u)
+
+#if (SEARCH_STEPS >= SEARCH_DONE)
+#error "Line search: too many steps for the 3-bit step field."
+#endif
 #define SIDE_LOOK_STEP          (6u)    // Past leg: servo 6 x 15 = 90 deg
                                         // off centre, at the obstacle.
 #define SIDE_NEAR_CM            (30u)   // Sideways closer = the obstacle.
@@ -142,6 +187,13 @@
 #define F_PRINT_MASK            (0x7u)
 #define F_PASS_SHIFT            (11u)   // Same bits as F_PRINT: BYPASS only.
 #define F_PASS_MASK             (0x7u)
+#define F_SEARCH_SHIFT          (11u)   // Same bits: align / search only.
+#define F_SEARCH_MASK           (0x7u)
+
+// ---- track_pivot() results ----
+#define TRACK_RUNNING           (0u)
+#define TRACK_ANGLE             (1u)    // Stopped at the target angle.
+#define TRACK_LINE              (2u)    // Stopped: a line sensor saw black.
 #define F_SIDE_SHIFT            (14u)
 #define F_SIDE_MASK             (0x3u)
 
@@ -160,9 +212,11 @@ typedef struct
                                 // 0 once the bypass's pivots are done.
     uint16_t past_pulses;       // Estimated past leg (obs_past_cm()),
                                 // used if the side scan never sees it.
-    uint8_t  polls;             // Wait-loop counter (0..255).
+    uint16_t polls;             // Wait-loop counter.
     bool     b_seen;            // Phase flag: straight seen.
     bool     b_turning;         // Phase flag: tracked pivot started.
+    bool     b_requested;       // Search: pivot asked of Navigation.
+    bool     b_armed;           // Line stop armed: white seen in pivot.
 } scan_ctx_t;
 
 static void     on_watch(scan_ctx_t * p_ctx);
@@ -179,9 +233,12 @@ static void     update_silence(scan_ctx_t * p_ctx,
                                ultrasonic_reading_t reading);
 static bool     is_nav_driving(void);
 static bool     is_bypass_over(void);
-static bool     track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses);
+static uint16_t track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses,
+                            bool b_stop_on_line);
+static void     on_search(scan_ctx_t * p_ctx);
 static uint32_t encoder_sum(void);
 static uint32_t rejoin_pulses(void);
+static uint32_t align_pulses(void);
 static void     log_text(UB const * p_text);
 static uint16_t ping_cm(void);
 static uint16_t ping_median_cm(void);
@@ -209,6 +266,8 @@ obstacle_scan_task(INT stacd, void * p_exinf)
     ctx.polls        = 0u;
     ctx.b_seen       = false;
     ctx.b_turning    = false;
+    ctx.b_requested  = false;
+    ctx.b_armed      = false;
 
     servo_set_angle_deg((uint8_t)CENTRE_DEG);
     (void)tm_sprintf(g_log,
@@ -396,7 +455,7 @@ on_fine(scan_ctx_t * p_ctx)
 
         if (front_cm >= OBS_FAR_CM)
         {
-            front_cm = TRIGGER_CM;      // Centre missed: assume 30 cm.
+            front_cm = TRIGGER_CM;      // Centre missed: assume 15 cm.
         }
 
         lateral_cm = obs_lateral_cm(front_cm, edge);
@@ -454,8 +513,12 @@ on_bypass(scan_ctx_t * p_ctx)
 #else
     uint16_t const leg = fld_get(p_ctx->state_word, F_LEG_SHIFT,
                                  F_LEG_MASK);
-    uint32_t const target = (leg <= LEG_PARALLEL) ?
-                            (uint32_t)p_ctx->pivot_pulses : rejoin_pulses();
+    uint32_t const target =
+        (LEG_OUT == leg)      ? (uint32_t)p_ctx->pivot_pulses :
+        (LEG_PARALLEL == leg) ? ((uint32_t)p_ctx->pivot_pulses +
+                                 drv_encoder_mm_to_pulses(
+                                     obs_deg_arc_mm(PARALLEL_IN_DEG))) :
+        (LEG_IN == leg)       ? rejoin_pulses() : align_pulses();
 
     if (is_bypass_over())
     {
@@ -482,6 +545,13 @@ on_bypass(scan_ctx_t * p_ctx)
     {
         watch_past(p_ctx);              // The past leg is running.
     }
+    else if ((LEG_ALIGN == leg) &&
+             (p_ctx->b_requested || nav_is_search_wait() ||
+              (0u != fld_get(p_ctx->state_word, F_SEARCH_SHIFT,
+                             F_SEARCH_MASK))))
+    {
+        on_search(p_ctx);               // After the align / back limit.
+    }
     else if ((0u == p_ctx->pivot_pulses) ||
              ((LEG_OUT != leg) && !p_ctx->b_seen))
     {
@@ -494,7 +564,8 @@ on_bypass(scan_ctx_t * p_ctx)
 
         (void)tk_dly_tsk(PIVOT_POLL_MS);
     }
-    else if (track_pivot(p_ctx, target))
+    else if (TRACK_RUNNING != track_pivot(p_ctx, target,
+                                          (LEG_ALIGN == leg)))
     {
         p_ctx->polls     = 0u;
         p_ctx->b_seen    = false;
@@ -517,7 +588,11 @@ on_bypass(scan_ctx_t * p_ctx)
             }
             else if (LEG_IN == leg)
             {
+                // Side watch over: its bits become the search step (0).
                 servo_set_angle_deg((uint8_t)CENTRE_DEG);
+                p_ctx->state_word = fld_set(p_ctx->state_word,
+                                            F_SEARCH_SHIFT, F_SEARCH_MASK,
+                                            0u);
             }
             else
             {
@@ -642,16 +717,25 @@ post_passed(uint16_t pass)
 /*!
  * @brief  Follow one pivot with the encoders: start counting when Motion
  *         starts pivoting, StopTurn when each wheel has gone
- *         target_pulses (or after PIVOT_MAX_POLLS: SCAN_ERROR fault).
- * @param  p_ctx          Task context (b_turning, start_sum, polls).
- * @param  target_pulses  Pulses per wheel for the angle.
- * @return true once StopTurn has been sent.
+ *         target_pulses, or (align, search) as soon as a line sensor
+ *         sees black after it has seen white in this pivot (so it never
+ *         stops on the tape it is still over when the pivot starts).
+ *         A pivot that takes too long (PIVOT_MAX_POLLS, or
+ *         SEARCH_MAX_POLLS for a slow search sweep) raises SCAN_ERROR.
+ * @param  p_ctx           Task context (b_turning, start_sum, polls).
+ * @param  target_pulses   Pulses per wheel for the angle.
+ * @param  b_stop_on_line  Also stop when Line Following reports LINE_ON
+ *                         after a not-ON reading.
+ * @return TRACK_RUNNING, or TRACK_ANGLE / TRACK_LINE once StopTurn has
+ *         been sent.
  */
-static bool
-track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses)
+static uint16_t
+track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses, bool b_stop_on_line)
 {
-    bool     b_done = false;
-    uint32_t turned;
+    uint16_t const max_polls = b_stop_on_line ? (uint16_t)SEARCH_MAX_POLLS :
+                                                (uint16_t)PIVOT_MAX_POLLS;
+    uint16_t       result    = TRACK_RUNNING;
+    uint32_t       turned;
 
     if (!p_ctx->b_turning)
     {
@@ -660,6 +744,7 @@ track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses)
             p_ctx->b_turning = true;
             p_ctx->start_sum = encoder_sum();
             p_ctx->polls     = 0u;
+            p_ctx->b_armed   = false;
         }
     }
     else
@@ -668,22 +753,147 @@ track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses)
         turned = (encoder_sum() - p_ctx->start_sum) / 2u;
         p_ctx->polls++;
 
-        if ((turned >= target_pulses) || (p_ctx->polls >= PIVOT_MAX_POLLS))
+        if (b_stop_on_line && (LINE_ON != line_get_state()))
         {
-            if (p_ctx->polls >= PIVOT_MAX_POLLS)
+            p_ctx->b_armed = true;      // Off the tape: a line may stop it.
+        }
+
+        if (b_stop_on_line && p_ctx->b_armed &&
+            (LINE_ON == line_get_state()))
+        {
+            result = TRACK_LINE;
+        }
+        else if ((turned >= target_pulses) || (p_ctx->polls >= max_polls))
+        {
+            if (p_ctx->polls >= max_polls)
             {
                 (void)nav_raise_fault(NAV_FLT_SCAN_ERROR);
             }
 
+            result = TRACK_ANGLE;
+        }
+        else
+        {
+            // Still turning.
+        }
+
+        if (TRACK_RUNNING != result)
+        {
             (void)motion_stop_turn();
-            (void)tm_sprintf(g_log, (UB *)"[S5] StopTurn after %u of %u pulses",
-                             (UINT)turned, (UINT)target_pulses);
+            (void)tm_sprintf(g_log, (UB *)"[S5] StopTurn after %u of %u"
+                             " pulses%s", (UINT)turned, (UINT)target_pulses,
+                             (TRACK_LINE == result) ? " (line)" : "");
             log_text(g_log);
-            b_done = true;
         }
     }
 
-    return (b_done);
+    return (result);
+}
+
+/*!
+ * @brief  Line search, in the align leg: runs when Navigation waits for a
+ *         verdict (after the align pivot, or when the back limit ran out).
+ *         Step 0: line already on -> FOUND.  Otherwise ask Navigation for
+ *         one pivot to the next zig-zag target (obs_search_target_deg()),
+ *         StopTurn it on the angle or on the line, and log the step.
+ *         Line seen -> FOUND; all SEARCH_STEPS done -> FAILED
+ *         (Navigation stops with LINE_NOT_FOUND).
+ */
+static void
+on_search(scan_ctx_t * p_ctx)
+{
+    uint16_t const side = fld_get(p_ctx->state_word, F_SIDE_SHIFT,
+                                  F_SIDE_MASK);
+    uint16_t       step = fld_get(p_ctx->state_word, F_SEARCH_SHIFT,
+                                  F_SEARCH_MASK);
+    int16_t        target;
+    int16_t        from;
+    uint16_t       sweep;
+    bool           b_left;
+    uint16_t       result;
+
+    // "+" direction: towards the original line = the turn-in pivot, which
+    // is RIGHT after a LEFT bypass and LEFT after a RIGHT one.
+    bool const     b_plus_is_left = ((OBS_SIDE_RIGHT == side) ==
+                                     (1 == SEARCH_FIRST_TOWARD_LINE));
+
+    target = obs_search_target_deg(step, SEARCH_START_DEG, SEARCH_STEP_DEG);
+    from   = obs_search_target_deg((uint16_t)((0u == step) ? 0u :
+                                              (step - 1u)),
+                                   SEARCH_START_DEG, SEARCH_STEP_DEG);
+    sweep  = (uint16_t)((target > from) ? (target - from) : (from - target));
+    b_left = ((target > from) == b_plus_is_left);
+
+    if (p_ctx->b_requested)
+    {
+        // A search pivot is running: stop it on the angle or the line.
+        result = track_pivot(p_ctx, p_ctx->pivot_pulses, true);
+
+        if (TRACK_RUNNING == result)
+        {
+            (void)tk_dly_tsk(PIVOT_POLL_MS);
+        }
+        else
+        {
+            p_ctx->b_requested = false;
+            p_ctx->b_turning   = false;
+            p_ctx->polls       = 0u;
+            (void)tm_sprintf(g_log, (UB *)"[S5] search: pivot %s %u deg"
+                             " (to %d), %s", b_left ? "left" : "right",
+                             (UINT)sweep, (INT)target,
+                             (TRACK_LINE == result) ? "line found"
+                                                    : "no line");
+            log_text(g_log);
+
+            if (TRACK_LINE == result)
+            {
+                (void)nav_post_search(NAV_SEARCH_FOUND);
+                p_ctx->pivot_pulses = 0u;   // Logs "bypass done".
+                step = SEARCH_DONE;
+            }
+        }
+    }
+    else if ((SEARCH_DONE == step) || !nav_is_search_wait())
+    {
+        (void)tk_dly_tsk(PIVOT_POLL_MS);    // Waiting for Navigation.
+    }
+    else if ((0u == step) && (LINE_ON == line_get_state()))
+    {
+        (void)tm_sprintf(g_log, (UB *)"[S5] search: line on, no search");
+        log_text(g_log);
+        (void)nav_post_search(NAV_SEARCH_FOUND);
+        p_ctx->pivot_pulses = 0u;           // Logs "bypass done".
+        step = SEARCH_DONE;
+    }
+    else if (step >= SEARCH_STEPS)
+    {
+        (void)tm_sprintf(g_log, (UB *)"[S5] search: no line within +/-%u"
+                         " deg, LINE_NOT_FOUND", (UINT)SEARCH_MAX_DEG);
+        log_text(g_log);
+        (void)nav_post_search(NAV_SEARCH_FAILED);
+        step = SEARCH_DONE;
+    }
+    else
+    {
+        // Next zig-zag target: ask Navigation for the pivot.
+        step++;
+        target = obs_search_target_deg(step, SEARCH_START_DEG,
+                                       SEARCH_STEP_DEG);
+        from   = obs_search_target_deg((uint16_t)(step - 1u),
+                                       SEARCH_START_DEG, SEARCH_STEP_DEG);
+        sweep  = (uint16_t)((target > from) ? (target - from)
+                                            : (from - target));
+        b_left = ((target > from) == b_plus_is_left);
+        p_ctx->pivot_pulses = (uint16_t)drv_encoder_mm_to_pulses(
+                                  obs_deg_arc_mm(sweep));
+        p_ctx->b_requested  = true;
+        p_ctx->b_turning    = false;
+        p_ctx->polls        = 0u;
+        (void)nav_post_search(b_left ? NAV_SEARCH_LEFT : NAV_SEARCH_RIGHT);
+    }
+
+    p_ctx->state_word = fld_set(p_ctx->state_word, F_SEARCH_SHIFT,
+                                F_SEARCH_MASK, step);
 }
 
 /*!
@@ -708,6 +918,15 @@ static uint32_t
 rejoin_pulses(void)
 {
     return (drv_encoder_mm_to_pulses(obs_pivot_arc_mm(OBS_REJOIN_STEP)));
+}
+
+/*!
+ * @brief  Pulses per wheel for the align pivot's limit (ALIGN_MAX_DEG).
+ */
+static uint32_t
+align_pulses(void)
+{
+    return (drv_encoder_mm_to_pulses(obs_deg_arc_mm(ALIGN_MAX_DEG)));
 }
 
 /*!
@@ -757,6 +976,8 @@ enter(scan_ctx_t * p_ctx, uint16_t state)
     p_ctx->pivot_pulses = 0u;
     p_ctx->b_seen       = false;
     p_ctx->b_turning    = false;
+    p_ctx->b_requested  = false;
+    p_ctx->b_armed      = false;
     p_ctx->state_word   = fld_set(p_ctx->state_word, F_STATE_SHIFT,
                                   F_STATE_MASK, state);
 }

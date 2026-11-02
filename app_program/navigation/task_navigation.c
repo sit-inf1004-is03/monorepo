@@ -21,7 +21,11 @@
  *     "past" cm; pivot in towards the line and creep at
  *     most "back" cm until the line is on (else LINE_NOT_FOUND); creep
  *     NAV_CROSS_MM more so the axle is on the line, brake and pivot onto
- *     it.
+ *     it.  Then (or if the back limit runs out) wait in P_SEARCH_WAIT for
+ *     Obstacle Scan's verdict (nav_post_search()): FOUND -> follow the
+ *     line; LEFT / RIGHT -> one slow search pivot, StopTurn from Obstacle
+ *     Scan (angle or line seen), then wait again; FAILED -> stop with
+ *     LINE_NOT_FOUND.
  *   - A stop fault brakes and holds until a remote CLEAR.
  *
  * Navigation sends Motion one command at a time and always waits for its
@@ -50,6 +54,11 @@
                                         // barcode with no junction.
 #define NAV_BYPASS_MM_S     (60u)
 #define NAV_REACQUIRE_MM_S  (50u)       // Limit: the plan's "back" field.
+#define NAV_SEARCH_PIVOT_MM_S (60u)     // Slow: the line sensor (read
+                                        // every 20 ms) cannot skip the
+                                        // tape.
+#define NAV_SEARCH_WAIT_LOOPS (300u)    // >= ~3 s with no verdict from
+                                        // Obstacle Scan: LINE_NOT_FOUND.
 #define NAV_CROSS_MM        (80u)       // Line seen: creep this much more
                                         // before the align pivot, so the
                                         // wheel axle (the pivot centre) is
@@ -70,8 +79,10 @@
 #define EVT_PLAN            (1u << 12)
 #define EVT_REMOTE          (1u << 13)
 #define EVT_PASSED          (1u << 14)
+#define EVT_SEARCH          (1u << 15)
 #define EVT_ALL             (EVT_BARCODE | EVT_JUNCTION | EVT_OBSTACLE |    \
-                             EVT_PLAN | EVT_REMOTE | EVT_PASSED)
+                             EVT_PLAN | EVT_REMOTE | EVT_PASSED |           \
+                             EVT_SEARCH)
 #define WAIT_ALL            (EVT_ALL | NAV_FLT_ALL)
 
 // Bypass plan, 29 bits in a uint32_t (PROPOSED bit order, Ruien owns
@@ -104,8 +115,10 @@
 #define P_REACQUIRE         (11u)   // Straight: at most the back leg.
 #define P_CROSS             (12u)   // Line seen: same straight, creep on.
 #define P_ALIGN             (13u)
-#define P_HALTING           (14u)   // Brake sent; then P_HALTED.
-#define P_HALTED            (15u)
+#define P_SEARCH_WAIT       (14u)   // Stopped: Obstacle Scan's verdict.
+#define P_SEARCH_PIVOT      (15u)   // One search pivot.
+#define P_HALTING           (16u)   // Brake sent; then P_HALTED.
+#define P_HALTED            (17u)
 
 typedef struct
 {
@@ -125,6 +138,9 @@ typedef struct
     bool     b_plan;
     bool     b_remote;
     bool     b_passed;
+    bool     b_search;
+    uint32_t search_cmd;        // NAV_SEARCH_ being run.
+    uint32_t search_loops;      // Loops waited in P_SEARCH_WAIT.
 } nav_ctx_t;
 
 static ID                g_flg_id   = 0;
@@ -135,12 +151,14 @@ static uint32_t volatile g_barcode_in = 0u;     // Wing
 static uint32_t volatile g_line_state = NAV_LINE_ON;    // Wing
 static uint32_t volatile g_plan_in    = 0u;     // Ruien
 static uint32_t volatile g_remote_in  = 0u;     // Rifa
+static uint32_t volatile g_search_in  = 0u;     // Ruien
 
 // Written by the Navigation task only.
 //
 static uint32_t volatile g_state  = NAV_STATE_IDLE;
 static uint32_t volatile g_faults = 0u;
 static uint32_t volatile g_reason = NAV_REASON_NONE;
+static bool     volatile g_b_search_wait = false;   // In P_SEARCH_WAIT.
 
 // Used by the Navigation task only.  Static storage starts zeroed:
 // P_IDLE, nothing pending.
@@ -154,6 +172,7 @@ static void nav_on_reply(motion_reply_t const * p_reply);
 static void nav_on_move_done(void);
 static void nav_process(void);
 static void nav_on_remote(uint32_t command);
+static void nav_on_search(uint32_t command);
 static void nav_at_junction(void);
 static bool nav_approach_too_long(void);
 static bool nav_driven_mm(uint32_t distance_mm);
@@ -163,7 +182,7 @@ static void nav_halt(uint32_t state, uint32_t reason);
 static void nav_set_state(uint32_t state);
 static void nav_drive_line(void);
 static void nav_send_straight(uint32_t speed_mm_s, uint32_t distance_mm);
-static void nav_send_pivot(uint32_t direction);
+static void nav_send_pivot(uint32_t direction, uint32_t speed_mm_s);
 static void nav_send(motion_cmd_t const * p_cmd);
 static ER   nav_post(uint32_t event);
 
@@ -312,6 +331,40 @@ ER
 nav_post_bypass_passed (void)
 {
     return (nav_post(EVT_PASSED));
+}
+
+/*!
+ * @brief Obstacle Scan's search verdict (Ruien), while Navigation waits
+ *        in the bypass search (nav_is_search_wait()).
+ *
+ * @param[in] command  NAV_SEARCH_LEFT / _RIGHT (one search pivot, ended by
+ *                     Obstacle Scan's StopTurn), _FOUND (follow the line)
+ *                     or _FAILED (stop, LINE_NOT_FOUND).
+ *
+ * @return E_OK, E_PAR for a bad command, or the error from tk_set_flg().
+ */
+ER
+nav_post_search (uint32_t command)
+{
+    ER result = E_PAR;
+
+    if ((command >= NAV_SEARCH_LEFT) && (command <= NAV_SEARCH_FAILED))
+    {
+        g_search_in = command;
+        result      = nav_post(EVT_SEARCH);
+    }
+
+    return (result);
+}
+
+/*!
+ * @brief True while Navigation is stopped in the bypass search, waiting
+ *        for nav_post_search() (read only, for Obstacle Scan).
+ */
+bool
+nav_is_search_wait (void)
+{
+    return (g_b_search_wait);
 }
 
 /*!
@@ -499,6 +552,7 @@ nav_take_events (UINT pattern)
     g_ctx.b_plan     = (g_ctx.b_plan || (0u != (bits & EVT_PLAN)));
     g_ctx.b_remote   = (g_ctx.b_remote || (0u != (bits & EVT_REMOTE)));
     g_ctx.b_passed   = (g_ctx.b_passed || (0u != (bits & EVT_PASSED)));
+    g_ctx.b_search   = (g_ctx.b_search || (0u != (bits & EVT_SEARCH)));
 
     if ((0u != (fresh & NAV_FLT_STOP_MASK)) &&
         (NAV_STATE_FAULT != g_state))
@@ -583,7 +637,7 @@ nav_on_move_done (void)
             if (g_ctx.turns_left > 1u)
             {
                 g_ctx.turns_left--;
-                nav_send_pivot(g_ctx.turn_dir);
+                nav_send_pivot(g_ctx.turn_dir, 0u);
             }
             else
             {
@@ -612,7 +666,7 @@ nav_on_move_done (void)
             break;
 
         case P_REACQUIRE:
-            nav_halt(NAV_STATE_FAULT, NAV_REASON_LINE_NOT_FOUND);
+            nav_enter(P_SEARCH_WAIT);   // Back limit, no line: search.
             break;
 
         case P_CROSS:
@@ -620,7 +674,8 @@ nav_on_move_done (void)
             break;
 
         case P_ALIGN:
-            nav_enter(P_FOLLOW);
+        case P_SEARCH_PIVOT:
+            nav_enter(P_SEARCH_WAIT);   // Obstacle Scan: line or not?
             break;
 
         default:
@@ -721,6 +776,31 @@ nav_process (void)
         }
     }
 
+    // Obstacle Scan's search verdict.  Only meaningful while waiting.
+    //
+    if (g_ctx.b_search)
+    {
+        g_ctx.b_search = false;
+
+        if (P_SEARCH_WAIT == g_ctx.phase)
+        {
+            nav_on_search(g_search_in);
+        }
+    }
+    else if (P_SEARCH_WAIT == g_ctx.phase)
+    {
+        g_ctx.search_loops++;
+
+        if (g_ctx.search_loops >= NAV_SEARCH_WAIT_LOOPS)
+        {
+            nav_halt(NAV_STATE_FAULT, NAV_REASON_LINE_NOT_FOUND);
+        }
+    }
+    else
+    {
+        // Not searching.
+    }
+
     if ((P_REACQUIRE == g_ctx.phase) && (NAV_LINE_ON == g_line_state))
     {
         nav_enter(P_CROSS);
@@ -732,6 +812,36 @@ nav_process (void)
     else
     {
         // Not re-acquiring.
+    }
+}
+
+/*!
+ * @brief Act on Obstacle Scan's search verdict, in P_SEARCH_WAIT.
+ *
+ * @param[in] command  NAV_SEARCH_.
+ */
+static void
+nav_on_search (uint32_t command)
+{
+    switch (command)
+    {
+        case NAV_SEARCH_LEFT:
+        case NAV_SEARCH_RIGHT:
+            g_ctx.search_cmd = command;
+            nav_enter(P_SEARCH_PIVOT);
+            break;
+
+        case NAV_SEARCH_FOUND:
+            nav_enter(P_FOLLOW);
+            break;
+
+        case NAV_SEARCH_FAILED:
+            nav_halt(NAV_STATE_FAULT, NAV_REASON_LINE_NOT_FOUND);
+            break;
+
+        default:
+            // Refused by nav_post_search().
+            break;
     }
 }
 
@@ -850,7 +960,8 @@ nav_enter (uint32_t phase)
     uint32_t const back = ((NAV_SIDE_LEFT == side) ? MOTION_DIR_RIGHT :
                                                      MOTION_DIR_LEFT);
 
-    g_ctx.phase = phase;
+    g_ctx.phase     = phase;
+    g_b_search_wait = (P_SEARCH_WAIT == phase);
 
     switch (phase)
     {
@@ -871,7 +982,7 @@ nav_enter (uint32_t phase)
         case P_TURNING:
             nav_set_state(NAV_STATE_JUNCTION);
             motion_set_speed_cap(0u);
-            nav_send_pivot(g_ctx.turn_dir);
+            nav_send_pivot(g_ctx.turn_dir, 0u);
             break;
 
         case P_WAIT_PLAN:
@@ -880,7 +991,7 @@ nav_enter (uint32_t phase)
 
         case P_BYPASS_OUT:
             nav_set_state(NAV_STATE_BYPASS);
-            nav_send_pivot(out);
+            nav_send_pivot(out, 0u);
             break;
 
         case P_BYPASS_SIDE:
@@ -889,7 +1000,7 @@ nav_enter (uint32_t phase)
             break;
 
         case P_BYPASS_TURN:
-            nav_send_pivot(back);
+            nav_send_pivot(back, 0u);
             break;
 
         case P_BYPASS_PAST:
@@ -898,7 +1009,7 @@ nav_enter (uint32_t phase)
             break;
 
         case P_BYPASS_BACK:
-            nav_send_pivot(back);
+            nav_send_pivot(back, 0u);
             break;
 
         case P_REACQUIRE:
@@ -913,7 +1024,20 @@ nav_enter (uint32_t phase)
             break;
 
         case P_ALIGN:
-            nav_send_pivot(out);    // The line runs the original way.
+            // The line runs the original way.  Slow, like a search pivot:
+            // Obstacle Scan stops it as soon as a line sensor sees it.
+            nav_send_pivot(out, NAV_SEARCH_PIVOT_MM_S);
+            break;
+
+        case P_SEARCH_WAIT:
+            nav_set_state(NAV_STATE_BYPASS);
+            g_ctx.search_loops = 0u;
+            break;
+
+        case P_SEARCH_PIVOT:
+            nav_send_pivot(((NAV_SEARCH_LEFT == g_ctx.search_cmd) ?
+                            MOTION_DIR_LEFT : MOTION_DIR_RIGHT),
+                           NAV_SEARCH_PIVOT_MM_S);
             break;
 
         default:
@@ -961,6 +1085,8 @@ nav_halt (uint32_t state, uint32_t reason)
     g_ctx.b_obstacle = false;
     g_ctx.b_plan     = false;
     g_ctx.b_passed   = false;
+    g_ctx.b_search   = false;
+    g_b_search_wait  = false;
     nav_set_state(state);
 
     if (g_ctx.b_motion_busy)
@@ -1027,11 +1153,15 @@ nav_send_straight (uint32_t speed_mm_s, uint32_t distance_mm)
 /*!
  * @brief Send a pivot; StopTurn from Line Following or Obstacle Scan ends
  *        it.
+ *
+ * @param[in] direction   MOTION_DIR_LEFT or MOTION_DIR_RIGHT.
+ * @param[in] speed_mm_s  Wheel speed; 0 = Motion's default.
  */
 static void
-nav_send_pivot (uint32_t direction)
+nav_send_pivot (uint32_t direction, uint32_t speed_mm_s)
 {
-    motion_cmd_t const cmd = { MOTION_CMD_PIVOT, direction, 0u, 0u };
+    motion_cmd_t const cmd = { MOTION_CMD_PIVOT, direction, speed_mm_s,
+                               0u };
 
     nav_send(&cmd);
 }

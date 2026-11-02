@@ -62,6 +62,9 @@ static line_state_t g_state      = LINE_SEARCHING;
 static int32_t      g_last_level = 0;
 static float        g_err_filt   = 0.0f;   /* smoothed error   */
 static float        g_err_prev   = 0.0f;   /* last loop's one  */
+static bool         g_b_resync   = true;   /* LOCAL: next ON sample has no
+                                            * valid previous error: skip D */
+static bool         g_b_was_follow = false;  /* LOCAL: hand-back edge */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -188,6 +191,24 @@ EXPORT void line_task(INT stacd, void * exinf)
         }
 #endif
 
+        /* LOCAL: Navigation hands steering back (e.g. after a bypass):
+         * forget what was read while not steering (the diagonal line
+         * crossing), so only what is under the sensors now decides. */
+        {
+            uint32_t const nav = nav_get_state();
+            bool const b_follow = ((NAV_STATE_LINE_FOLLOW == nav) ||
+                                   (NAV_STATE_JUNCTION == nav));
+
+            if (b_follow && !g_b_was_follow)
+            {
+                g_err_filt   = 0.0f;
+                g_err_prev   = 0.0f;
+                g_last_level = 0;
+                g_b_resync   = true;
+            }
+            g_b_was_follow = b_follow;
+        }
+
         uint16_t raw_c = line_read(LINE_C_CHAN);
         uint16_t raw_r = line_read(LINE_R_CHAN);
         float    c     = blackness(raw_c, WHITE_LEVEL_C, BLACK_LEVEL_C);
@@ -197,7 +218,8 @@ EXPORT void line_task(INT stacd, void * exinf)
 
         if ((c < LINE_LOST_FRAC) && (r < LINE_LOST_FRAC))
         {
-            g_state = LINE_LOST;
+            g_state    = LINE_LOST;
+            g_b_resync = true;    /* LOCAL: no D kick when the line returns */
 
             /* Lost: turn towards the side the line was last seen on.
              * Near the middle (line between the sensors on a straight):
@@ -233,8 +255,19 @@ EXPORT void line_task(INT stacd, void * exinf)
              * treat as straight instead of a hard turn. */
             if ((c > LINE_BOTH_BLACK) && (r > LINE_BOTH_BLACK))
             {
+                /* LOCAL: ease back to straight at LINE_LEVEL_STEP per loop
+                 * instead of snapping to 0 (that jerked on straights). */
                 level = 0;
-                g_last_level = 0;
+                if (g_last_level > LINE_LEVEL_STEP)
+                {
+                    level = g_last_level - LINE_LEVEL_STEP;
+                }
+                else if (g_last_level < -LINE_LEVEL_STEP)
+                {
+                    level = g_last_level + LINE_LEVEL_STEP;
+                }
+                g_last_level = level;
+                g_b_resync   = true;  /* LOCAL: no D kick afterwards */
                 line_output(level);
 #if LINE_DEBUG
                 tm_printf((UB*)"C=%4u R=%4u e=%d lvl=%d BOTH-BLK\n",
@@ -260,6 +293,14 @@ EXPORT void line_task(INT stacd, void * exinf)
 
             /* 1. Smooth the error: one noisy reading can't jerk the car. */
             g_err_filt += LINE_FILTER * (error - g_err_filt);
+
+            /* LOCAL: first sample after LOST / both-black / hand-back:
+             * the previous error is stale, so no derivative this time. */
+            if (g_b_resync)
+            {
+                g_err_prev = g_err_filt;
+                g_b_resync = false;
+            }
 
             /* 2. Small errors on a straight: just go straight. */
             float p_err = g_err_filt;

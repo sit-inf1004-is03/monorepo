@@ -58,7 +58,7 @@ subsystem5_test(void)
                "9-bit profile slots saturate and do not overlap");
 
     // Median of 3: one stray echo is ignored.
-    TEST_CHECK("S5-U03", (30u == obs_median3(30u, 175u, 31u)) &&
+    TEST_CHECK("S5-U03", (31u == obs_median3(30u, 175u, 31u)) &&
                (511u == obs_median3(511u, 20u, 511u)),
                "median of 3 removes one stray reading");
 
@@ -75,19 +75,22 @@ subsystem5_test(void)
                "side choice: bottle left/right, wall right, boxed in");
 
     // Edge and sideways distance: first clear step 45 deg, so the edge
-    // is taken at 37.5 deg; 25 cm ahead -> 25 x 0.77 = 20 + 8 + 2 cm.
+    // is taken at 37.5 deg; 25 cm ahead -> 25 x 0.77 = 20, limited to
+    // OBS_MAX_HALF_WIDTH_CM: 10 + 8 + 0 = 18 cm.  Edge at 15 deg (7.5):
+    // 25 x 0.13 = 4, raised to OBS_MIN_HALF_WIDTH_CM: 8 + 8 + 0 = 16 cm.
     TEST_CHECK("S5-U05",
                (3u == obs_find_edge(make_profile(fine_left,
                                                  OBS_FINE_COUNT), CLEAR_CM))
-               && (30u == obs_lateral_cm(25u, 3u)),
+               && (18u == obs_lateral_cm(25u, 3u)) &&
+               (16u == obs_lateral_cm(25u, 1u)),
                "fine scan edge step and lateral distance");
 
     // Three legs, 25 cm ahead, 24 cm sideways, 45 deg out:
-    // out 24 / 0.71 = 34; past 25 + 8 + 8 + 2 - 34 x 0.71 (24) = 19;
+    // out 24 / 0.71 = 34; past 25 + 15 + 8 + 5 - 34 x 0.71 (24) = 29;
     // back 34 x 0.71 / sin 30 deg (49) + 15 slack = 64.  The out leg is
     // capped at OBS_OUT_MAX_CM; the past leg is never 0.
     TEST_CHECK("S5-U08", (34u == obs_out_cm(24u, 3u)) &&
-               (19u == obs_past_cm(25u, 34u, 3u)) &&
+               (29u == obs_past_cm(25u, 34u, 3u)) &&
                (64u == obs_back_cm(34u, 3u)) &&
                (OBS_OUT_MAX_CM == obs_out_cm(100u, 1u)) &&
                (1u == obs_past_cm(0u, 40u, 1u)),
@@ -102,6 +105,18 @@ subsystem5_test(void)
                (((786u * OBS_HALF_TRACK_MM) + 500u) / 1000u ==
                 obs_pivot_arc_mm(3u)),
                "pivot angle clears the car body, encoder arc");
+
+    // Line search: targets +15, -30, +45 ... from the start heading; a
+    // 165 deg sweep (+75 -> -90) is 2.88 rad x the half track.
+    TEST_CHECK("S5-U10", (0 == obs_search_target_deg(0u, 15u, 15u)) &&
+               (15 == obs_search_target_deg(1u, 15u, 15u)) &&
+               (-30 == obs_search_target_deg(2u, 15u, 15u)) &&
+               (45 == obs_search_target_deg(3u, 15u, 15u)) &&
+               (-90 == obs_search_target_deg(6u, 15u, 15u)) &&
+               ((((165u * 17453u * OBS_HALF_TRACK_MM) + 500000u) /
+                 1000000u) == obs_deg_arc_mm(165u)) &&
+               (obs_pivot_arc_mm(3u) == obs_deg_arc_mm(45u)),
+               "line search zig-zag targets and pivot arc");
 
     // Bypass plan through Navigation's packer: 2 + 3 x 9 = 29 bits,
     // values kept.

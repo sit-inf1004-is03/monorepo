@@ -11,7 +11,9 @@
  *                                     nav_set_line_state()
  *   Obstacle Scan (Ruien):            nav_post_obstacle(),
  *                                     nav_post_bypass_plan(),
- *                                     nav_post_bypass_passed()
+ *                                     nav_post_bypass_passed(),
+ *                                     nav_post_search(),
+ *                                     nav_is_search_wait()
  *   Any subsystem, its own bits only: nav_raise_fault()
  *   Wi-Fi / MQTT commands (Rifa):     nav_post_remote()
  *   Everyone (telemetry, scan arm):   nav_get_state(), nav_get_faults(),
@@ -28,6 +30,7 @@
 #ifndef NAVIGATION_H
 #define NAVIGATION_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "../app.h"
@@ -64,6 +67,13 @@
 #define NAV_SIDE_LEFT           (0u)
 #define NAV_SIDE_RIGHT          (1u)
 #define NAV_BYPASS_CM_MAX       (511u)  // 9-bit distance fields.
+
+// Bypass line search verdicts (Obstacle Scan), 3 bits.
+//
+#define NAV_SEARCH_LEFT         (1u)    // One search pivot left.
+#define NAV_SEARCH_RIGHT        (2u)    // One search pivot right.
+#define NAV_SEARCH_FOUND        (3u)    // Line on: follow it.
+#define NAV_SEARCH_FAILED       (4u)    // Give up: LINE_NOT_FOUND.
 
 // Remote commands.
 //
@@ -105,6 +115,8 @@ ER       nav_post_obstacle(void);
 ER       nav_post_bypass_plan(uint32_t side, uint32_t out_cm,
                               uint32_t past_cm, uint32_t back_cm);
 ER       nav_post_bypass_passed(void);
+ER       nav_post_search(uint32_t command);
+bool     nav_is_search_wait(void);
 ER       nav_raise_fault(uint32_t bits);
 ER       nav_post_remote(uint32_t command);
 

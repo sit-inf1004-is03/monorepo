@@ -28,6 +28,14 @@
 #define SERVO_MIN_PULSE_US    (600u)
 #define SERVO_MAX_PULSE_US    (2400u)
 
+/* Trim: added to every requested angle (start-up centre included) so that
+ * 90 deg really points straight ahead.  The horn sits on its spline one
+ * tooth (~17 deg on an SG90) off, so the true servo centre looks a bit to
+ * one side.  On this car low angles look RIGHT: if the sensor still
+ * points right at start-up, make this larger; if it now points left,
+ * smaller.  0 once the horn is re-seated straight. */
+#define SERVO_TRIM_DEG        (10)
+
 /* RP2040 PWM block: libbsp has no divider call, so DIV is written here.
  * Per-slice register stride 0x14, DIV at offset 0x04; integer part in
  * bits 11..4 (fraction bits 3..0 left at 0). */
@@ -76,21 +84,31 @@ servo_set_angle_deg(uint8_t angle_deg)
 }
 
 /**
- * @brief  Map 0..180 degrees linearly onto the calibrated pulse range.
- * @param  angle_deg  Requested angle; clamped to SERVO_MAX_DEG.
+ * @brief  Map 0..180 degrees (plus SERVO_TRIM_DEG) linearly onto the
+ *         calibrated pulse range.
+ * @param  angle_deg  Requested angle; the trimmed angle is clamped to
+ *                    0..SERVO_MAX_DEG.
  * @return Pulse width in microseconds (= PWM compare value).
  */
 static uint32_t
 angle_to_pulse_us(uint8_t angle_deg)
 {
-    uint32_t deg = (uint32_t)angle_deg;
+    int32_t deg = (int32_t)angle_deg + SERVO_TRIM_DEG;
 
-    if (deg > SERVO_MAX_DEG)
+    if (deg < 0)
     {
-        deg = SERVO_MAX_DEG;                        /* clamp, never wrap */
+        deg = 0;                                    /* clamp, never wrap */
+    }
+    else if (deg > (int32_t)SERVO_MAX_DEG)
+    {
+        deg = (int32_t)SERVO_MAX_DEG;
+    }
+    else
+    {
+        /* In range. */
     }
 
     return (SERVO_MIN_PULSE_US +
-            ((deg * (SERVO_MAX_PULSE_US - SERVO_MIN_PULSE_US)) /
+            (((uint32_t)deg * (SERVO_MAX_PULSE_US - SERVO_MIN_PULSE_US)) /
              SERVO_MAX_DEG));
 }

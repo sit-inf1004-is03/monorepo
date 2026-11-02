@@ -46,12 +46,25 @@
 // OBS_REJOIN_STEP and creep at most "back" to find the line.
 //
 #define OBS_CAR_HALF_WIDTH_CM   (8u)    // TODO: measure the real car.
-#define OBS_SIDE_MARGIN_CM      (2u)
+#define OBS_SIDE_MARGIN_CM      (0u)    // Gap: car side to box side.
+                                        // 0: shortest out diagonal; the
+                                        // half-width limits above still
+                                        // leave 0.5-2.5 cm on a 15 cm box.
 
 // The sensor only sees the obstacle's front face, so its depth is an
 // assumption: set it to the deepest obstacle on the track.
 //
-#define OBS_DEPTH_CM            (8u)    // A bottle.
+#define OBS_DEPTH_CM            (15u)   // Deepest box on the track.
+
+// Obstacle half-width used for the sideways distance: the measured value
+// (front x tan(edge)), limited to MIN..MAX.  Boxes on the track are 10 to
+// 15 cm wide.  The sonar beam (~30 deg) makes a box look wider, never
+// narrower, so MIN = the widest box (a false "open" ping on a flat face
+// cannot make the car clip it) and MAX = the widest box + 2 cm beam slack
+// (a box that looks huge does not swing the car 30 cm out).
+//
+#define OBS_MIN_HALF_WIDTH_CM   (8u)    // 15 cm box.
+#define OBS_MAX_HALF_WIDTH_CM   (10u)   // 15 cm box + beam slack.
 
 // Ultrasonic sensor to the wheel axle (the pivot centre).  The past leg
 // ends when the axle is OBS_PAST_MARGIN_CM past the obstacle's back: the
@@ -66,7 +79,9 @@
 // that estimate + OBS_PAST_SCAN_EXTRA_CM, for deeper obstacles.
 //
 #define OBS_SENSOR_TO_AXLE_CM   (8u)    // TODO: measure the real car.
-#define OBS_PAST_MARGIN_CM      (2u)    // Buffer after the axle is past.
+#define OBS_PAST_MARGIN_CM      (5u)    // Buffer after the axle is past;
+                                        // >= 3 cm with no side gap, or the
+                                        // turn-in clips the back corner.
 #define OBS_PAST_SCAN_EXTRA_CM  (15u)
 
 // Half the distance between the two wheel centres: turns a pivot angle
@@ -106,6 +121,9 @@ uint16_t obs_out_cm(uint16_t lateral_cm, uint16_t pivot_step);
 uint16_t obs_past_cm(uint16_t front_cm, uint16_t out_cm,
                      uint16_t pivot_step);
 uint16_t obs_back_cm(uint16_t out_cm, uint16_t pivot_step);
+uint16_t obs_deg_arc_mm(uint16_t angle_deg);
+int16_t  obs_search_target_deg(uint16_t step, uint16_t start_deg,
+                               uint16_t step_deg);
 
 #endif /* OBSTACLE_LOGIC_H */
 
