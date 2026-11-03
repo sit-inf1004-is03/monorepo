@@ -61,7 +61,13 @@
 #define EVT_REMOTE          (1u << 13)
 #define EVT_ALL             (EVT_BARCODE | EVT_JUNCTION | EVT_OBSTACLE |    \
                              EVT_PLAN | EVT_REMOTE)
-#define WAIT_ALL            (EVT_ALL | NAV_FLT_ALL)
+
+// A request to clear degrade fault bit n is event bit n + 16, so each
+// owner sets only its own bit and no word has two writers.
+//
+#define EVT_CLEAR_SHIFT     (16u)
+#define EVT_CLEAR_ALL       (NAV_FLT_DEGRADE_MASK << EVT_CLEAR_SHIFT)
+#define WAIT_ALL            (EVT_ALL | NAV_FLT_ALL | EVT_CLEAR_ALL)
 
 // Bypass plan, uint16 in a uint32_t (PROPOSED bit order, Ruien owns it):
 // bits 0-1 side, bits 2-10 distance in cm (0-511), bits 11-14 angle
@@ -277,8 +283,9 @@ nav_post_bypass_plan (uint32_t side, uint32_t distance_cm)
 
 /*!
  * @brief Raise fault bits (any subsystem, its own bits only).  A bit in
- *        NAV_FLT_STOP_MASK brakes the car; Wi-Fi loss is only recorded.
- *        Bits stay raised in nav_get_faults() until a remote CLEAR.
+ *        NAV_FLT_STOP_MASK brakes the car and stays raised until a remote
+ *        CLEAR; a degrade bit (IMU, Wi-Fi loss) is only recorded, until
+ *        its owner calls nav_clear_fault() or a remote CLEAR.
  *
  * @param[in] bits  One or more NAV_FLT_ bits.
  *
@@ -293,6 +300,32 @@ nav_raise_fault (uint32_t bits)
     if ((0u != bits) && (0u == (bits & ~NAV_FLT_ALL)))
     {
         result = tk_set_flg(g_flg_id, bits);
+    }
+
+    return (result);
+}
+
+/*!
+ * @brief Clear degrade fault bits on recovery (their owner only, e.g. the
+ *        IMU task once the IMU answers again).
+ *
+ * Stop bits cannot be cleared this way: the car has braked, and only a
+ * remote CLEAR restarts it.  If a raise and a clear of the same bit arrive
+ * together, the bit stays raised.
+ *
+ * @param[in] bits  One or more bits of NAV_FLT_DEGRADE_MASK.
+ *
+ * @return E_OK, E_PAR for bits outside NAV_FLT_DEGRADE_MASK, or the error
+ *         from tk_set_flg().
+ */
+ER
+nav_clear_fault (uint32_t bits)
+{
+    ER result = E_PAR;
+
+    if ((0u != bits) && (0u == (bits & ~NAV_FLT_DEGRADE_MASK)))
+    {
+        result = tk_set_flg(g_flg_id, (bits << EVT_CLEAR_SHIFT));
     }
 
     return (result);
@@ -421,11 +454,15 @@ nav_take_events (UINT pattern)
 {
     // Cast: UINT and uint32_t are both 32 bits on this target.
     //
-    uint32_t const bits   = (uint32_t) pattern;
-    uint32_t const faults = bits & NAV_FLT_ALL;
-    uint32_t const fresh  = faults & ~g_faults;
+    uint32_t const bits    = (uint32_t) pattern;
+    uint32_t const faults  = bits & NAV_FLT_ALL;
+    uint32_t const cleared = (bits >> EVT_CLEAR_SHIFT) & NAV_FLT_DEGRADE_MASK;
+    uint32_t const fresh   = faults & ~g_faults;
 
-    g_faults = g_faults | faults;   // This task is the only writer.
+    // Clear first, then raise, so a raise and clear together leaves the
+    // bit raised.  This task is the only writer of g_faults.
+    //
+    g_faults = (g_faults & ~cleared) | faults;
 
     g_ctx.b_barcode  = (g_ctx.b_barcode || (0u != (bits & EVT_BARCODE)));
     g_ctx.b_junction = (g_ctx.b_junction || (0u != (bits & EVT_JUNCTION)));
