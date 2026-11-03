@@ -1,33 +1,35 @@
-/*
- *	subsystem4.h
- *	Subsystem 4 -- Monitor (reporting).  Student ID: <student ID>.
+/**
+ * @file    subsystem4.h
+ * @brief   Subsystem 4 -- IMU-Based Motion and Terrain Monitoring.
+ *          Buddy 4: Andrew Chia Kai Xun Bedina (2501298).
  *
- *	Public interface of subsystem 4.  Other subsystems include it as
- *	"../subsystem4/subsystem4.h".
+ * Public interface of subsystem 4.  Other subsystems include it as
+ * "../subsystem4/subsystem4.h" and use only what is listed here.
+ *
+ * Hardware: MPU-9250 on I2C1, GP2 = SDA, GP3 = SCL (Grove port 2).
+ * Task:     imu_task, priority S4_PRI_IMU, any core, every 10 ms.
+ *
+ * What the other subsystems get (details in imu_task.h and imu_pack.h):
+ *   Buddy 1  imu_task_get_snapshot(), imu_task_get_aux() every publish;
+ *            imu_task_read_event() drained with TMO_POL; layouts in
+ *            imu_pack.h (snapshot 4 B, aux 4 B, event 2 B).
+ *   Buddy 2  ESTOP (fault bit 4) in the shared fault flag, waited on with
+ *            faults_wait(FAULTS_NOTIFY_MOTION, ...) (common/faults.h);
+ *            calls imu_task_set_encoder_source() from subsystem2_init().
+ *   Nav      READY_IMU, IMU fault (bit 3) and ESTOP in the fault flag;
+ *            calls imu_task_signal_course_done() at the end of the run.
  */
 
 #ifndef SUBSYSTEM4_H
 #define SUBSYSTEM4_H
 
 #include "../app.h"
+#include "../common/faults.h"
+#include "imu_task.h"
+#include "imu_pack.h"
 
-#define S4_PRI_MONITOR		18	/* priority band 18-19 (TEAM.md) */
-#define S4_ALARM_MS		2000	/* report anyway if nothing for 2 s */
-#define S4_LED_TOGGLE_REPORTS	6	/* pause/resume the LED every N reports */
-
-/* IF-03: send one text line (at most S4_SUMMARY_MAX bytes, no '\0'
-   needed) to mbf_summary, then set FLG_BATCH in flg_events. */
-#define S4_SUMMARY_MAX		48
-#define FLG_BATCH		0x0002	/* set by subsystem 3 */
-#define FLG_ALARM		0x0001	/* private: set by our alarm handler */
-
-IMPORT ID	mbf_summary;
-IMPORT ID	flg_events;
-
-/* Private to subsystem 4 */
-IMPORT ID	alm_monitor;
-IMPORT UW	s4_lines_received;	/* for the tests */
-IMPORT void	monitor_task(INT stacd, void *exinf);
-IMPORT void	monitor_alarm_handler(void *exinf);
+#define S4_PRI_IMU      (18)    /* priority band 18-19 (TEAM.md section 4) */
 
 #endif /* SUBSYSTEM4_H */
+
+/*** end of file ***/

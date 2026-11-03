@@ -1,0 +1,804 @@
+  0.0s imu: accel mg   x 91  y 94  z -864
+  0.0s imu: mag raw    x -561  y 719  z -1181
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 3 dps, heading 11 deg, motion 0
+  0.0s imu: accel mg   x 82  y 93  z -861
+  0.0s imu: mag raw    x -560  y 715  z -1189
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 0 dps, heading 11 deg, motion 0
+  0.0s imu: accel mg   x 79  y 94  z -866
+  0.0s imu: mag raw    x -564  y 717  z -1177
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+  0.0s imu: accel mg   x 76  y 94  z -864
+  0.0s imu: mag raw    x -558  y 715  z -1179
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate -3 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 75  y 93  z -862
+  0.0s imu: mag raw    x -560  y 724  z -1189
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 77  y 92  z -858
+  0.0s imu: mag raw    x -563  y 717  z -1178
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 2 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 77  y 90  z -856
+  0.0s imu: mag raw    x -566  y 717  z -1178
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 83  y 90  z -864
+  0.0s imu: mag raw    x -562  y 723  z -1174
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 74  y 98  z -869
+  0.0s imu: mag raw    x -566  y 717  z -1179
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 1 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 88  y 89  z -864
+  0.0s imu: mag raw    x -557  y 724  z -1176
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 80  y 96  z -869
+  0.0s imu: mag raw    x -564  y 719  z -1177
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 1 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 76  y 92  z -866
+  0.0s imu: mag raw    x -560  y 720  z -1187
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 78  y 89  z -870
+  0.0s imu: mag raw    x -561  y 718  z -1172
+  0.0s imu: pitch 0 deg, roll 1 deg, terrain 0
+  0.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 83  y 103  z -860
+  0.0s imu: mag raw    x -564  y 724  z -1175
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 5 dps, heading 10 deg, motion 0
+  0.0s imu: accel mg   x 79  y 95  z -865
+  0.0s imu: mag raw    x -575  y 720  z -1181
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 2 dps, heading 11 deg, motion 0
+  0.0s imu: accel mg   x 88  y 100  z -869
+  0.0s imu: mag raw    x -567  y 719  z -1182
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 0 dps, heading 11 deg, motion 0
+  0.0s imu: accel mg   x 86  y 101  z -857
+  0.0s imu: mag raw    x -560  y 723  z -1174
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 0 dps, heading 11 deg, motion 0
+  0.0s imu: accel mg   x 83  y 94  z -862
+  0.0s imu: mag raw    x -565  y 726  z -1182
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate 0 dps, heading 11 deg, motion 0
+  0.0s imu: accel mg   x 86  y 86  z -863
+  0.0s imu: mag raw    x -562  y 721  z -1178
+  0.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+  0.2s imu: accel mg   x 80  y 101  z -853
+  0.2s imu: mag raw    x -564  y 720  z -1185
+  0.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.2s imu: yaw rate 1 dps, heading 11 deg, motion 0
+  0.5s imu: accel mg   x 75  y 103  z -861
+  0.5s imu: mag raw    x -562  y 713  z -1190
+  0.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+  0.7s imu: accel mg   x 82  y 99  z -858
+  0.7s imu: mag raw    x -563  y 712  z -1195
+  0.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+  0.7s imu: yaw rate 1 dps, heading 11 deg, motion 0
+  1.0s imu: accel mg   x 75  y 99  z -861
+  1.0s imu: mag raw    x -556  y 711  z -1191
+  1.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  1.0s imu: yaw rate 1 dps, heading 11 deg, motion 0
+  1.3s imu: accel mg   x 75  y 90  z -875
+  1.3s imu: mag raw    x -562  y 713  z -1188
+  1.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+  1.3s imu: yaw rate -2 dps, heading 10 deg, motion 0
+  1.5s imu: accel mg   x 86  y 125  z -847
+  1.5s imu: mag raw    x -562  y 717  z -1177
+  1.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  1.5s imu: yaw rate 2 dps, heading 11 deg, motion 2
+  1.7s imu: accel mg   x 81  y 100  z -866
+  1.7s imu: mag raw    x -564  y 719  z -1159
+  1.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+  1.7s imu: yaw rate 1 dps, heading 11 deg, motion 0
+  2.0s imu: accel mg   x 76  y 95  z -863
+  2.0s imu: mag raw    x -562  y 725  z -1165
+  2.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  2.0s imu: yaw rate -2 dps, heading 10 deg, motion 0
+  2.3s imu: accel mg   x 79  y 94  z -864
+  2.3s imu: mag raw    x -570  y 726  z -1170
+  2.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+  2.3s imu: yaw rate -2 dps, heading 10 deg, motion 0
+  2.5s imu: accel mg   x 78  y 102  z -863
+  2.5s imu: mag raw    x -571  y 731  z -1170
+  2.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  2.5s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  2.8s imu: accel mg   x 78  y 102  z -866
+  2.8s imu: mag raw    x -561  y 738  z -1167
+  2.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+  2.8s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  3.0s imu: accel mg   x 80  y 98  z -865
+  3.0s imu: mag raw    x -560  y 734  z -1165
+  3.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  3.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  3.3s imu: accel mg   x 77  y 93  z -867
+  3.3s imu: mag raw    x -565  y 728  z -1166
+  3.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+  3.3s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  3.5s imu: accel mg   x 80  y 97  z -872
+  3.5s imu: mag raw    x -558  y 729  z -1157
+  3.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  3.5s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  3.7s imu: accel mg   x 77  y 103  z -858
+  3.7s imu: mag raw    x -567  y 732  z -1164
+  3.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+  3.7s imu: yaw rate 3 dps, heading 10 deg, motion 0
+  4.0s imu: accel mg   x 84  y 108  z -854
+  4.0s imu: mag raw    x -578  y 731  z -1162
+  4.0s imu: pitch 0 deg, roll -1 deg, terrain 0
+  4.0s imu: yaw rate 3 dps, heading 11 deg, motion 0
+  4.2s imu: accel mg   x 87  y 106  z -858
+  4.2s imu: mag raw    x -572  y 733  z -1168
+  4.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+  4.2s imu: yaw rate 2 dps, heading 11 deg, motion 0
+  4.5s imu: accel mg   x 89  y 109  z -862
+  4.5s imu: mag raw    x -556  y 734  z -1158
+  4.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  4.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+  4.8s imu: accel mg   x 89  y 102  z -857
+  4.8s imu: mag raw    x -564  y 732  z -1162
+  4.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+  4.8s imu: yaw rate -1 dps, heading 11 deg, motion 0
+  5.0s imu: accel mg   x 85  y 101  z -862
+  5.0s imu: mag raw    x -560  y 737  z -1173
+  5.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  5.0s imu: yaw rate -2 dps, heading 10 deg, motion 0
+  5.3s imu: accel mg   x 90  y 105  z -858
+  5.3s imu: mag raw    x -561  y 740  z -1172
+  5.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+  5.3s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  5.5s imu: accel mg   x 82  y 104  z -858
+  5.5s imu: mag raw    x -560  y 742  z -1163
+  5.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  5.5s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  5.7s imu: accel mg   x 81  y 107  z -859
+  5.7s imu: mag raw    x -567  y 738  z -1165
+  5.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+  5.7s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  6.0s imu: accel mg   x 82  y 111  z -866
+  6.0s imu: mag raw    x -564  y 741  z -1166
+  6.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  6.0s imu: yaw rate 0 dps, heading 10 deg, motion 0
+  6.2s imu: accel mg   x 80  y 103  z -867
+  6.2s imu: mag raw    x -564  y 739  z -1167
+  6.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+  6.2s imu: yaw rate -2 dps, heading 10 deg, motion 0
+  6.5s imu: accel mg   x 73  y 99  z -865
+  6.5s imu: mag raw    x -567  y 738  z -1158
+  6.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  6.5s imu: yaw rate -2 dps, heading 10 deg, motion 0
+  6.7s imu: accel mg   x 77  y 100  z -862
+  6.7s imu: mag raw    x -568  y 737  z -1166
+  6.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+  6.7s imu: yaw rate 0 dps, heading 9 deg, motion 0
+  7.0s imu: accel mg   x 81  y 97  z -872
+  7.0s imu: mag raw    x -567  y 732  z -1152
+  7.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  7.0s imu: yaw rate 1 dps, heading 10 deg, motion 0
+  7.3s imu: accel mg   x 82  y 102  z -860
+  7.3s imu: mag raw    x -566  y 732  z -1163
+  7.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+  7.3s imu: yaw rate 2 dps, heading 10 deg, motion 0
+  7.5s imu: accel mg   x 74  y 95  z -865
+  7.5s imu: mag raw    x -557  y 724  z -1170
+  7.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  7.5s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  7.8s imu: accel mg   x 76  y 102  z -866
+  7.8s imu: mag raw    x -566  y 726  z -1171
+  7.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+  7.8s imu: yaw rate 2 dps, heading 10 deg, motion 0
+  8.0s imu: accel mg   x 79  y 100  z -866
+  8.0s imu: mag raw    x -560  y 726  z -1168
+  8.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  8.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+  8.3s imu: accel mg   x 83  y 97  z -871
+  8.3s imu: mag raw    x -561  y 738  z -1163
+  8.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+  8.3s imu: yaw rate -3 dps, heading 9 deg, motion 0
+  8.5s imu: accel mg   x 75  y 102  z -870
+  8.5s imu: mag raw    x -558  y 747  z -1157
+  8.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  8.5s imu: yaw rate -3 dps, heading 9 deg, motion 0
+  8.8s imu: accel mg   x 83  y 105  z -865
+  8.8s imu: mag raw    x -557  y 752  z -1162
+  8.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+  8.8s imu: yaw rate 1 dps, heading 9 deg, motion 0
+  9.0s imu: accel mg   x 86  y 105  z -866
+  9.0s imu: mag raw    x -556  y 752  z -1166
+  9.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+  9.0s imu: yaw rate 0 dps, heading 9 deg, motion 0
+  9.3s imu: accel mg   x 84  y 106  z -862
+  9.3s imu: mag raw    x -558  y 754  z -1163
+  9.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+  9.3s imu: yaw rate -1 dps, heading 9 deg, motion 0
+  9.5s imu: accel mg   x 84  y 103  z -862
+  9.5s imu: mag raw    x -558  y 762  z -1156
+  9.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+  9.5s imu: yaw rate -2 dps, heading 9 deg, motion 0
+  9.8s imu: accel mg   x 89  y 104  z -862
+  9.8s imu: mag raw    x -561  y 757  z -1161
+  9.8s imu: pitch 0 deg, roll -1 deg, terrain 0
+  9.8s imu: yaw rate 2 dps, heading 9 deg, motion 0
+ 10.0s imu: accel mg   x 80  y 105  z -864
+ 10.0s imu: mag raw    x -559  y 758  z -1166
+ 10.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 10.0s imu: yaw rate -2 dps, heading 9 deg, motion 0
+ 10.3s imu: accel mg   x 83  y 111  z -860
+ 10.3s imu: mag raw    x -561  y 754  z -1159
+ 10.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 10.3s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 10.5s imu: accel mg   x 92  y 102  z -864
+ 10.5s imu: mag raw    x -563  y 747  z -1155
+ 10.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 10.5s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 10.8s imu: accel mg   x 83  y 100  z -864
+ 10.8s imu: mag raw    x -571  y 744  z -1156
+ 10.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 10.8s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 11.0s imu: accel mg   x 85  y 102  z -861
+ 11.0s imu: mag raw    x -562  y 748  z -1159
+ 11.0s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 11.0s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 11.3s imu: accel mg   x 80  y 97  z -862
+ 11.3s imu: mag raw    x -564  y 733  z -1160
+ 11.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 11.3s imu: yaw rate -3 dps, heading 10 deg, motion 0
+ 11.5s imu: accel mg   x 78  y 97  z -860
+ 11.5s imu: mag raw    x -570  y 742  z -1163
+ 11.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 11.5s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 11.8s imu: accel mg   x 74  y 102  z -867
+ 11.8s imu: mag raw    x -572  y 742  z -1159
+ 11.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 11.8s imu: yaw rate -1 dps, heading 9 deg, motion 0
+ 12.0s imu: accel mg   x 76  y 96  z -864
+ 12.0s imu: mag raw    x -572  y 738  z -1162
+ 12.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 12.0s imu: yaw rate 0 dps, heading 9 deg, motion 0
+ 12.3s imu: accel mg   x 75  y 104  z -871
+ 12.3s imu: mag raw    x -569  y 731  z -1158
+ 12.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 12.3s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 12.5s imu: accel mg   x 81  y 97  z -868
+ 12.5s imu: mag raw    x -568  y 737  z -1162
+ 12.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 12.5s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 12.8s imu: accel mg   x 77  y 94  z -866
+ 12.8s imu: mag raw    x -567  y 735  z -1166
+ 12.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 12.8s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 13.0s imu: accel mg   x 79  y 104  z -865
+ 13.0s imu: mag raw    x -574  y 745  z -1167
+ 13.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 13.0s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 13.3s imu: accel mg   x 81  y 99  z -867
+ 13.3s imu: mag raw    x -569  y 735  z -1160
+ 13.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 13.3s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 13.5s imu: accel mg   x 79  y 101  z -859
+ 13.5s imu: mag raw    x -565  y 744  z -1150
+ 13.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 13.5s imu: yaw rate -2 dps, heading 10 deg, motion 0
+ 13.8s imu: accel mg   x 85  y 104  z -858
+ 13.8s imu: mag raw    x -573  y 737  z -1167
+ 13.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 13.8s imu: yaw rate 4 dps, heading 11 deg, motion 0
+ 14.0s imu: accel mg   x 82  y 108  z -862
+ 14.0s imu: mag raw    x -573  y 737  z -1160
+ 14.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 14.0s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 14.3s imu: accel mg   x 87  y 110  z -865
+ 14.3s imu: mag raw    x -568  y 737  z -1158
+ 14.3s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 14.3s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 14.5s imu: accel mg   x 79  y 104  z -858
+ 14.5s imu: mag raw    x -570  y 736  z -1164
+ 14.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 14.5s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 14.8s imu: accel mg   x 83  y 109  z -858
+ 14.8s imu: mag raw    x -560  y 742  z -1161
+ 14.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 14.8s imu: yaw rate -2 dps, heading 10 deg, motion 0
+ 15.0s imu: accel mg   x 86  y 99  z -852
+ 15.0s imu: mag raw    x -571  y 746  z -1163
+ 15.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 15.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 15.2s imu: accel mg   x 89  y 102  z -863
+ 15.2s imu: mag raw    x -567  y 741  z -1156
+ 15.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 15.2s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 15.5s imu: accel mg   x 83  y 102  z -862
+ 15.5s imu: mag raw    x -568  y 745  z -1160
+ 15.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 15.5s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 15.7s imu: accel mg   x 81  y 105  z -862
+ 15.7s imu: mag raw    x -567  y 745  z -1159
+ 15.7s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 15.7s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 16.0s imu: accel mg   x 86  y 105  z -861
+ 16.0s imu: mag raw    x -568  y 744  z -1158
+ 16.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 16.0s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 16.2s imu: accel mg   x 79  y 100  z -873
+ 16.2s imu: mag raw    x -570  y 750  z -1164
+ 16.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 16.2s imu: yaw rate -3 dps, heading 9 deg, motion 0
+ 16.5s imu: accel mg   x 75  y 102  z -871
+ 16.5s imu: mag raw    x -557  y 740  z -1153
+ 16.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 16.5s imu: yaw rate -1 dps, heading 9 deg, motion 0
+ 16.7s imu: accel mg   x 76  y 101  z -862
+ 16.7s imu: mag raw    x -573  y 732  z -1162
+ 16.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 16.7s imu: yaw rate 2 dps, heading 10 deg, motion 0
+ 17.0s imu: accel mg   x 79  y 98  z -865
+ 17.0s imu: mag raw    x -564  y 736  z -1157
+ 17.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 17.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 17.2s imu: accel mg   x 79  y 101  z -862
+ 17.2s imu: mag raw    x -565  y 732  z -1166
+ 17.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 17.2s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 17.5s imu: accel mg   x 80  y 102  z -870
+ 17.5s imu: mag raw    x -573  y 732  z -1157
+ 17.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 17.5s imu: yaw rate 2 dps, heading 10 deg, motion 0
+ 17.7s imu: accel mg   x 79  y 104  z -866
+ 17.7s imu: mag raw    x -562  y 728  z -1164
+ 17.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 17.7s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 18.0s imu: accel mg   x 87  y 101  z -859
+ 18.0s imu: mag raw    x -566  y 736  z -1172
+ 18.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 18.0s imu: yaw rate 2 dps, heading 10 deg, motion 0
+ 18.2s imu: accel mg   x 79  y 102  z -865
+ 18.2s imu: mag raw    x -558  y 738  z -1157
+ 18.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 18.2s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 18.5s imu: accel mg   x 80  y 99  z -858
+ 18.5s imu: mag raw    x -572  y 736  z -1158
+ 18.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 18.5s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 18.7s imu: accel mg   x 81  y 98  z -860
+ 18.7s imu: mag raw    x -570  y 738  z -1165
+ 18.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 18.7s imu: yaw rate 2 dps, heading 10 deg, motion 0
+ 19.0s imu: accel mg   x 82  y 102  z -861
+ 19.0s imu: mag raw    x -566  y 742  z -1162
+ 19.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 19.0s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 19.2s imu: accel mg   x 78  y 101  z -864
+ 19.2s imu: mag raw    x -572  y 742  z -1157
+ 19.2s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 19.2s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 19.5s imu: accel mg   x 83  y 111  z -857
+ 19.5s imu: mag raw    x -577  y 743  z -1157
+ 19.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 19.5s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 19.7s imu: accel mg   x 85  y 106  z -859
+ 19.7s imu: mag raw    x -562  y 736  z -1156
+ 19.7s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 19.7s imu: yaw rate 2 dps, heading 11 deg, motion 0
+ 20.0s imu: accel mg   x 79  y 108  z -866
+ 20.0s imu: mag raw    x -566  y 735  z -1166
+ 20.0s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 20.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 20.2s imu: accel mg   x 87  y 102  z -854
+ 20.2s imu: mag raw    x -569  y 739  z -1155
+ 20.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 20.2s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 20.5s imu: accel mg   x 87  y 105  z -858
+ 20.5s imu: mag raw    x -569  y 736  z -1158
+ 20.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 20.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 20.7s imu: accel mg   x 84  y 104  z -863
+ 20.7s imu: mag raw    x -564  y 737  z -1164
+ 20.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 20.7s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 21.0s imu: accel mg   x 83  y 98  z -863
+ 21.0s imu: mag raw    x -562  y 739  z -1160
+ 21.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 21.0s imu: yaw rate -2 dps, heading 10 deg, motion 0
+ 21.2s imu: accel mg   x 81  y 96  z -859
+ 21.2s imu: mag raw    x -565  y 729  z -1156
+ 21.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 21.2s imu: yaw rate -2 dps, heading 10 deg, motion 0
+ 21.5s imu: accel mg   x 78  y 96  z -866
+ 21.5s imu: mag raw    x -569  y 738  z -1165
+ 21.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 21.5s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 21.7s imu: accel mg   x 78  y 99  z -861
+ 21.7s imu: mag raw    x -570  y 737  z -1159
+ 21.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 21.7s imu: yaw rate 1 dps, heading 10 deg, motion 0
+ 22.0s imu: accel mg   x 79  y 98  z -869
+ 22.0s imu: mag raw    x -564  y 734  z -1148
+ 22.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 22.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 22.2s imu: accel mg   x 80  y 100  z -862
+ 22.2s imu: mag raw    x -563  y 738  z -1159
+ 22.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 22.2s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 22.5s imu: accel mg   x 75  y 102  z -863
+ 22.5s imu: mag raw    x -564  y 738  z -1151
+ 22.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 22.5s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 22.8s imu: accel mg   x 81  y 99  z -866
+ 22.8s imu: mag raw    x -574  y 736  z -1163
+ 22.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 22.8s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 23.0s imu: accel mg   x 72  y 99  z -866
+ 23.0s imu: mag raw    x -567  y 735  z -1159
+ 23.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 23.0s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 23.3s imu: accel mg   x 78  y 98  z -863
+ 23.3s imu: mag raw    x -570  y 740  z -1159
+ 23.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 23.3s imu: yaw rate 0 dps, heading 10 deg, motion 0
+ 23.5s imu: accel mg   x 70  y 97  z -859
+ 23.5s imu: mag raw    x -561  y 740  z -1161
+ 23.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 23.5s imu: yaw rate -2 dps, heading 9 deg, motion 0
+ 23.8s imu: accel mg   x 83  y 106  z -861
+ 23.8s imu: mag raw    x -573  y 742  z -1154
+ 23.8s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 23.8s imu: yaw rate 3 dps, heading 11 deg, motion 0
+ 24.0s imu: accel mg   x 81  y 99  z -862
+ 24.0s imu: mag raw    x -569  y 738  z -1163
+ 24.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 24.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 24.3s imu: accel mg   x 86  y 104  z -861
+ 24.3s imu: mag raw    x -563  y 731  z -1157
+ 24.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 24.3s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 24.5s imu: accel mg   x 83  y 106  z -862
+ 24.5s imu: mag raw    x -561  y 731  z -1162
+ 24.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 24.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 24.8s imu: accel mg   x 83  y 102  z -857
+ 24.8s imu: mag raw    x -565  y 728  z -1165
+ 24.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 24.8s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 25.0s imu: accel mg   x 84  y 101  z -858
+ 25.0s imu: mag raw    x -558  y 725  z -1166
+ 25.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 25.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 25.2s imu: accel mg   x 79  y 103  z -860
+ 25.2s imu: mag raw    x -570  y 730  z -1163
+ 25.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 25.2s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 25.5s imu: accel mg   x 83  y 105  z -861
+ 25.5s imu: mag raw    x -555  y 734  z -1165
+ 25.5s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 25.5s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 25.7s imu: accel mg   x 86  y 108  z -855
+ 25.7s imu: mag raw    x -556  y 723  z -1175
+ 25.7s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 25.7s imu: yaw rate 3 dps, heading 11 deg, motion 0
+ 26.0s imu: accel mg   x 83  y 104  z -854
+ 26.0s imu: mag raw    x -558  y 713  z -1177
+ 26.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 26.0s imu: yaw rate 2 dps, heading 12 deg, motion 0
+ 26.3s imu: accel mg   x 87  y 113  z -867
+ 26.3s imu: mag raw    x -560  y 709  z -1175
+ 26.3s imu: pitch 0 deg, roll -1 deg, terrain 0
+ 26.3s imu: yaw rate 2 dps, heading 12 deg, motion 0
+ 26.5s imu: accel mg   x 89  y 102  z -864
+ 26.5s imu: mag raw    x -566  y 712  z -1179
+ 26.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 26.5s imu: yaw rate 4 dps, heading 12 deg, motion 2
+ 26.8s imu: accel mg   x 81  y 93  z -869
+ 26.8s imu: mag raw    x -562  y 714  z -1183
+ 26.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 26.8s imu: yaw rate -3 dps, heading 11 deg, motion 0
+ 27.0s imu: accel mg   x 76  y 93  z -866
+ 27.0s imu: mag raw    x -574  y 704  z -1186
+ 27.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 27.0s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 27.3s imu: accel mg   x 79  y 98  z -864
+ 27.3s imu: mag raw    x -566  y 715  z -1182
+ 27.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 27.3s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 27.5s imu: accel mg   x 83  y 94  z -865
+ 27.5s imu: mag raw    x -566  y 708  z -1189
+ 27.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 27.5s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 27.7s imu: accel mg   x 78  y 93  z -866
+ 27.7s imu: mag raw    x -556  y 711  z -1190
+ 27.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 27.7s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 28.0s imu: accel mg   x 79  y 94  z -869
+ 28.0s imu: mag raw    x -560  y 717  z -1192
+ 28.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 28.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 28.2s imu: accel mg   x 83  y 95  z -866
+ 28.2s imu: mag raw    x -567  y 708  z -1187
+ 28.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 28.2s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 28.5s imu: accel mg   x 71  y 95  z -867
+ 28.5s imu: mag raw    x -564  y 715  z -1184
+ 28.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 28.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 28.8s imu: accel mg   x 75  y 92  z -863
+ 28.8s imu: mag raw    x -564  y 718  z -1186
+ 28.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 28.8s imu: yaw rate -1 dps, heading 10 deg, motion 0
+ 29.0s imu: accel mg   x 84  y 100  z -858
+ 29.0s imu: mag raw    x -568  y 711  z -1179
+ 29.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 29.0s imu: yaw rate 6 dps, heading 12 deg, motion 0
+ 29.3s imu: accel mg   x 80  y 101  z -861
+ 29.3s imu: mag raw    x -566  y 710  z -1180
+ 29.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 29.3s imu: yaw rate 0 dps, heading 12 deg, motion 0
+ 29.5s imu: accel mg   x 81  y 103  z -863
+ 29.5s imu: mag raw    x -564  y 714  z -1181
+ 29.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 29.5s imu: yaw rate -1 dps, heading 12 deg, motion 0
+ 29.8s imu: accel mg   x 86  y 105  z -862
+ 29.8s imu: mag raw    x -561  y 712  z -1185
+ 29.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 29.8s imu: yaw rate 0 dps, heading 12 deg, motion 0
+ 30.0s imu: accel mg   x 81  y 103  z -858
+ 30.0s imu: mag raw    x -570  y 717  z -1176
+ 30.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 30.0s imu: yaw rate -2 dps, heading 11 deg, motion 0
+ 30.3s imu: accel mg   x 81  y 103  z -860
+ 30.3s imu: mag raw    x -557  y 719  z -1188
+ 30.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 30.3s imu: yaw rate -2 dps, heading 11 deg, motion 0
+ 30.5s imu: accel mg   x 81  y 109  z -860
+ 30.5s imu: mag raw    x -559  y 708  z -1181
+ 30.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 30.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 30.8s imu: accel mg   x 81  y 100  z -860
+ 30.8s imu: mag raw    x -566  y 716  z -1180
+ 30.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 30.8s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 31.0s imu: accel mg   x 84  y 102  z -859
+ 31.0s imu: mag raw    x -564  y 707  z -1180
+ 31.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 31.0s imu: yaw rate 2 dps, heading 11 deg, motion 0
+ 31.3s imu: accel mg   x 75  y 97  z -862
+ 31.3s imu: mag raw    x -565  y 715  z -1181
+ 31.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 31.3s imu: yaw rate -3 dps, heading 11 deg, motion 0
+ 31.5s imu: accel mg   x 80  y 94  z -867
+ 31.5s imu: mag raw    x -558  y 708  z -1185
+ 31.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 31.5s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 31.8s imu: accel mg   x 79  y 96  z -866
+ 31.8s imu: mag raw    x -573  y 712  z -1186
+ 31.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 31.8s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 32.0s imu: accel mg   x 79  y 93  z -863
+ 32.0s imu: mag raw    x -572  y 706  z -1181
+ 32.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 32.0s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 32.3s imu: accel mg   x 81  y 98  z -860
+ 32.3s imu: mag raw    x -566  y 712  z -1186
+ 32.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 32.3s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 32.5s imu: accel mg   x 77  y 90  z -868
+ 32.5s imu: mag raw    x -566  y 704  z -1177
+ 32.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 32.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 32.8s imu: accel mg   x 83  y 94  z -865
+ 32.8s imu: mag raw    x -566  y 706  z -1179
+ 32.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 32.8s imu: yaw rate 2 dps, heading 11 deg, motion 0
+ 33.0s imu: accel mg   x 82  y 95  z -868
+ 33.0s imu: mag raw    x -562  y 712  z -1178
+ 33.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 33.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 33.3s imu: accel mg   x 74  y 99  z -867
+ 33.3s imu: mag raw    x -571  y 713  z -1178
+ 33.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 33.3s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 33.5s imu: accel mg   x 79  y 105  z -858
+ 33.5s imu: mag raw    x -558  y 707  z -1173
+ 33.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 33.5s imu: yaw rate 2 dps, heading 11 deg, motion 0
+ 33.8s imu: accel mg   x 86  y 100  z -853
+ 33.8s imu: mag raw    x -569  y 711  z -1182
+ 33.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 33.8s imu: yaw rate 3 dps, heading 12 deg, motion 0
+ 34.0s imu: accel mg   x 78  y 104  z -857
+ 34.0s imu: mag raw    x -562  y 709  z -1179
+ 34.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 34.0s imu: yaw rate 0 dps, heading 12 deg, motion 0
+ 34.3s imu: accel mg   x 75  y 102  z -860
+ 34.3s imu: mag raw    x -568  y 708  z -1182
+ 34.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 34.3s imu: yaw rate -2 dps, heading 11 deg, motion 0
+ 34.5s imu: accel mg   x 86  y 102  z -864
+ 34.5s imu: mag raw    x -558  y 712  z -1191
+ 34.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 34.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 34.8s imu: accel mg   x 86  y 97  z -856
+ 34.8s imu: mag raw    x -560  y 708  z -1191
+ 34.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 34.8s imu: yaw rate -1 dps, heading 12 deg, motion 0
+ 35.0s imu: IMPACT 2.8 g -> ESTOP
+ 35.0s imu: accel mg   x -104  y 90  z -828
+ 35.0s imu: mag raw    x -594  y 688  z -1176
+ 35.0s imu: pitch -5 deg, roll -1 deg, terrain 0
+ 35.0s imu: yaw rate -29 dps, heading 9 deg, motion 0
+ 35.3s imu: accel mg   x 77  y 100  z -858
+ 35.3s imu: mag raw    x -564  y 707  z -1182
+ 35.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 35.3s imu: yaw rate 2 dps, heading 12 deg, motion 0
+ 35.5s imu: recovered from impact
+ 35.5s imu: accel mg   x 79  y 108  z -859
+ 35.5s imu: mag raw    x -565  y 705  z -1181
+ 35.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 35.5s imu: yaw rate 1 dps, heading 12 deg, motion 0
+ 35.8s imu: accel mg   x 87  y 101  z -864
+ 35.8s imu: mag raw    x -567  y 710  z -1182
+ 35.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 35.8s imu: yaw rate 0 dps, heading 12 deg, motion 0
+ 36.0s imu: accel mg   x 75  y 93  z -862
+ 36.0s imu: mag raw    x -570  y 712  z -1184
+ 36.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 36.0s imu: yaw rate -3 dps, heading 11 deg, motion 0
+ 36.3s imu: accel mg   x 82  y 94  z -866
+ 36.3s imu: mag raw    x -561  y 710  z -1182
+ 36.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 36.3s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 36.5s imu: accel mg   x 77  y 99  z -865
+ 36.5s imu: mag raw    x -562  y 707  z -1184
+ 36.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 36.5s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 36.8s imu: accel mg   x 80  y 93  z -867
+ 36.8s imu: mag raw    x -568  y 708  z -1173
+ 36.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 36.8s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 36.8s imu: IMPACT 0.5 g -> ESTOP
+ 37.0s imu: accel mg   x 75  y 99  z -867
+ 37.0s imu: mag raw    x -572  y 710  z -1183
+ 37.0s imu: pitch -1 deg, roll 0 deg, terrain 0
+ 37.0s imu: yaw rate 6 dps, heading 11 deg, motion 0
+ 37.3s imu: accel mg   x 79  y 95  z -864
+ 37.3s imu: mag raw    x -569  y 716  z -1174
+ 37.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 37.3s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 37.3s imu: recovered from impact
+ 37.5s imu: accel mg   x 77  y 100  z -867
+ 37.5s imu: mag raw    x -569  y 712  z -1180
+ 37.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 37.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 37.8s imu: accel mg   x 74  y 96  z -864
+ 37.8s imu: mag raw    x -570  y 710  z -1179
+ 37.8s imu: pitch -1 deg, roll 0 deg, terrain 0
+ 37.8s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 38.0s imu: accel mg   x 80  y 94  z -861
+ 38.0s imu: mag raw    x -564  y 710  z -1174
+ 38.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 38.0s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 38.3s imu: accel mg   x 82  y 104  z -860
+ 38.3s imu: mag raw    x -568  y 703  z -1182
+ 38.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 38.3s imu: yaw rate 5 dps, heading 12 deg, motion 0
+ 38.5s imu: accel mg   x 82  y 95  z -854
+ 38.5s imu: mag raw    x -569  y 712  z -1185
+ 38.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 38.5s imu: yaw rate -1 dps, heading 12 deg, motion 0
+ 38.8s imu: accel mg   x 82  y 100  z -864
+ 38.8s imu: mag raw    x -560  y 707  z -1179
+ 38.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 38.8s imu: yaw rate -1 dps, heading 12 deg, motion 0
+ 39.0s imu: accel mg   x 78  y 108  z -857
+ 39.0s imu: mag raw    x -569  y 704  z -1179
+ 39.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 39.0s imu: yaw rate 1 dps, heading 12 deg, motion 0
+ 39.3s imu: accel mg   x 84  y 104  z -861
+ 39.3s imu: mag raw    x -575  y 704  z -1183
+ 39.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 39.3s imu: yaw rate 2 dps, heading 12 deg, motion 0
+ 39.5s imu: IMPACT 1.5 g -> ESTOP
+ 39.5s imu: accel mg   x 78  y 54  z -861
+ 39.5s imu: mag raw    x -595  y 691  z -1175
+ 39.5s imu: pitch -6 deg, roll -2 deg, terrain 0
+ 39.5s imu: yaw rate -13 dps, heading 10 deg, motion 0
+ 39.8s imu: accel mg   x 78  y 98  z -861
+ 39.8s imu: mag raw    x -573  y 721  z -1186
+ 39.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 39.8s imu: yaw rate 3 dps, heading 11 deg, motion 0
+ 40.0s imu: recovered from impact
+ 40.0s imu: accel mg   x 83  y 103  z -869
+ 40.0s imu: mag raw    x -569  y 710  z -1188
+ 40.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 40.0s imu: yaw rate 1 dps, heading 12 deg, motion 0
+ 40.3s imu: accel mg   x 82  y 101  z -858
+ 40.3s imu: mag raw    x -563  y 717  z -1181
+ 40.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 40.3s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 40.5s imu: accel mg   x 81  y 96  z -864
+ 40.5s imu: mag raw    x -561  y 714  z -1178
+ 40.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 40.5s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 40.7s imu: accel mg   x 74  y 96  z -865
+ 40.7s imu: mag raw    x -556  y 715  z -1178
+ 40.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 40.7s imu: yaw rate -3 dps, heading 10 deg, motion 0
+ 41.0s imu: accel mg   x 80  y 98  z -869
+ 41.0s imu: mag raw    x -569  y 706  z -1177
+ 41.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 41.0s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 41.2s imu: accel mg   x 65  y 96  z -860
+ 41.2s imu: mag raw    x -566  y 711  z -1174
+ 41.2s imu: pitch -1 deg, roll 0 deg, terrain 0
+ 41.2s imu: yaw rate -3 dps, heading 10 deg, motion 0
+ 41.5s imu: accel mg   x 71  y 93  z -866
+ 41.5s imu: mag raw    x -567  y 719  z -1177
+ 41.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 41.5s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 41.7s imu: accel mg   x 79  y 96  z -864
+ 41.7s imu: mag raw    x -562  y 712  z -1184
+ 41.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 41.7s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 41.9s imu: IMPACT 1.4 g -> ESTOP
+ 42.0s imu: accel mg   x -126  y 122  z -843
+ 42.0s imu: mag raw    x -566  y 705  z -1184
+ 42.0s imu: pitch -3 deg, roll 0 deg, terrain 0
+ 42.0s imu: yaw rate -8 dps, heading 9 deg, motion 0
+ 42.2s imu: accel mg   x 75  y 100  z -856
+ 42.2s imu: mag raw    x -564  y 710  z -1168
+ 42.2s imu: pitch -1 deg, roll 0 deg, terrain 0
+ 42.2s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 42.4s imu: recovered from impact
+ 42.5s imu: accel mg   x 77  y 94  z -868
+ 42.5s imu: mag raw    x -567  y 715  z -1181
+ 42.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 42.5s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 42.7s imu: accel mg   x 75  y 92  z -863
+ 42.7s imu: mag raw    x -562  y 712  z -1174
+ 42.7s imu: pitch -1 deg, roll 0 deg, terrain 0
+ 42.7s imu: yaw rate 0 dps, heading 11 deg, motion 0
+ 43.0s imu: accel mg   x 83  y 98  z -860
+ 43.0s imu: mag raw    x -562  y 713  z -1170
+ 43.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 43.0s imu: yaw rate 2 dps, heading 11 deg, motion 0
+ 43.2s imu: accel mg   x 80  y 102  z -865
+ 43.2s imu: mag raw    x -567  y 703  z -1179
+ 43.2s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 43.2s imu: yaw rate 1 dps, heading 12 deg, motion 0
+ 43.5s imu: accel mg   x 83  y 98  z -864
+ 43.5s imu: mag raw    x -566  y 717  z -1171
+ 43.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 43.5s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 43.7s imu: accel mg   x 73  y 103  z -864
+ 43.7s imu: mag raw    x -571  y 708  z -1166
+ 43.7s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 43.7s imu: yaw rate -1 dps, heading 11 deg, motion 0
+ 44.0s imu: accel mg   x 86  y 103  z -857
+ 44.0s imu: mag raw    x -571  y 716  z -1174
+ 44.0s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 44.0s imu: yaw rate 1 dps, heading 11 deg, motion 0
+ 44.3s imu: IMPACT 1.1 g -> ESTOP
+ 44.3s imu: accel mg   x 17  y 121  z -859
+ 44.3s imu: mag raw    x -596  y 689  z -1164
+ 44.3s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 44.3s imu: yaw rate 11 dps, heading 13 deg, motion 0
+ 44.5s imu: accel mg   x 87  y 95  z -859
+ 44.5s imu: mag raw    x -562  y 715  z -1175
+ 44.5s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 44.5s imu: yaw rate -3 dps, heading 12 deg, motion 0
+ 44.8s imu: recovered from impact
+ 44.8s imu: accel mg   x 81  y 110  z -862
+ 44.8s imu: mag raw    x -562  y 713  z -1174
+ 44.8s imu: pitch 0 deg, roll 0 deg, terrain 0
+ 44.8s imu: yaw rate -1 dps, heading 11 deg, motion 0
+
+[exited with code 0]

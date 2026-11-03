@@ -20,7 +20,7 @@ subsystem, ask its owner or open a pull request for them to review.
 | 1 | *example:* LED heartbeat on GP19 | | | `app_program/subsystem1/` | `testing/subsystem1/` |
 | 2 | *example:* Producer: makes a sample every 300 ms | | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
-| 4 | *example:* Monitor: prints reports, pauses the LED | | | `app_program/subsystem4/` | `testing/subsystem4/` |
+| 4 | IMU-based motion and terrain monitoring (GY-511 / LSM303D on I2C1) | 2501298 | | `app_program/subsystem4/`, `app_program/common/` | `testing/subsystem4/` |
 | 5 | | | | `app_program/subsystem5/` | `testing/subsystem5/` |
 
 Shared files (`app_program/app_main.c`, `app_program/app.h`, this file)
@@ -50,8 +50,8 @@ fixed.
 | GP23, GP24, GP25, GP29 | *reserved* | Pico W radio |
 | GP0 | | (taken whenever the team builds with `CRASH_REPORT=1`) |
 | GP1 | | (taken whenever the team builds with `CRASH_REPORT=1`) |
-| GP2 | | |
-| GP3 | | |
+| GP2 | S4 | I2C1 SDA, IMU (Grove 2) |
+| GP3 | S4 | I2C1 SCL, IMU (Grove 2) |
 | GP4 | | |
 | GP5 | S2 | left wheel encoder (input, pull-up, rising edge via `gpio_irq`) |
 | GP6 | | |
@@ -107,7 +107,7 @@ the drivers have no locking to stop it.
 |---|---|---|---|
 | UART1 | | | |
 | I2C0 | | | |
-| I2C1 | | | |
+| I2C1 | S4 | `imu_task` | GP2 (SDA), GP3 (SCL) |
 | SPI0 | | | |
 | SPI1 | | | |
 | ADC | | | GP26–GP28 |
@@ -150,7 +150,7 @@ change it only by team agreement. Write down every task you create.
 | 1 | 12–13 | *example:* led_task – 12 – any |
 | 2 | 14–15 | task_motion – 14 – core 1 (away from Wi-Fi's priority 4 task on core 0); *example:* producer_task – 14 – core 1; one of s2_test_b2_task, s2_test_motor_task, s2_test_motion_task – 15 – core 0 (`TEST=1` builds only) |
 | 3 | 16–17 | *example:* consumer_task – 16 – core 0 |
-| 4 | 18–19 | *example:* monitor_task – 18 – any |
+| 4 | 18–19 | imu_task – 18 – any |
 | 5 | 20–21 | |
 | Navigation | 10–11 (*proposed*) | task_navigation – 10 – core 1 (with task_motion); nav_test_m01_task – 11 – core 0 (`TEST=1` builds only) |
 
@@ -178,6 +178,12 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-12 | any → Navigation | event flag (owned by Navigation until G1/G2) | `nav_raise_fault()`, `nav_clear_fault()` | the agreed fault bits 0–7, each raised only by its owner. IMU (bit 3) and Wi-Fi loss (bit 7) only degrade: the car keeps running, and the owner may clear its bit on recovery. Every other bit stops the car until a remote CLEAR (rest of G10 open) | IMU degrade: Glenn + Andrew; rest *proposed* |
 | IF-13 | Wi-Fi / MQTT → Navigation | event flag + one-writer word | `nav_post_remote()` | START, STOP, CLEAR | *proposed* |
 | IF-14 | Navigation → any (telemetry, Obstacle Scan) | shared data, read only | `nav_get_state()`, `nav_get_faults()`, `nav_get_reason()` | vehicle state (3 bits): IDLE, LINE_FOLLOW, JUNCTION, OBSTACLE (Obstacle Scan's cue to scan), BYPASS, STOPPED, FAULT | *proposed* |
+| IF-S4-1 | S4 → S1 | 32-bit word, one atomic store | `imu_task_get_snapshot()` | pitch, highest hump, motion, terrain, faults, yaw rate (`imu_pack.h`) | proposed by S4 |
+| IF-S4-2 | S4 → S1 | 32-bit word | `imu_task_get_aux()` | roll, heading, hump count | proposed by S4 |
+| IF-S4-3 | S4 → S1 | message buffer (owned by S4), read with `TMO_POL` | `imu_task_read_event()` | 16-bit events: HUMP, MOTION, TERRAIN, IMPACT, IMU_FAULT, IMU_OK, COURSE_DONE | proposed by S4 |
+| IF-S4-4 | S4 → Nav | shared event flag (`common/faults`) | `faults.h` | IMU fault (bit 3), READY_IMU; reconcile onto IF-12 `nav_raise_fault(NAV_FLT_IMU)` | proposed by S4, confirm with Nav |
+| IF-S4-5 | S2 → S4 | read-only pointers to the encoder ISR words | `imu_task_set_encoder_source()` | 12-bit wrapping count in the low bits; reconcile onto IF-06 `drv_encoder_get_count()` | proposed by S4, confirm with S2 |
+| IF-S4-6 | Nav → S4 | function call | `imu_task_signal_course_done()` / `imu_task_restart()` | end / start of a run | proposed by S4 |
 
 Each interface is tested by at least one integration test
 (`testing/integration/TEST_LOG.md`).
@@ -197,7 +203,7 @@ limit there. The numbers below are the example's usage.
 | Message buffer | 12 | | | | 1 | |
 | Fixed memory pool | 12 | | 1 | | | |
 | Variable memory pool | 12 | | | | | |
-| Cyclic handler | 12 | 1 | | | | |
-| Alarm handler | 12 | | | | 1 | |
+| Cyclic handler | 12 | 1 | | | 1 | |
+| Alarm handler | 12 | | | | | |
 
 (The kernel's USB and WiFi service tasks also use a few of these.)

@@ -1,52 +1,45 @@
-/*
- *	subsystem4.c
- *	Subsystem 4 -- Monitor: creates its objects and starts its task.
+/**
+ * @file    subsystem4.c
+ * @brief   Subsystem 4 -- creates its kernel objects and starts its task.
  *
- *	APIs shown: tk_cre_flg, tk_cre_mbf, tk_cre_alm
+ * usermain() (app_main.c) calls subsystem4_init() in phase 1 and
+ * subsystem4_start() in phase 2.
  */
 
 #include "subsystem4.h"
 
-EXPORT ID	mbf_summary;	/* IF-03 */
-EXPORT ID	flg_events;	/* IF-03 */
-EXPORT ID	alm_monitor;
-
-EXPORT ER subsystem4_init(void)
+/**
+ * @brief   Phase 1: create the shared fault flag (owned by Buddy 4, gap
+ *          G1) and the IMU's own kernel objects.  Starts no task.
+ *
+ * NOTE: subsystems 1-3 run their _init() before this one.  They must not
+ * set fault or READY bits inside _init(); only their tasks do, and every
+ * task starts after all _init() calls.  Moving faults_init() to the top of
+ * usermain() would remove this ordering rule (team decision, app_main.c).
+ *
+ * @return  E_OK or a negative kernel error code.
+ */
+ER
+subsystem4_init (void)
 {
-	T_CFLG	cflg = {0};
-	T_CMBF	cmbf = {0};
-	T_CALM	calm = {0};
+    ER result = faults_init();
 
-	/* Event flag: a 32-bit pattern of bits.  Tasks wait for a bit (or a
-	   combination of bits) to be set. */
-	cflg.flgatr  = TA_TFIFO | TA_WMUL;	/* allow several waiters */
-	cflg.iflgptn = 0;			/* all bits clear to begin with */
-	flg_events = tk_cre_flg(&cflg);
-	if (flg_events < E_OK) {
-		return flg_events;
-	}
+    if (E_OK == result)
+    {
+        result = imu_task_init();
+    }
 
-	/* Message buffer: COPIES variable-length data into a kernel ring
-	   buffer.  Here it carries short text lines from subsystem 3. */
-	cmbf.mbfatr = TA_TFIFO;
-	cmbf.bufsz  = 4 * S4_SUMMARY_MAX;	/* total buffer size, bytes */
-	cmbf.maxmsz = S4_SUMMARY_MAX;		/* largest single message */
-	mbf_summary = tk_cre_mbf(&cmbf);
-	if (mbf_summary < E_OK) {
-		return mbf_summary;
-	}
-
-	/* Alarm handler: called ONCE, a given time after tk_sta_alm().
-	   The monitor task re-arms it each time round its loop. */
-	calm.almatr = TA_HLNG;
-	calm.almhdr = (FP)monitor_alarm_handler;
-	alm_monitor = tk_cre_alm(&calm);
-	return (alm_monitor < E_OK) ? alm_monitor : E_OK;
+    return (result);
 }
 
-EXPORT ER subsystem4_start(void)
+/**
+ * @brief   Phase 2: start the IMU task and its 10 ms cyclic handler.
+ * @return  E_OK or a negative kernel error code.
+ */
+ER
+subsystem4_start (void)
 {
-	/* No affinity: the scheduler may run it on either core */
-	ID tid = app_start_task(monitor_task, S4_PRI_MONITOR, 0, "monitor_task");
-	return (tid < E_OK) ? tid : E_OK;
+    return (imu_task_start(S4_PRI_IMU));
 }
+
+/*** end of file ***/
