@@ -104,7 +104,11 @@ static void      handle_outputs (imu_monitor_output_t const * p_out);
 static void      sensor_lost (imu_pack_fault_reason_t reason);
 static void      report_fault (imu_pack_fault_reason_t reason);
 static void      report_recovered (void);
+static void      report_hump (imu_terrain_hump_t const * p_hump);
 static void      finish_course (void);
+#if (1 == IMU_TASK_HUMP_TRACE)
+static void      trace_hump (void);
+#endif
 static void      update_ramp (void);
 static void      publish (void);
 static bool      sample_is_frozen (drv_imu_sample_t const * p_sample);
@@ -498,7 +502,19 @@ try_probe (void)
             emit_event(IMU_PACK_EVT_IMU_OK, 0u);
         }
 
-        imu_monitor_recalibrate(&g_monitor);
+        /* Back after a dropout: the car may be on a slope, so keep the
+         * level.  Calibrate only if there is no level yet (boot, new run).
+         */
+        if (imu_monitor_resume(&g_monitor))
+        {
+            (void)faults_signal(FAULTS_READY_IMU);
+            log_line("===== imu: back, level kept =====\n", 0, 0, 0);
+        }
+        else
+        {
+            imu_monitor_recalibrate(&g_monitor);
+        }
+
         g_read_fail_count = 0u;
         g_frozen_count    = 0u;
         g_b_have_time     = false;
@@ -597,6 +613,9 @@ process_sample (drv_imu_sample_t * p_sample)
     imu_monitor_step(&g_monitor, p_sample, &counts, measure_dt(), &out);
     handle_outputs(&out);
     update_ramp();
+#if (1 == IMU_TASK_HUMP_TRACE)
+    trace_hump();
+#endif
     publish();
     g_stats.cycles++;
 
@@ -694,13 +713,7 @@ handle_outputs (imu_monitor_output_t const * p_out)
 
     if (p_out->b_hump_closed)
     {
-        emit_event(IMU_PACK_EVT_HUMP,
-                   imu_pack_hump_payload(p_out->hump.peak_mm_packed,
-                                         p_out->hump.b_saturated,
-                                         p_out->hump.max_pitch_deg));
-        log_tenths("===== imu: HUMP peak %d.%d mm, packed %d mm =====\n",
-                   p_out->hump.peak_mm,
-                   (int32_t)p_out->hump.peak_mm_packed);
+        report_hump(&p_out->hump);
     }
 
     if (p_out->b_motion_changed)
@@ -736,8 +749,16 @@ static void
 sensor_lost (imu_pack_fault_reason_t reason)
 {
     imu_pack_fault_reason_t final_reason = reason;
+    imu_terrain_hump_t      hump;
 
     g_stats.recoveries++;
+
+    /* Keep the hump measured so far; re-probing would drop it. */
+    if (imu_monitor_close_hump(&g_monitor, &hump))
+    {
+        report_hump(&hump);
+        log_line("imu: hump cut short, sensor lost\n", 0, 0, 0);
+    }
 
     if (DRV_I2C1_ERR_BUS_STUCK == drv_i2c1_recover_bus())
     {
@@ -785,6 +806,25 @@ report_fault (imu_pack_fault_reason_t reason)
 }
 
 /**
+ * @brief   Publish one closed hump.
+ * @param   p_hump  The result.
+ */
+static void
+report_hump (imu_terrain_hump_t const * p_hump)
+{
+    emit_event(IMU_PACK_EVT_HUMP,
+               imu_pack_hump_payload(p_hump->peak_mm_packed,
+                                     p_hump->b_saturated,
+                                     p_hump->max_pitch_deg));
+    log_tenths("===== imu: HUMP peak %d.%d mm, packed %d mm =====\n",
+               p_hump->peak_mm, (int32_t)p_hump->peak_mm_packed);
+#if (1 == IMU_TASK_HUMP_TRACE)
+    log_line("imu h: max pitch %d deg\n",
+             (int32_t)p_hump->max_pitch_deg, 0, 0);
+#endif
+}
+
+/**
  * @brief   Impact over: log that the car settled.  Recovery is not a
  *          published event; the IMPACT event is the only impact telemetry.
  */
@@ -815,6 +855,41 @@ finish_course (void)
     g_state = IMU_TASK_STATE_COMPLETE;
     (void)tk_stp_cyc(g_h_imu_cyc);
 }
+
+#if (1 == IMU_TASK_HUMP_TRACE)
+/**
+ * @brief   Diagnostic: while a hump is open, print every 50 ms what the
+ *          height estimate is built from.  All values are whole numbers:
+ *          pitch in 0.1 deg, forward acceleration in 0.01 g, front height
+ *          in 0.1 mm, travel in mm.
+ */
+static void
+trace_hump (void)
+{
+    static uint32_t s_div = 0u;
+
+    if (IMU_TERRAIN_LEVEL == imu_terrain_get_state(&g_monitor.terrain))
+    {
+        s_div = 0u;
+    }
+    else if (0u == (s_div++ % 5u))
+    {
+        imu_filter_attitude_t const * const p_att =
+            imu_monitor_get_attitude(&g_monitor);
+
+        /* Casts: small values, well inside the int range. */
+        tm_printf((UB *)"imu h: pitch %d fwd %d front %d travel %d\n",
+                  (int)(p_att->pitch_deg * 10.0f),
+                  (int)(p_att->lin_fwd_g * 100.0f),
+                  (int)(g_monitor.terrain.front_mm * 10.0f),
+                  (int)g_monitor.terrain.travel_mm);
+    }
+    else
+    {
+        /* Between prints. */
+    }
+}
+#endif
 
 /**
  * @brief   Feed Line Following's ramp detection (IF-S4-7).  Skipped during

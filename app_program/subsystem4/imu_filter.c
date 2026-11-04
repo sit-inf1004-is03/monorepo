@@ -289,6 +289,54 @@ imu_filter_track_bias (imu_filter_t * p_filter,
 }
 
 /**
+ * @brief   Carry on after a sensor dropout without measuring level again.
+ *
+ * The car may be on a slope when the sensor comes back, so the level
+ * reference (offsets, 1 g scale, gyro bias) is kept.  Calibrating there
+ * would make the slope read as level and level ground read as a slope.
+ * Only the state that is stale after a gap is cleared.
+ *
+ * @param   p_filter  Filter state.
+ * @return  true if the filter can carry on; false if it never calibrated or
+ *          its reference is not finite, so it must be calibrated.
+ */
+bool
+imu_filter_resume (imu_filter_t * p_filter)
+{
+    bool b_ok = false;
+
+    if ((NULL != p_filter) && p_filter->b_calibrated &&
+        imu_math_is_finite(p_filter->pitch_offset_deg) &&
+        imu_math_is_finite(p_filter->roll_offset_deg) &&
+        imu_math_is_finite(p_filter->one_g))
+    {
+        imu_filter_attitude_t * const p_att = &p_filter->attitude;
+
+        if (!imu_math_is_finite(p_att->pitch_deg))
+        {
+            p_att->pitch_deg = 0.0f;
+        }
+
+        if (!imu_math_is_finite(p_att->roll_deg))
+        {
+            p_att->roll_deg = 0.0f;
+        }
+
+        p_att->lin_fwd_g         = 0.0f;
+        p_att->yaw_rate_dps      = 0.0f;
+        p_filter->pitch_slow_deg = p_att->pitch_deg;
+        p_filter->error_pitch    = 0.0f;
+        p_filter->error_roll     = 0.0f;
+        p_filter->disagree_pitch = 0u;
+        p_filter->disagree_roll  = 0u;
+        p_filter->b_yaw_primed   = false;
+        b_ok = true;
+    }
+
+    return (b_ok);
+}
+
+/**
  * @brief   Report whether calibration has finished.
  * @param   p_filter  Filter state.
  * @return  true once calibrated.

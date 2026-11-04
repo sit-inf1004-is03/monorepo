@@ -28,6 +28,7 @@
 #define HUMP_COUNT_MAX      (255u)
 
 static void     reset_model (imu_terrain_t * p_terrain);
+static float32_t median_pitch (imu_terrain_t * p_terrain, float32_t pitch_deg);
 static void     track_height (imu_terrain_t * p_terrain, float32_t pitch_deg,
                               float32_t distance_mm);
 static bool     level_step (imu_terrain_t * p_terrain, float32_t pitch_deg,
@@ -67,6 +68,7 @@ imu_terrain_init (imu_terrain_t * p_terrain)
         }
 
         p_terrain->history_bins   = bins;
+        p_terrain->b_rear_climbs  = (0 != IMU_TERRAIN_REAR_CLIMBS);
         p_terrain->run_peak_mm    = 0.0f;
         p_terrain->hump_count     = 0u;
         p_terrain->state_bits     = 0u;
@@ -278,6 +280,49 @@ reset_model (imu_terrain_t * p_terrain)
     p_terrain->travel_mm     = 0.0f;
     p_terrain->bin_fill_mm   = 0.0f;
     p_terrain->level_travel_mm = 0.0f;
+    p_terrain->window_head  = 0u;
+    p_terrain->window_count = 0u;
+}
+
+/**
+ * @brief   Median of the last IMU_TERRAIN_PEAK_WINDOW pitch samples.  A jolt
+ *          shorter than half the window is dropped entirely, where a low-pass
+ *          would only spread it out, and the top of a real ramp is hardly
+ *          clipped.
+ * @param   p_terrain  Terrain state.
+ * @param   pitch_deg  New sample.
+ * @return  Median of the samples held so far.
+ */
+static float32_t
+median_pitch (imu_terrain_t * p_terrain, float32_t pitch_deg)
+{
+    float32_t sorted[IMU_TERRAIN_PEAK_WINDOW];
+
+    p_terrain->pitch_window[p_terrain->window_head] = pitch_deg;
+    p_terrain->window_head = (p_terrain->window_head + 1u) %
+                             IMU_TERRAIN_PEAK_WINDOW;
+
+    if (p_terrain->window_count < IMU_TERRAIN_PEAK_WINDOW)
+    {
+        p_terrain->window_count++;
+    }
+
+    /* Insertion sort; the window is small and only runs during a hump. */
+    for (uint32_t i = 0u; i < p_terrain->window_count; i++)
+    {
+        float32_t const value = p_terrain->pitch_window[i];
+        uint32_t        slot  = i;
+
+        while ((slot > 0u) && (sorted[slot - 1u] > value))
+        {
+            sorted[slot] = sorted[slot - 1u];
+            slot--;
+        }
+
+        sorted[slot] = value;
+    }
+
+    return (sorted[p_terrain->window_count / 2u]);
 }
 
 /**
@@ -294,7 +339,13 @@ track_height (imu_terrain_t * p_terrain, float32_t pitch_deg,
 
     p_terrain->travel_mm += distance_mm;
 
-    if (0u == p_terrain->history_bins)
+    if (!p_terrain->b_rear_climbs)
+    {
+        /* Rear wheels beside the ramp: the rear stays at ground level. */
+        p_terrain->front_mm = IMU_TERRAIN_WHEELBASE_MM *
+            imu_math_sin_deg(median_pitch(p_terrain, pitch_deg));
+    }
+    else if (0u == p_terrain->history_bins)
     {
         /* Simple method: average height over one wheelbase. */
         p_terrain->front_mm += sin_pitch * distance_mm;
@@ -541,7 +592,9 @@ static void
 close_hump (imu_terrain_t * p_terrain, bool b_cut_short)
 {
     imu_terrain_hump_t * const p_result = &p_terrain->result;
-    float32_t const peak    = p_terrain->peak_mm * IMU_TERRAIN_HEIGHT_GAIN;
+    float32_t const peak    = p_terrain->peak_mm *
+        (p_terrain->b_rear_climbs ? IMU_TERRAIN_HEIGHT_GAIN :
+                                    IMU_TERRAIN_FLAT_GAIN);
     int32_t const   rounded = imu_math_round(peak);
 
     /* Clamp then pack (bitpack.h rule 1): 0..127 plus a saturation flag. */

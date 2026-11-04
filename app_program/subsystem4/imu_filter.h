@@ -192,6 +192,7 @@ bool imu_filter_update (imu_filter_t * p_filter,
                         bool b_still);
 void imu_filter_track_bias (imu_filter_t * p_filter,
                             imu_filter_input_t const * p_input);
+bool imu_filter_resume (imu_filter_t * p_filter);
 bool imu_filter_is_calibrated (imu_filter_t const * p_filter);
 imu_filter_attitude_t const *
      imu_filter_get_attitude (imu_filter_t const * p_filter);

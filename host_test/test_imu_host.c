@@ -118,6 +118,7 @@ static void start (imu_monitor_t * p_mon, imu_sim_t * p_sim,
 
     memset(&dummy, 0, sizeof(dummy));
     imu_monitor_init(p_mon);
+    p_mon->terrain.b_rear_climbs = true;    /* imu_sim's default car */
     imu_sim_init(p_sim, enc_start, 12345u);
     imu_sim_flat_profile(p_prof);
     p_prof->b_no_gyro = g_no_gyro ? true : false;
@@ -557,8 +558,8 @@ static void test_persistence (void)
           "25 deg roll flagged as tilt after 5 samples");
 
     /* Nose up, then straight back to level (the real car on a short
-     * hump never tips nose down).  At 2 mm per sample the wheelbase is
-     * 70 samples of level travel.
+     * hump never tips nose down).  At 2 mm per sample the wheelbase is about
+     * 38 samples of level travel.
      */
     imu_terrain_hump_t hump;
     uint32_t           closed_at = 0u;
@@ -585,7 +586,7 @@ static void test_persistence (void)
     printf("       climb then level: closed after %u level samples, "
            "peak %.1f mm\n", (unsigned)closed_at, (double)hump.peak_mm);
     check("H-U32", b_climbing && !b_desc && b_result && !hump.b_cut_short &&
-                   (closed_at >= 69u) && (closed_at <= 72u) &&
+                   (closed_at >= 36u) && (closed_at <= 40u) &&
                    (1u == imu_terrain_get_hump_count(&terrain)),
           "climb then level (no nose-down): hump closes after one "
           "wheelbase of level travel");
@@ -1057,6 +1058,19 @@ static void test_accel_only (void)
     g_no_gyro = 0;
 }
 
+/* One simulator step through the monitor, feeding the ramp detection. */
+static void ramp_step (imu_monitor_t * p_mon, imu_sim_t * p_sim,
+                       imu_sim_profile_t const * p_prof)
+{
+    scenario_t sc;
+
+    memset(&sc, 0, sizeof(sc));
+    run(p_mon, p_sim, p_prof, 1u, 1, &sc);
+    imu_filter_attitude_t const * const p_att =
+        imu_monitor_get_attitude(p_mon);
+    (void)imu_ramp_update(p_att->pitch_deg, p_att->roll_deg);
+}
+
 static void test_ramp (void)
 {
     /* imu_task's 10 ms: on after 6 samples, off after 10. */
@@ -1161,6 +1175,164 @@ static void test_ramp (void)
     check("H-A13", !b_false && (on_steps >= 100u) && b_ended_flat,
           "no gyro: simulated slope through the monitor sets and clears "
           "imu_on_ramp(), flat driving does not");
+
+    /* Sensor lost and back while stopped on a slope: the level must be
+     * kept, or the slope reads flat and flat ground reads as a ramp.
+     */
+    g_no_gyro = 1;
+    start(&mon, &sim, &prof, 0u);
+    prof.hump_height_mm = 100.0f;
+    prof.hump_length_mm = 1000.0f;
+    prof.hump_start_mm  = 400.0f;
+    prof.wheelbase_mm   = IMU_TERRAIN_WHEELBASE_MM;
+    prof.speed_mm_s     = 200.0f;
+    imu_ramp_stop();
+    for (uint32_t i = 0u; (i < 1000u) && (imu_get_tilt_x10() < 100u); i++)
+    {
+        ramp_step(&mon, &sim, &prof);
+    }
+    prof.speed_mm_s = 0.0f;
+    for (uint32_t i = 0u; i < 50u; i++)
+    {
+        ramp_step(&mon, &sim, &prof);
+    }
+    imu_ramp_stop();
+    int const b_resumed = imu_monitor_resume(&mon) ? 1 : 0;
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        ramp_step(&mon, &sim, &prof);
+    }
+    int const      b_slope    = imu_on_ramp();
+    uint32_t const tilt_slope = imu_get_tilt_x10();
+    prof.speed_mm_s = 200.0f;
+    for (uint32_t i = 0u; (i < 2000u) && (sim.rear_pos_mm < 1800.0f); i++)
+    {
+        ramp_step(&mon, &sim, &prof);
+    }
+    prof.speed_mm_s = 0.0f;
+    for (uint32_t i = 0u; i < 300u; i++)
+    {
+        ramp_step(&mon, &sim, &prof);
+    }
+    uint32_t const tilt_flat = imu_get_tilt_x10();
+    printf("       dropout on a slope: tilt %u.%u deg there, %u.%u deg on "
+           "flat ground\n", (unsigned)(tilt_slope / 10u),
+           (unsigned)(tilt_slope % 10u), (unsigned)(tilt_flat / 10u),
+           (unsigned)(tilt_flat % 10u));
+    check("H-A14", b_resumed && b_slope && (tilt_slope >= 80u) &&
+                   !imu_on_ramp() && (tilt_flat <= 10u),
+          "no gyro: sensor back on a slope keeps the level: ramp there, "
+          "not on flat ground");
+
+    /* Never calibrated (sensor lost at boot, or a new run): no resume. */
+    imu_monitor_init(&mon);
+    int const b_refused = !imu_monitor_resume(&mon);
+    g_no_gyro = 0;
+    imu_ramp_stop();
+    check("H-A15", b_refused &&
+                   (IMU_MONITOR_CALIBRATING == imu_monitor_get_mode(&mon)),
+          "not calibrated yet: resume refused, calibration still runs");
+}
+
+/* The real course: only the ball climbs the ramp, the rear wheels pass
+ * either side.  Measured ramp: 10 mm high, 196 mm long.  Returns the peak.
+ */
+static float ball_only_peak (float height, float length, float speed)
+{
+    imu_monitor_t     mon;
+    imu_sim_t         sim;
+    imu_sim_profile_t prof;
+    scenario_t        sc;
+
+    memset(&sc, 0, sizeof(sc));
+    g_no_gyro = 1;
+    start(&mon, &sim, &prof, 0u);
+    mon.terrain.b_rear_climbs = false;
+    prof.b_rear_flat    = true;
+    prof.hump_height_mm = height;
+    prof.hump_length_mm = length;
+    prof.hump_start_mm  = 400.0f;
+    prof.wheelbase_mm   = IMU_TERRAIN_WHEELBASE_MM;
+    prof.speed_mm_s     = speed;
+    run(&mon, &sim, &prof,
+        (uint32_t)(((400.0f + length + 200.0f) / speed) * 100.0f), 1, &sc);
+    g_no_gyro = 0;
+
+    return (1u == sc.humps) ? (sc.last_peak_mm / IMU_TERRAIN_FLAT_GAIN) :
+                              -1.0f;
+}
+
+static void test_rear_flat (void)
+{
+    float const p10a = ball_only_peak(10.0f, 196.0f, 120.0f);
+    float const p10b = ball_only_peak(10.0f, 196.0f, 40.0f);
+    float const p20  = ball_only_peak(20.0f, 300.0f, 120.0f);
+
+    printf("       ball only: 10 mm ramp %.1f mm at 120 mm/s, %.1f mm at "
+           "40 mm/s; 20 mm ramp %.1f mm\n", (double)p10a, (double)p10b,
+           (double)p20);
+    check("H-A16", (fabsf(p10a - 10.0f) <= 2.0f) &&
+                   (fabsf(p10b - 10.0f) <= 2.0f) &&
+                   (fabsf(p20 - 20.0f) <= 4.0f),
+          "no gyro, rear wheels beside the ramp: one hump, height within "
+          "20 %");
+
+    /* A short spike must not set the peak: 8 deg, then 40 ms at 12 deg. */
+    imu_terrain_t      terrain;
+    imu_terrain_hump_t hump;
+
+    imu_terrain_init(&terrain);
+    for (uint32_t i = 0u; i < 100u; i++)
+    {
+        float const pitch = ((i >= 50u) && (i < 54u)) ? 12.0f : 8.0f;
+
+        (void)imu_terrain_update(&terrain, pitch, 0.0f, 1.0f, true);
+    }
+    for (uint32_t i = 0u; i < 150u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 1.0f, true);
+    }
+    int const   b_result = imu_terrain_take_result(&terrain, &hump);
+    float const clean    = IMU_TERRAIN_FLAT_GAIN *
+                           IMU_TERRAIN_WHEELBASE_MM * sinf(8.0f * 0.0174533f);
+
+    printf("       spike: peak %.1f mm, 8 deg alone is %.1f mm\n",
+           (double)hump.peak_mm, (double)clean);
+    check("H-U38", b_result && (hump.peak_mm <= (clean * 1.12f)),
+          "40 ms pitch spike adds less than 12 % to the peak");
+
+    /* Sensor lost part way over the ramp: the hump is reported, once. */
+    imu_monitor_t     mon;
+    imu_sim_t         sim;
+    imu_sim_profile_t prof;
+    scenario_t        sc;
+
+    memset(&sc, 0, sizeof(sc));
+    g_no_gyro = 1;
+    start(&mon, &sim, &prof, 0u);
+    mon.terrain.b_rear_climbs = false;
+    prof.b_rear_flat    = true;
+    prof.hump_height_mm = 10.0f;
+    prof.hump_length_mm = 196.0f;
+    prof.hump_start_mm  = 400.0f;
+    prof.wheelbase_mm   = IMU_TERRAIN_WHEELBASE_MM;
+    prof.speed_mm_s     = 120.0f;
+    for (uint32_t i = 0u; (i < 1500u) && (IMU_TERRAIN_CLIMBING !=
+         imu_terrain_get_state(&mon.terrain)); i++)
+    {
+        run(&mon, &sim, &prof, 1u, 1, &sc);
+    }
+    run(&mon, &sim, &prof, 30u, 1, &sc);
+    imu_terrain_hump_t lost;
+    int const b_closed = imu_monitor_close_hump(&mon, &lost) ? 1 : 0;
+    int const b_again  = imu_monitor_close_hump(&mon, &lost) ? 1 : 0;
+    int const b_level  = (IMU_TERRAIN_LEVEL ==
+                          imu_terrain_get_state(&mon.terrain));
+    g_no_gyro = 0;
+    check("H-A17", b_closed && !b_again && b_level && lost.b_cut_short &&
+                   (lost.peak_mm > 2.0f) &&
+                   (1u == imu_monitor_get_hump_count(&mon)),
+          "sensor lost on a hump: reported once, cut short, peak kept");
 }
 
 int main (void)
@@ -1178,6 +1350,7 @@ int main (void)
     test_hump_variants();
     test_accel_only();
     test_ramp();
+    test_rear_flat();
     printf("[TEST] host SUMMARY %d passed, %d failed\n", g_pass, g_fail);
 
     return (0 == g_fail) ? 0 : 1;

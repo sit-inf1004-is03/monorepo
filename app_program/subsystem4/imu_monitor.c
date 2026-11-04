@@ -32,7 +32,8 @@ imu_monitor_init (imu_monitor_t * p_monitor)
 
 /**
  * @brief   Restart from calibration but keep the run statistics (highest
- *          hump peak, hump count), e.g. after an I2C fault was recovered.
+ *          hump peak, hump count).  The car must stand still on level
+ *          ground; after a sensor dropout use imu_monitor_resume().
  * @param   p_monitor  Monitor state.
  */
 void
@@ -104,6 +105,50 @@ imu_monitor_step (imu_monitor_t * p_monitor,
         p_out->motion_class  = imu_motion_get_class(&p_monitor->motion);
         p_out->terrain_state = imu_terrain_get_state(&p_monitor->terrain);
     }
+}
+
+/**
+ * @brief   Carry on after a sensor dropout, keeping the level reference and
+ *          the run statistics (see imu_filter_resume()).
+ * @param   p_monitor  Monitor state.
+ * @return  true if monitoring carries on; false if the monitor must be
+ *          calibrated instead (nothing was changed).
+ */
+bool
+imu_monitor_resume (imu_monitor_t * p_monitor)
+{
+    bool b_ok = false;
+
+    if ((NULL != p_monitor) && imu_filter_resume(&p_monitor->filter))
+    {
+        imu_odom_init(&p_monitor->odom);
+        imu_impact_init(&p_monitor->impact);
+        enter_monitoring(p_monitor);
+        b_ok = true;
+    }
+
+    return (b_ok);
+}
+
+/**
+ * @brief   The sensor was lost: close any open hump, keeping the peak
+ *          measured so far, so that a dropout cannot lose it.
+ * @param   p_monitor  Monitor state.
+ * @param   p_hump     Receives the result.
+ * @return  true if a hump was open and @p p_hump holds its result.
+ */
+bool
+imu_monitor_close_hump (imu_monitor_t * p_monitor, imu_terrain_hump_t * p_hump)
+{
+    bool b_closed = false;
+
+    if ((NULL != p_monitor) && (NULL != p_hump) &&
+        imu_terrain_force_close(&p_monitor->terrain))
+    {
+        b_closed = imu_terrain_take_result(&p_monitor->terrain, p_hump);
+    }
+
+    return (b_closed);
 }
 
 /**

@@ -71,12 +71,13 @@ imu_sim_flat_profile (imu_sim_profile_t * p_profile)
         p_profile->hump_height_mm = 0.0f;
         p_profile->hump_length_mm = 1.0f;
         p_profile->hump_start_mm  = 0.0f;
-        p_profile->wheelbase_mm   = 140.0f;
+        p_profile->wheelbase_mm   = 75.0f;
         p_profile->speed_mm_s     = 0.0f;
         p_profile->accel_g        = 0.0f;
         p_profile->yaw_rate_dps   = 0.0f;
         p_profile->noise_g        = 0.01f;
         p_profile->b_no_gyro      = false;
+        p_profile->b_rear_flat    = false;
     }
 }
 
@@ -275,7 +276,8 @@ cos_deg (float32_t angle_deg)
 static float32_t
 body_pitch_deg (imu_sim_profile_t const * p_profile, float32_t rear_mm)
 {
-    float32_t const rear_h = imu_sim_ground_height(p_profile, rear_mm);
+    float32_t const rear_h = p_profile->b_rear_flat ? 0.0f :
+        imu_sim_ground_height(p_profile, rear_mm);
     float32_t       pitch  = 0.0f;
 
     for (uint32_t pass = 0u; pass < FRONT_ITERATIONS; pass++)

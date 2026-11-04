@@ -71,6 +71,9 @@ typedef struct
 
 void imu_monitor_init (imu_monitor_t * p_monitor);
 void imu_monitor_recalibrate (imu_monitor_t * p_monitor);
+bool imu_monitor_resume (imu_monitor_t * p_monitor);
+bool imu_monitor_close_hump (imu_monitor_t * p_monitor,
+                             imu_terrain_hump_t * p_hump);
 void imu_monitor_step (imu_monitor_t * p_monitor,
                        drv_imu_sample_t const * p_raw,
                        imu_odom_counts_t const * p_counts, float32_t dt_s,

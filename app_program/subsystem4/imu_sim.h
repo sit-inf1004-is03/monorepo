@@ -41,6 +41,7 @@ typedef struct
     float32_t yaw_rate_dps;     /**< Turn rate (left positive).           */
     float32_t noise_g;          /**< Accelerometer noise amplitude.       */
     bool      b_no_gyro;        /**< LSM303D: no gyro, compass instead.   */
+    bool      b_rear_flat;      /**< Rear wheels pass beside the hump.    */
 } imu_sim_profile_t;
 
 /** Simulator state. */

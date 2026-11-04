@@ -345,6 +345,7 @@ test_algorithm_on_target (void)
     uint32_t             worst_di   = 0u;
 
     imu_monitor_init(&g_test_monitor);
+    g_test_monitor.terrain.b_rear_climbs = true;    /* as imu_sim drives */
     imu_sim_init(&sim, 0x0FF0u, 1u);
     imu_sim_flat_profile(&prof);
 

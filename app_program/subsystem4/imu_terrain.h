@@ -34,6 +34,15 @@
  *   model runs whenever pitch leaves the +/-IMU_TERRAIN_LEVEL_DEG band, so
  *   the rise before the climb threshold is not lost.
  *
+ *   That needs the rear wheels to climb the hump too.  On the course they
+ *   do not: the ramp is narrower than the rear wheels, which pass either
+ *   side, and only the front ball rides over it (measured 2026-11-04: 7.7
+ *   deg peak, no nose-down).  The rear stays at ground level, so
+ *       h_front = W * sin(pitch)
+ *   with pitch taken as the median of IMU_TERRAIN_PEAK_WINDOW samples so
+ *   that a jolt does not set the peak.  IMU_TERRAIN_REAR_CLIMBS selects
+ *   between the two.
+ *
  * Detection limit (by design): a hump whose steepest slope is below about
  * 6 deg never tilts the car past IMU_TERRAIN_CLIMB_DEG and is treated as
  * level ground.  Host test H-I01 covers 15-120 mm humps with slopes of
@@ -62,10 +71,19 @@
 #define IMU_TERRAIN_PERSIST_SAMPLES     (5u)      /* <= 7 (3-bit counter) */
 #define IMU_TERRAIN_TOP_LEVEL_SAMPLES   (100u)    /* 1 s; <= 127 (7 bits) */
 #define IMU_TERRAIN_MAX_HUMP_MM         (1500.0f) /* travel; then close   */
-#define IMU_TERRAIN_WHEELBASE_MM        (140.0f)  /* TODO: measure on car */
+#define IMU_TERRAIN_WHEELBASE_MM        (75.0f)   /* measured on the car */
 #define IMU_TERRAIN_BIN_MM              (5.0f)
 #define IMU_TERRAIN_HISTORY_BINS        (48u)     /* wheelbase <= 240 mm  */
 #define IMU_TERRAIN_HEIGHT_GAIN         (1.0f)    /* set from test T4     */
+#define IMU_TERRAIN_REAR_CLIMBS         (0)       /* 1 = full-width hump  */
+
+/*
+ * Rear-on-flat calibration, from three car runs over the measured 10 mm
+ * ramp on 2026-11-04 (13.6, 12.1, 12.4 mm): the car reads high at speed on
+ * the ramp.  One ramp only; check against a second known height.
+ */
+#define IMU_TERRAIN_FLAT_GAIN           (0.8f)
+#define IMU_TERRAIN_PEAK_WINDOW         (9u)      /* samples: 90 ms       */
 #define IMU_TERRAIN_PEAK_MAX_MM         (127u)    /* 7-bit field          */
 #define IMU_TERRAIN_TILT_PITCH_DEG      (25.0f)
 #define IMU_TERRAIN_TILT_ROLL_DEG       (20.0f)
@@ -100,12 +118,16 @@ typedef struct
     float32_t          bin_fill_mm;
     float32_t          run_peak_mm;
     float32_t          level_travel_mm; /**< Level travel while CLIMBING. */
+    float32_t          pitch_window[IMU_TERRAIN_PEAK_WINDOW];
+    uint32_t           window_head;
+    uint32_t           window_count;
     uint32_t           history_head;
     uint32_t           history_bins;
     uint32_t           hump_count;
     uint16_t           state_bits;  /**< [1:0] state [4:2] count
                                          [7:5] tilt count [8] tilted
                                          [15:9] level count (CLIMBING) */
+    bool               b_rear_climbs;   /**< Which height model runs.     */
     bool               b_result_ready;
     imu_terrain_hump_t result;
 } imu_terrain_t;

@@ -53,6 +53,12 @@
 #define IMU_TASK_TRACE_ENABLE       (0)
 #define IMU_TASK_TRACE_CYCLES       (50u)
 
+/*
+ * Diagnostic: pitch, forward acceleration, height and travel every 50 ms
+ * while a hump is open.  Off by default, like the trace above.
+ */
+#define IMU_TASK_HUMP_TRACE         (0)
+
 /** Top-level state of the task (3 bits). */
 typedef enum
 {
