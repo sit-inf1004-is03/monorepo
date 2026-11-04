@@ -41,7 +41,7 @@ static int16_t   to_counts (float32_t value, float32_t counts_per_unit);
 /**
  * @brief   Reset the simulator.
  * @param   p_sim          Simulator state.
- * @param   encoder_start  Initial encoder word (e.g. 0xFF0 to test wrap).
+ * @param   encoder_start  Initial 32-bit count (e.g. 0xFFFFFFF0 to test wrap).
  * @param   seed           Noise seed.
  */
 void

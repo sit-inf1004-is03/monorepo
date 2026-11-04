@@ -292,25 +292,25 @@ static void test_pack (void)
 static void test_odom (void)
 {
     imu_odom_t        odom;
-    imu_odom_counts_t counts = { 0xFFEu, 0xFFEu, true, true };
+    imu_odom_counts_t counts = { 0u, 0u, true, true };
 
-    check("H-U13", (imu_odom_delta(0x002u, 0xFFEu) == 4u) &&
-                   (imu_odom_delta(0x12345002u, 0x00000FFEu) == 4u) &&
+    check("H-U13", (imu_odom_delta(4u, 0u) == 4u) &&
+                   (imu_odom_delta(0x00000002u, 0xFFFFFFFEu) == 4u) &&
                    (imu_odom_delta(7u, 7u) == 0u),
-          "12-bit wrap-safe encoder difference (0xFFE -> 0x002 = 4)");
+          "32-bit wrap-safe encoder difference (wrap at 2^32)");
 
     imu_odom_init(&odom);
-    (void)imu_odom_update(&odom, &counts, DT_S, false);
-    counts.left_count  = 0x002u;
-    counts.right_count = 0x002u;
+    (void)imu_odom_update(&odom, &counts, DT_S, false);   /* prime at 0 */
+    counts.left_count  = 4u;
+    counts.right_count = 4u;
     float const d1 = imu_odom_update(&odom, &counts, DT_S, false);
-    counts.left_count  = 0x900u;    /* Motion reset or glitch */
-    counts.right_count = 0x003u;
+    counts.left_count  = 1004u;     /* +1000 pulses: implausible, discarded */
+    counts.right_count = 5u;        /* +1 pulse on the other wheel */
     float const d2 = imu_odom_update(&odom, &counts, DT_S, false);
     check("H-U14", (fabsf(d1 - 4.0f * IMU_ODOM_MM_PER_PULSE) < 1e-3f) &&
                    (fabsf(d2 - 0.5f * IMU_ODOM_MM_PER_PULSE) < 1e-3f) &&
                    (imu_odom_glitches(&odom) == 1u),
-          "distance over the wrap; implausible jump discarded and counted");
+          "cumulative counts; implausible jump discarded and counted");
 
     imu_odom_counts_t none = { 0u, 0u, false, false };
     float const d3 = imu_odom_update(&odom, &none, DT_S, true);
@@ -554,6 +554,91 @@ static void test_persistence (void)
     (void)imu_terrain_update(&terrain, 0.0f, 25.0f, 0.0f, false);
     check("H-U21", b_not_yet && imu_terrain_is_tilted(&terrain),
           "25 deg roll flagged as tilt after 5 samples");
+
+    /* Nose up, then straight back to level (the real car on a short
+     * hump never tips nose down).  At 2 mm per sample the wheelbase is
+     * 70 samples of level travel.
+     */
+    imu_terrain_hump_t hump;
+    uint32_t           closed_at = 0u;
+    int                b_desc    = 0;
+
+    imu_terrain_init(&terrain);
+    for (uint32_t i = 0u; i < 20u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 10.0f, 0.0f, 2.0f, true);
+    }
+    int const b_climbing = (IMU_TERRAIN_CLIMBING ==
+                            imu_terrain_get_state(&terrain));
+    for (uint32_t i = 1u; (i <= 200u) && (0u == closed_at); i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 2.0f, true);
+        b_desc = b_desc || (IMU_TERRAIN_DESCENDING ==
+                            imu_terrain_get_state(&terrain));
+        if (IMU_TERRAIN_HUMP_CLOSED == imu_terrain_get_state(&terrain))
+        {
+            closed_at = i;
+        }
+    }
+    int const b_result = imu_terrain_take_result(&terrain, &hump);
+    printf("       climb then level: closed after %u level samples, "
+           "peak %.1f mm\n", (unsigned)closed_at, (double)hump.peak_mm);
+    check("H-U32", b_climbing && !b_desc && b_result && !hump.b_cut_short &&
+                   (closed_at >= 69u) && (closed_at <= 72u) &&
+                   (1u == imu_terrain_get_hump_count(&terrain)),
+          "climb then level (no nose-down): hump closes after one "
+          "wheelbase of level travel");
+
+    /* Same, but no distance (no encoders yet): closes on the 1 s limit. */
+    imu_terrain_init(&terrain);
+    for (uint32_t i = 0u; i < 20u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 10.0f, 0.0f, 0.0f, true);
+    }
+    closed_at = 0u;
+    for (uint32_t i = 1u; (i <= 200u) && (0u == closed_at); i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.0f, true);
+        if (IMU_TERRAIN_HUMP_CLOSED == imu_terrain_get_state(&terrain))
+        {
+            closed_at = i;
+        }
+    }
+    check("H-U33", closed_at == IMU_TERRAIN_TOP_LEVEL_SAMPLES,
+          "climb then level with no encoder distance: closes after 1 s");
+
+    /* A short level crest (40 mm, less than the wheelbase) followed by a
+     * real descent still goes through DESCENDING.
+     */
+    imu_terrain_init(&terrain);
+    for (uint32_t i = 0u; i < 20u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 10.0f, 0.0f, 2.0f, true);
+    }
+    for (uint32_t i = 0u; i < 20u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 2.0f, true);
+    }
+    int const b_still_climbing = (IMU_TERRAIN_CLIMBING ==
+                                  imu_terrain_get_state(&terrain));
+    b_desc = 0;
+    for (uint32_t i = 0u; i < 20u; i++)
+    {
+        (void)imu_terrain_update(&terrain, -10.0f, 0.0f, 2.0f, true);
+        b_desc = b_desc || (IMU_TERRAIN_DESCENDING ==
+                            imu_terrain_get_state(&terrain));
+    }
+    int b_closed = 0;
+    for (uint32_t i = 0u; i < 10u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 2.0f, true);
+        b_closed = b_closed || (IMU_TERRAIN_HUMP_CLOSED ==
+                                imu_terrain_get_state(&terrain));
+    }
+    check("H-U34", b_still_climbing && b_desc && b_closed &&
+                   (1u == imu_terrain_get_hump_count(&terrain)),
+          "short flat top then nose-down: still CLIMBING->DESCENDING->"
+          "closed, one hump");
 }
 
 static void test_impact (void)

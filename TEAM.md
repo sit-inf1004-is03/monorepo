@@ -181,8 +181,8 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-S4-1 | S4 → S1 | 32-bit word, one atomic store | `imu_task_get_snapshot()` | pitch, highest hump, motion, terrain, faults, yaw rate (`imu_pack.h`) | proposed by S4 |
 | IF-S4-2 | S4 → S1 | 32-bit word | `imu_task_get_aux()` | roll, heading, hump count | proposed by S4 |
 | IF-S4-3 | S4 → S1 | message buffer (owned by S4), read with `TMO_POL` | `imu_task_read_event()` | 16-bit events: HUMP, MOTION, TERRAIN, IMPACT, IMU_FAULT, IMU_OK, COURSE_DONE | proposed by S4 |
-| IF-S4-4 | S4 → Nav | shared event flag (`common/faults`) | `faults.h` | IMU fault (bit 3), READY_IMU; reconcile onto IF-12 `nav_raise_fault(NAV_FLT_IMU)` | proposed by S4, confirm with Nav |
-| IF-S4-5 | S2 → S4 | read-only pointers to the encoder ISR words | `imu_task_set_encoder_source()` | 12-bit wrapping count in the low bits; reconcile onto IF-06 `drv_encoder_get_count()` | proposed by S4, confirm with S2 |
+| IF-S4-4 | S4 → Nav | IF-12 | `nav_raise_fault(NAV_FLT_IMU)`, `nav_clear_fault(NAV_FLT_IMU)` | IMU fault (bit 3), degrade only: raised once per outage, cleared when the sensor answers again. READY_IMU stays in `common/faults.h`, read only by S4 so far | IMU degrade: Glenn + Andrew |
+| IF-S4-5 | S2 → S4 | IF-06 | `drv_encoder_get_count()` | 32-bit cumulative count per wheel, 0.330 mm/pulse (replaces the earlier pointer proposal) | uses IF-06 as shipped; width still open (G4) |
 | IF-S4-6 | Nav → S4 | function call | `imu_task_signal_course_done()` / `imu_task_restart()` | end / start of a run | proposed by S4 |
 
 Each interface is tested by at least one integration test

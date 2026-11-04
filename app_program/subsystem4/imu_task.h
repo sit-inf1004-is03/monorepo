@@ -10,10 +10,11 @@
  *   IF-S4-1  snapshot word   imu_task_get_snapshot()   any task, any time
  *   IF-S4-2  aux word        imu_task_get_aux()        any task, any time
  *   IF-S4-3  event stream    imu_task_read_event()     Buddy 1 (Comm task)
- *   IF-S4-4  IMU fault, READY_IMU bits in the shared fault flag
- *            (common/faults.h)                         Navigation
+ *   IF-12    IMU fault       nav_raise_fault(NAV_FLT_IMU),
+ *                            nav_clear_fault(NAV_FLT_IMU)  Navigation
+ *   IF-S4-4  IMU fault, READY_IMU bits in common/faults.h  S4 only so far
  * Inputs:
- *   IF-S4-5  encoder words   imu_task_set_encoder_source()  from Buddy 2
+ *   IF-06    encoder counts  drv_encoder_get_count()        from Buddy 2
  *   IF-S4-6  course done     imu_task_signal_course_done()  from Navigation
  *
  * The snapshot and aux words are each written with ONE 32-bit store, so a
@@ -35,8 +36,9 @@
 
 /*
  * The IMU owns its IMU-fault bit and clears it itself on recovery
- * (re-initialisation after an I2C fault).  Set to 0 to leave it latched
- * for the Navigation owner to clear instead.
+ * (re-initialisation after an I2C fault), in common/faults.h and in
+ * Navigation (nav_clear_fault(), IF-12).  Set to 0 to leave it latched
+ * until a remote CLEAR instead.
  */
 #define IMU_TASK_SELF_CLEAR_FAULTS  (1)
 
@@ -82,8 +84,6 @@ ER       imu_task_start (PRI priority);
 uint32_t imu_task_get_snapshot (void);
 uint32_t imu_task_get_aux (void);
 ER       imu_task_read_event (uint16_t * p_event);
-void     imu_task_set_encoder_source (uint32_t const volatile * p_left,
-                                      uint32_t const volatile * p_right);
 void     imu_task_signal_course_done (void);
 ER       imu_task_restart (void);
 void     imu_task_get_stats (imu_task_stats_t * p_stats);

@@ -13,11 +13,11 @@
  *   Buddy 1  imu_task_get_snapshot(), imu_task_get_aux() every publish;
  *            imu_task_read_event() drained with TMO_POL; layouts in
  *            imu_pack.h (snapshot 4 B, aux 4 B, event 2 B).
- *   Buddy 2  ESTOP (fault bit 4) in the shared fault flag, waited on with
- *            faults_wait(FAULTS_NOTIFY_MOTION, ...) (common/faults.h);
- *            calls imu_task_set_encoder_source() from subsystem2_init().
- *   Nav      READY_IMU, IMU fault (bit 3) and ESTOP in the fault flag;
- *            calls imu_task_signal_course_done() at the end of the run.
+ *   Buddy 2  nothing to call: the IMU reads the wheel encoder counts with
+ *            drv_encoder_get_count() (IF-06, subsystem2/drv_encoder.h).
+ *   Nav      the IMU raises and clears NAV_FLT_IMU (IF-12, degrade only:
+ *            the car keeps driving); Nav calls
+ *            imu_task_signal_course_done() at the end of the run.
  */
 
 #ifndef SUBSYSTEM4_H

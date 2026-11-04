@@ -15,8 +15,9 @@
  * and never enters Monitoring until a later probe succeeds.  "Read failure"
  * (rule 2): IMU_TASK_MAX_READ_ERRORS failed reads in a row, or
  * IMU_TASK_FROZEN_SAMPLES identical samples, set fault bit 3, free the bus
- * and go OFFLINE (gap G5).  Navigation sees the bit and knows impact
- * detection is unavailable.
+ * and go OFFLINE (gap G5).  The fault reaches Navigation as NAV_FLT_IMU
+ * (IF-12).  It only degrades: the car keeps driving without impact or hump
+ * data, and the bit is cleared when a later probe succeeds.
  */
 
 /* NULL comes from tk/typedef.h; <stddef.h> would clash with the kernel's
@@ -30,6 +31,8 @@
 #include "drv_i2c1.h"
 #include "drv_imu.h"
 #include "drv_us_timer.h"
+#include "../subsystem2/drv_encoder.h"     /* IF-06: wheel encoder counts (Buddy 2) */
+#include "../navigation/navigation.h"       /* IF-12: IMU fault to Navigation */
 #if APP_TEST
 #include "../common/bitpack.h"
 #endif
@@ -61,8 +64,6 @@ static ID volatile                       g_h_imu_cyc      = 0;
 static ID volatile                       g_h_imu_mbf      = 0;
 static uint32_t volatile                 g_snapshot_word  = 0u;
 static uint32_t volatile                 g_aux_word       = 0u;
-static uint32_t const volatile * volatile gp_enc_left     = NULL;
-static uint32_t const volatile * volatile gp_enc_right    = NULL;
 static bool volatile                     g_b_course_done  = false;
 static bool volatile                     g_b_restart      = false;
 static imu_task_stats_t volatile         g_stats;
@@ -245,21 +246,6 @@ imu_task_read_event (uint16_t * p_event)
     }
 
     return (result);
-}
-
-/**
- * @brief   Register Motion Control's encoder words (read-only; written by
- *          its encoder ISR).  Call from subsystem2_init().  Either pointer
- *          may be NULL; with both NULL the fallback speed is used.
- * @param   p_left   Left wheel encoder word.
- * @param   p_right  Right wheel encoder word.
- */
-void
-imu_task_set_encoder_source (uint32_t const volatile * p_left,
-                             uint32_t const volatile * p_right)
-{
-    gp_enc_left  = p_left;
-    gp_enc_right = p_right;
 }
 
 /**
@@ -502,6 +488,7 @@ try_probe (void)
         {
 #if (1 == IMU_TASK_SELF_CLEAR_FAULTS)
             (void)faults_clear(FAULTS_IMU);
+            (void)nav_clear_fault(NAV_FLT_IMU);
 #endif
             g_b_fault_reported = false;
             emit_event(IMU_PACK_EVT_IMU_OK, 0u);
@@ -765,6 +752,7 @@ report_fault (imu_pack_fault_reason_t reason)
         imu_pack_snapshot_t snap;
 
         (void)faults_set(FAULTS_IMU);
+        (void)nav_raise_fault(NAV_FLT_IMU);
         (void)faults_clear_status(FAULTS_READY_IMU);
         g_b_fault_reported = true;
 
@@ -885,19 +873,22 @@ measure_dt (void)
 }
 
 /**
- * @brief   Read Motion Control's encoder words (single 32-bit loads).
+ * @brief   Read Buddy 2's wheel encoder counts (IF-06, drv_encoder.h).
+ *
+ * Each getter returns a 32-bit cumulative pulse count that is safe to read
+ * from any task on either core.  The counts are always available in the
+ * integrated firmware (Buddy 2 owns the ISR), so both words are present;
+ * imu_odom's "no encoder" fallback is only exercised by the host tests.
+ *
  * @param   p_counts  Receives the counts and which words exist.
  */
 static void
 read_encoders (imu_odom_counts_t * p_counts)
 {
-    uint32_t const volatile * const p_left  = gp_enc_left;
-    uint32_t const volatile * const p_right = gp_enc_right;
-
-    p_counts->b_has_left  = (NULL != p_left);
-    p_counts->b_has_right = (NULL != p_right);
-    p_counts->left_count  = (NULL != p_left) ? *p_left : 0u;
-    p_counts->right_count = (NULL != p_right) ? *p_right : 0u;
+    p_counts->b_has_left  = true;
+    p_counts->b_has_right = true;
+    p_counts->left_count  = drv_encoder_get_count(DRV_ENCODER_LEFT);
+    p_counts->right_count = drv_encoder_get_count(DRV_ENCODER_RIGHT);
 }
 
 /**

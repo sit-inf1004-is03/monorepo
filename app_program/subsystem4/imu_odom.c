@@ -31,14 +31,14 @@ imu_odom_init (imu_odom_t * p_odom)
 }
 
 /**
- * @brief   Wrap-safe difference of two 12-bit encoder counts.
+ * @brief   Wrap-safe difference of two 32-bit encoder counts (IF-06).
  *
- * Example: last = 0xFFE, now = 0x002 gives 4.  Correct as long as fewer
- * than 4096 pulses (about 43 m) pass between two calls.
+ * Example: last = 0xFFFFFFFE, now = 0x00000002 gives 4.  The count only
+ * wraps at 2^32 (~1380 km), so the per-sample difference is always exact.
  *
  * @param   now_count   Current encoder word.
  * @param   last_count  Encoder word at the previous call.
- * @return  Pulses counted in between, 0 to 4095.
+ * @return  Pulses counted in between.
  */
 uint32_t
 imu_odom_delta (uint32_t now_count, uint32_t last_count)

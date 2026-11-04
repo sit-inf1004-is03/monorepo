@@ -3,25 +3,24 @@
  * @brief   Distance travelled per sample, from Motion Control's encoder
  *          words, for the hump-height estimate.
  *
- * Interface agreed in Tribunal 1 (2.3 and 2.4, "Encoder distance for IMU
- * hump height"):
- *   - Each wheel's count lives in its own 32-bit word, written ONLY by the
- *     encoder interrupt (Buddy 2).  The IMU reads it, never writes it.
- *   - The count is 12 bits wide and wraps, so the IMU takes a modulo
- *     difference of the masked values.  Taking the difference every 10 ms
- *     means a wrap is harmless (at most a few pulses per sample).
+ * Interface: Buddy 2's encoder driver, IF-06 (subsystem2/drv_encoder.h).
+ * Resolved against Buddy 2's shipped getter on 2026-11-03 (supersedes the
+ * Tribunal 1 2.3/2.4 raw-pointer proposal):
+ *   - imu_task reads each wheel with drv_encoder_get_count(DRV_ENCODER_*),
+ *     a 32-bit cumulative pulse count written only by Buddy 2's ISR.  The
+ *     IMU reads it, never writes it.
+ *   - The count is 32 bits wide and only wraps at 2^32 (~1380 km at
+ *     0.33 mm/pulse), so the per-sample modulo difference is always exact.
  *   - Buddy 2 never resets the counter between moves.
- *
- * ASSUMPTIONS (to confirm with Buddy 2, gap G4):
- *   - The count is in the LOW 12 bits of the word (IMU_ODOM_COUNT_MASK).
- *   - IMU_ODOM_MM_PER_PULSE: 210 mm wheel circumference / 20 disc slots.
+ *   - IMU_ODOM_MM_PER_PULSE = 210 mm wheel circumference / 637 pulses per
+ *     wheel revolution (Buddy 2 S2-M01, IF-06) = 0.330 mm/pulse.
  *   - Single-channel encoders count up in both directions, so reversing
  *     over a hump would be integrated as forward travel.  The car only
  *     reverses during an obstacle "reverse and reattempt", on flat ground.
  *
- * If Motion Control has not registered its words (e.g. bench tests before
- * integration), distance falls back to IMU_ODOM_FALLBACK_MM_PER_S while the
- * IMU sees the car moving, and the snapshot's "no encoder" bit is set.
+ * If no encoder count is available (host tests, or a bench build without
+ * Buddy 2), distance falls back to IMU_ODOM_FALLBACK_MM_PER_S while the IMU
+ * sees the car moving, and the snapshot's "no encoder" bit is set.
  */
 
 #ifndef IMU_ODOM_H
@@ -32,9 +31,9 @@
 
 #include "imu_math.h"
 
-#define IMU_ODOM_COUNT_MASK         (0x00000FFFu)
-#define IMU_ODOM_MM_PER_PULSE       (10.5f)
-#define IMU_ODOM_MAX_PULSES         (20u)   /* per 10 ms; more = glitch */
+#define IMU_ODOM_COUNT_MASK         (0xFFFFFFFFu)  /* 32-bit cumulative (IF-06) */
+#define IMU_ODOM_MM_PER_PULSE       (0.330f)       /* 210 mm / 637 pulses per rev */
+#define IMU_ODOM_MAX_PULSES         (637u)  /* 1 wheel rev / 10 ms; more = glitch */
 #define IMU_ODOM_IDLE_SAMPLES       (20u)   /* 200 ms without pulses    */
 #define IMU_ODOM_FALLBACK_MM_PER_S  (150.0f)
 #define IMU_ODOM_SETTLE_SAMPLES     (40u)   /* 400 ms of steady movement */

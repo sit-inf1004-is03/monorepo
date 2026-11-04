@@ -19,10 +19,10 @@ Needs the IMU on GP2/GP3 (GY-511 / LSM303D as fitted, or an MPU-9250) and the ca
 | S4-U03 | Still car reads STATIONARY, LEVEL, \|pitch\| < 2°, no ESTOP | Figure 5 initial states | auto | reads the snapshot word | PASS |
 | S4-U04 | Snapshot golden vector identical on target and host | IF-S4-1 layout (T3) | auto | packs host vector 2 | `0x054740FD` |
 | S4-U05 | Fault flag: 2 tasks + 1 handler toggle own bits 20 000×, no lost/phantom bits, real faults untouched | G1, IR-3, test T1 | auto | stress test, bits 28–30 | 0 errors on every writer |
-| S4-U06 | Simulated impact raises ESTOP and wakes a waiter quickly | G2, IR-7, test T6 | auto | `imu_task_test_inject_shock()`, `faults_wait(FAULTS_NOTIFY_TEST)` | woken, ESTOP set, latency < 25 ms |
-| S4-U07 | Snapshot shows ESTOP; IMU clears it after settling 0.5 s | Figure 5 "Recovered" | auto | waits 1.5 s | ESTOP clear |
+| S4-U06 | Simulated impact gives an IMPACT event quickly (telemetry only, no stop) | test T6 | auto | `imu_task_test_inject_shock()`, `imu_task_read_event()` | IMPACT event within 50 ms |
+| S4-U07 | After an impact the IMU keeps running and nothing is latched, in S4 or in Navigation | Figure 5 "Recovered", IF-12 | auto | waits 1.5 s | READY_IMU set, no IMU fault, `NAV_FLT_IMU` clear, STATIONARY |
 | S4-U08 | Hump algorithm on the RP2040 soft-float, 50 mm simulated hump | FR3, NFR4 | auto | `imu_sim` through a private monitor | peak within ±10 %, < 0.5 ms per sample |
-| S4-U09 | 12-bit encoder wrap and clamp helpers on target | Tribunal 2.3 encoder interface | auto | `imu_odom_delta(0x002, 0xFFE)` | 4 |
+| S4-U09 | 32-bit encoder wrap and clamp helpers on target | IF-06 | auto | `imu_odom_delta(0x00000002, 0xFFFFFFFE)` | 4 |
 
 ### On-target, manual
 
@@ -49,6 +49,7 @@ Same C sources as the firmware, compiled with a PC compiler and fed simulated se
 | H-U20..21 | Persistence (3-sample spike), tilt | Week 6 6.3.2 rule 1 | no false hump; tilt after 5 samples |
 | H-U22..25 | Impact detection, recovery, hump suppression, hold-off | Week 6 6.3.2 rules 2–3, Tribunal 1.1 | as described |
 | H-U26..31 | Motion classes; acceleration not read as climbing; drift removed at stops | Week 6 6.3.1, Tribunal 1.2 "accelerometer-only pitch" | as described |
+| H-U32..34 | Climb then level closes the hump after one wheelbase, or 1 s with no distance; a short flat top then nose-down still goes through DESCENDING | car never tips nose down on the hump | as described |
 | H-I01..05 | Hump detection and peak accuracy, 42 profiles (15–120 mm, 150–1000 mm, slopes 6–35°, 100–300 mm/s) | FR3, NFR4 | detected once each, error ≤ 10 % (NFR4: 20 %), sequence Level→Climbing→Descending→HumpClosed→Level, saturation at 127 mm |
 | H-I06..09 | Wheelbase ±20 mm, no encoder, sub-threshold undulation, gyro clipping recovery | NFR4, G5-style robustness | within NFR4; no lock-up |
 | H-A01 | No gyro (GY-511): calibrates; 3 s still reads level, no turn, no hump | Week 6 6.3 | as described |
@@ -88,3 +89,6 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-28 | S4-M03 (taps on the front, third run) | not yet committed | Andrew (with AI assistance) | INFO | `logs/2026-10-28_tap_light_medium_firm.txt` | Light, medium and firm tap on the front of the chassis: no `IMPACT` this time, only vibration (`motion 2`). Hand taps land on both sides of the 1 g forward limit, so they cannot set the limits. Peak sizes not visible (trace is every 250 ms) |
 | 2026-10-28 | S4-M03 (car pushed to roll into a box) | not yet committed | Andrew (with AI assistance) | PARTIAL | `logs/2026-10-28_roll_into_box.txt` | 2–3 runs: one hit gave `IMPACT 1.0 g -> ESTOP` and `recovered` 0.5 s later; one run (≈12.3 s, −0.28 g in the sampled line) did not trigger. Added a debug-only `imu: peak mg dev .. fwd ..` trace line (largest jolt since the last line) to size each hit next time |
 | 2026-10-28 | S4-M03 (roll into a box, with peak trace) | not yet committed | Andrew (with AI assistance) | PASS (bench) | `logs/2026-10-28_roll_into_box_peaks.txt` | Firmware with compass offsets + peak trace, `calibrated (forced=0)`. 4 pushes, harder each time. Peak forward jolt / \|a\| change: 330/84 mg and 318/133 mg (gentle, no impact); 1942/1202 mg and 1471/788 mg (firm, `IMPACT -> ESTOP`, `recovered` 0.5 s later). Still car: ≤ 40/90 mg. The 1 g forward limit sits in the gap between gentle and firm hits. Still to do with motors running: collision at cruise speed and normal driving bumps |
+| 2026-11-04 | H-* (55 checks, adds H-U32..34 to this copy) | not yet committed | Andrew (with AI assistance) | PASS (55/55) | `logs/2026-11-04_host_tests_nav_wiring.txt` | On top of origin/main cf382fd, with the IF-06 encoder getter (0.330 mm/pulse) and the IF-12 Navigation calls. Host tests do not compile `imu_task.c` |
+| 2026-11-04 | build | not yet committed | Andrew (with AI assistance) | PARTIAL | none | This branch: all subsystem4 objects compile with no warnings against main's `navigation.h`, but the image does not build, because origin/main fails in subsystem2/subsystem3 (stray `#endif` in `subsystem3.h`, example `task_producer.c` and `task_consumer.c`). Scratch tree of origin/integration/buddy5-bypass 4c57f7b plus this subsystem4: normal and TEST=1 link with no warnings, with that branch's `imu.c` replaced by a stub. Not run on hardware |
+| YYYY-MM-DD | S4-U01..S4-U09, sensor unplug (`NAV_FLT_IMU` raised, car keeps driving, cleared on reconnect) | | | | | not run yet: needs an image that builds |

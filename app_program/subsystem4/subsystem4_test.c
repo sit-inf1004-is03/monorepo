@@ -20,6 +20,7 @@
 #include "imu_monitor.h"
 #include "imu_sim.h"
 #include "drv_us_timer.h"
+#include "../navigation/navigation.h"
 
 #define READY_TIMEOUT_MS        (3000)
 #define POLL_MS                 (10)
@@ -192,9 +193,9 @@ test_packing (void)
 
     TEST_CHECK("S4-U04", 0x054740FDu == imu_pack_snapshot(&snap),
                "snapshot golden vector matches the host build");
-    TEST_CHECK("S4-U09", (4u == imu_odom_delta(0x002u, 0xFFEu)) &&
+    TEST_CHECK("S4-U09", (4u == imu_odom_delta(0x00000002u, 0xFFFFFFFEu)) &&
                          (127u == bitpack_clamp_u32(500u, 127u)),
-               "12-bit encoder wrap and clamp helpers on target");
+               "32-bit encoder wrap and clamp helpers on target");
     TEST_SUMMARY("subsystem4 packing");
 }
 
@@ -310,6 +311,7 @@ test_impact (void)
     imu_pack_unpack_snapshot(imu_task_get_snapshot(), &snap);
     TEST_CHECK("S4-U07",
                faults_is_set(FAULTS_READY_IMU) && !faults_is_set(FAULTS_IMU) &&
+               (0u == (nav_get_faults() & NAV_FLT_IMU)) &&
                (0u == snap.motion_class),
                "impact is telemetry only: IMU keeps running, nothing latched");
     TEST_SUMMARY("subsystem4 impact");
