@@ -16,6 +16,7 @@
 #include "../subsystem2/motion.h"
 #include "../subsystem2/drv_encoder.h"   /* LOCAL: junction turn angle */
 #include "../navigation/navigation.h"
+#include "../subsystem4/imu.h"          /* LOCAL: ramp tilt */
 
 #define LINE_C_CHAN     (0U)      /* GP26 centre = ADC0 */
 #define LINE_R_CHAN     (1U)      /* GP27 right  = ADC1 */
@@ -60,6 +61,23 @@
 #define LINE_LEVEL_STEP (1)       /* max turn-level change per 20 ms loop  */
 #define LINE_LOST_SIDE  (0.20f)   /* |error| at loss above this => that side */
 #define LINE_LOST_LEVEL (2)       /* turn level used to swing back to line */
+#define LINE_RAMP_EXTRA_MM (50U)  /* LOCAL: drive straight this far after
+                                   * the IMU reads flat again (wheels down,
+                                   * sensors back on the mat). */
+#define LINE_RAMP_MM_S    (120U)  /* LOCAL: straight speed on the ramp
+                                   * (cruise is 40: too little push to get
+                                   * over the top).  0 = no boost. */
+#define LINE_RAMP_SLOT_PULSES (30U)  /* LOCAL: heading history, one slot
+                                      * per ~10 mm (0.33 mm per pulse) */
+#define LINE_RAMP_SLOTS       (16U)
+#define LINE_RAMP_LOOKBACK    (10U)  /* slots: hold the heading from ~100
+                                      * mm before the tilt (line sensors
+                                      * are ahead of the wheels, so the
+                                      * last bit before the tilt steered
+                                      * on the ramp's colours) */
+#define LINE_RAMP_PULSES_PER_LEVEL (6)  /* heading error (L-R pulses,
+                                         * ~7 per deg) per turn level */
+#define LINE_RAMP_MAX_LEVEL   (3)
 #define LINE_JUNC_SAMPLES (2U)    /* LOCAL: both black this many loops in a
                                    * row after a barcode = the T junction */
 #define LINE_JUNC_BLACK (0.50f)   /* LOCAL: T check, both sensors. 0.22
@@ -92,6 +110,15 @@ static bool         g_b_junc_hold  = false;  /* LOCAL: T posted: drive
 static bool         g_b_pivot_armed = false; /* LOCAL: white seen in it */
 static uint32_t     g_pivot_start  = 0U;     /* LOCAL: L+R count at start */
 static bool         g_b_pivot_done = false;  /* LOCAL: StopTurn sent */
+static bool         g_b_ramp       = false;  /* LOCAL: ramp hold on */
+static bool         g_b_ramp_flat  = false;  /* LOCAL: landed, finishing */
+static uint32_t     g_ramp_flat_sum = 0U;    /* LOCAL: L+R count at landing */
+static int32_t      g_hist[LINE_RAMP_SLOTS]; /* LOCAL: L-R heading, ~10 mm
+                                              * apart */
+static uint32_t     g_hist_idx   = 0U;       /* next slot to write */
+static uint32_t     g_hist_count = 0U;       /* slots filled */
+static uint32_t     g_hist_next  = 0U;       /* L+R at the next slot */
+static int32_t      g_ramp_head  = 0;        /* L-R to hold on the ramp */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -247,6 +274,132 @@ EXPORT void line_task(INT stacd, void * exinf)
         uint16_t raw_r = line_read(LINE_R_CHAN);
         float    c     = blackness(raw_c, WHITE_LEVEL_C, BLACK_LEVEL_C);
         float    r     = blackness(raw_r, WHITE_LEVEL_R, BLACK_LEVEL_R);
+
+        /* LOCAL: ramp (no line on it, any colours).  While the IMU says
+         * tilted, and for LINE_RAMP_EXTRA_MM after it is flat again: no
+         * steering (straight), no T check, the line state Navigation sees
+         * is left as it was.  Then line following starts fresh. */
+        {
+            uint32_t const nav = nav_get_state();
+            bool const b_follow = ((NAV_STATE_LINE_FOLLOW == nav) ||
+                                   (NAV_STATE_JUNCTION == nav));
+            uint32_t const sum = drv_encoder_get_count(DRV_ENCODER_LEFT) +
+                                 drv_encoder_get_count(DRV_ENCODER_RIGHT);
+            bool const b_tilt = imu_on_ramp();
+            int32_t const head =
+                (int32_t)(drv_encoder_get_count(DRV_ENCODER_LEFT) -
+                          drv_encoder_get_count(DRV_ENCODER_RIGHT));
+
+            /* Heading history while following normally. */
+            if (!b_follow)
+            {
+                g_hist_count = 0U;
+            }
+            else if ((!g_b_ramp) &&
+                     ((0U == g_hist_count) ||
+                      ((int32_t)(sum - g_hist_next) >= 0)))
+            {
+                g_hist[g_hist_idx] = head;
+                g_hist_idx = (g_hist_idx + 1U) % LINE_RAMP_SLOTS;
+                if (g_hist_count < LINE_RAMP_SLOTS)
+                {
+                    g_hist_count++;
+                }
+                g_hist_next = sum + (2U * LINE_RAMP_SLOT_PULSES);
+            }
+            else
+            {
+                /* Between slots. */
+            }
+
+            if (b_follow && b_tilt)
+            {
+                if (!g_b_ramp)
+                {
+                    uint32_t const back =
+                        (g_hist_count > LINE_RAMP_LOOKBACK) ?
+                        LINE_RAMP_LOOKBACK : g_hist_count;
+
+                    g_ramp_head = head;
+                    if (back > 0U)
+                    {
+                        g_ramp_head = g_hist[(g_hist_idx + LINE_RAMP_SLOTS
+                                              - back) % LINE_RAMP_SLOTS];
+                    }
+                    tm_printf((UB*)"[LINE] ramp: straight, line ignored"
+                              " (tilt %u deg); heading from %u cm back,"
+                              " now off by %d pulses (~7 = 1 deg)\n",
+                              (unsigned)(imu_get_tilt_x10() / 10U),
+                              (unsigned)back, (int)(head - g_ramp_head));
+                }
+                g_b_ramp      = true;
+                g_b_ramp_flat = false;
+                motion_set_speed_floor(LINE_RAMP_MM_S);
+            }
+            else if (g_b_ramp && b_follow)
+            {
+                if (!g_b_ramp_flat)
+                {
+                    g_b_ramp_flat   = true;
+                    g_ramp_flat_sum = sum;
+                    motion_set_speed_floor(0U);   /* landed: back to cruise */
+                }
+                else if ((drv_encoder_pulses_to_mm(sum - g_ramp_flat_sum) /
+                          2U) >= LINE_RAMP_EXTRA_MM)
+                {
+                    g_b_ramp      = false;
+                    g_b_ramp_flat = false;
+                    motion_set_speed_floor(0U);
+                    tm_printf((UB*)"[LINE] ramp done: line following\n");
+                }
+                else
+                {
+                    /* Landed: a few cm more straight. */
+                }
+            }
+            else
+            {
+                if (g_b_ramp)
+                {
+                    motion_set_speed_floor(0U);
+                }
+                g_b_ramp      = false;  /* Not following: Navigation owns it */
+                g_b_ramp_flat = false;
+            }
+
+            if (g_b_ramp)
+            {
+                g_err_filt    = 0.0f;
+                g_err_prev    = 0.0f;
+                g_last_level  = 0;
+                g_b_resync    = true;
+                g_both_count  = 0U;
+                g_b_junc_hold = false;
+
+                /* Hold the pre-ramp heading: left wheel ahead (car turned
+                 * right) -> steer left.  Motion's +level turns right. */
+                {
+                    int32_t lvl = -((head - g_ramp_head) /
+                                    LINE_RAMP_PULSES_PER_LEVEL);
+
+                    if (lvl > LINE_RAMP_MAX_LEVEL)
+                    {
+                        lvl = LINE_RAMP_MAX_LEVEL;
+                    }
+                    else if (lvl < -LINE_RAMP_MAX_LEVEL)
+                    {
+                        lvl = -LINE_RAMP_MAX_LEVEL;
+                    }
+                    else
+                    {
+                        /* In range. */
+                    }
+                    line_output(LINE_STEER_SIGN * lvl);
+                }
+                tk_dly_tsk(LINE_LOOP_MS);
+                continue;
+            }
+        }
 
         /* LOCAL: barcode junctions.  Navigation is JUNCTION after a
          * barcode.  (1) While it still drives the line, both sensors

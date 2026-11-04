@@ -17,6 +17,7 @@
  */
 
 #include "subsystem4.h"
+#include "imu.h"	/* LOCAL TEST: MPU9250 ramp tilt (s5-local-test) */
 
 EXPORT ER subsystem4_init(void)
 {
@@ -25,5 +26,7 @@ EXPORT ER subsystem4_init(void)
 
 EXPORT ER subsystem4_start(void)
 {
-	return E_OK;
+	/* LOCAL TEST: IMU tilt task on I2C1 (GP2/GP3). */
+	ID tid = app_start_task((FP)imu_task, S4_PRI_MAIN, 0, "imu_task");
+	return (tid < E_OK) ? tid : E_OK;
 }

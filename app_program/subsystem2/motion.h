@@ -96,6 +96,7 @@ void     motion_set_turn_level(int32_t level);
 ER       motion_stop_turn(void);
 ER       motion_brake(void);
 void     motion_set_speed_cap(uint32_t speed_mm_s);
+void     motion_set_speed_floor(uint32_t speed_mm_s);  // LOCAL: ramp boost
 uint32_t motion_get_activity(void);
 uint32_t motion_get_faults(void);
 uint32_t motion_get_max_loop_usec(void);

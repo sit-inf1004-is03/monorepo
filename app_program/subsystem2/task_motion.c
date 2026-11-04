@@ -103,6 +103,10 @@ static int32_t volatile  g_turn_level   = 0;
 //
 static uint32_t volatile g_speed_cap    = 0u;
 
+// LOCAL TEST (ramp boost): written by Line Following only.  0 = none.
+//
+static uint32_t volatile g_speed_floor  = 0u;
+
 // Written by task_motion only.
 //
 static uint32_t volatile g_faults        = 0u;
@@ -310,6 +314,19 @@ motion_set_speed_cap (uint32_t speed_mm_s)
 {
     g_speed_cap = ((speed_mm_s > MOTION_SPEED_MAX_MM_S) ?
                    MOTION_SPEED_MAX_MM_S : speed_mm_s);
+}
+
+/*!
+ * @brief LOCAL TEST (ramp boost): lowest speed of a straight, above the
+ *        command's speed and Navigation's cap (more push on a ramp).
+ *
+ * @param[in] speed_mm_s  0 = none, else 1 to MOTION_SPEED_MAX_MM_S.
+ */
+void
+motion_set_speed_floor (uint32_t speed_mm_s)
+{
+    g_speed_floor = ((speed_mm_s > MOTION_SPEED_MAX_MM_S) ?
+                     MOTION_SPEED_MAX_MM_S : speed_mm_s);
 }
 
 /*!
@@ -635,9 +652,16 @@ motion_straight_step (uint32_t now_usec, float dt_sec)
         uint32_t const left_mm = drv_encoder_pulses_to_mm(
                                      g_move.target_pulses - done);
         uint32_t const cap     = g_speed_cap;
-        uint32_t const wanted  = (((0u != cap) &&
+        uint32_t const floor_v = g_speed_floor;
+        uint32_t       wanted  = (((0u != cap) &&
                                    (cap < g_move.cmd.speed_mm_s)) ?
                                   cap : g_move.cmd.speed_mm_s);
+
+        if (floor_v > wanted)
+        {
+            wanted = floor_v;   // LOCAL TEST: ramp boost.
+        }
+
         float const    cruise  = (float) wanted;
         float          speed   = motion_ramp(dt_sec, cruise);
 
