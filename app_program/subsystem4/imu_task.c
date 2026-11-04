@@ -26,6 +26,7 @@
 #include "../app.h"
 #include "../common/faults.h"
 #include "imu_task.h"
+#include "imu.h"
 #include "imu_monitor.h"
 #include "imu_pack.h"
 #include "drv_i2c1.h"
@@ -33,6 +34,7 @@
 #include "drv_us_timer.h"
 #include "../subsystem2/drv_encoder.h"     /* IF-06: wheel encoder counts (Buddy 2) */
 #include "../navigation/navigation.h"       /* IF-12: IMU fault to Navigation */
+#include "../subsystem3/line_barcode.h"     /* barcode_beep(): IMU ready */
 #if APP_TEST
 #include "../common/bitpack.h"
 #endif
@@ -81,6 +83,7 @@ static uint32_t             g_frozen_count      = 0u;
 static uint32_t             g_last_time_us      = 0u;
 static bool                 g_b_have_time       = false;
 static bool                 g_b_fault_reported  = false;
+static bool                 g_b_ready_beeped    = false;
 static uint32_t             g_cycle_read_us     = 0u;   /* this cycle only */
 static uint32_t             g_cycle_lines       = 0u;   /* this cycle only */
 #if (1 == IMU_TASK_TRACE_ENABLE)
@@ -102,6 +105,7 @@ static void      sensor_lost (imu_pack_fault_reason_t reason);
 static void      report_fault (imu_pack_fault_reason_t reason);
 static void      report_recovered (void);
 static void      finish_course (void);
+static void      update_ramp (void);
 static void      publish (void);
 static bool      sample_is_frozen (drv_imu_sample_t const * p_sample);
 static float32_t measure_dt (void);
@@ -592,6 +596,7 @@ process_sample (drv_imu_sample_t * p_sample)
     read_encoders(&counts);
     imu_monitor_step(&g_monitor, p_sample, &counts, measure_dt(), &out);
     handle_outputs(&out);
+    update_ramp();
     publish();
     g_stats.cycles++;
 
@@ -676,6 +681,13 @@ handle_outputs (imu_monitor_output_t const * p_out)
     if (p_out->b_calibrated)
     {
         (void)faults_signal(FAULTS_READY_IMU);
+
+        if (!g_b_ready_beeped)
+        {
+            g_b_ready_beeped = true;
+            barcode_beep(2U, BC_BEEP_MS);   /* 2 beeps: IMU ready. */
+        }
+
         log_line("===== imu: calibrated (forced=%d) =====\n",
                  p_out->b_calib_forced ? 1 : 0, 0, 0);
     }
@@ -754,6 +766,7 @@ report_fault (imu_pack_fault_reason_t reason)
         (void)faults_set(FAULTS_IMU);
         (void)nav_raise_fault(NAV_FLT_IMU);
         (void)faults_clear_status(FAULTS_READY_IMU);
+        imu_ramp_stop();
         g_b_fault_reported = true;
 
         /* Cast: the enum constants are 0..7, non-negative. */
@@ -798,8 +811,38 @@ finish_course (void)
                "=====\n",
                imu_monitor_get_run_peak_mm(&g_monitor), (int32_t)humps);
 
+    imu_ramp_stop();
     g_state = IMU_TASK_STATE_COMPLETE;
     (void)tk_stp_cyc(g_h_imu_cyc);
+}
+
+/**
+ * @brief   Feed Line Following's ramp detection (IF-S4-7).  Skipped during
+ *          calibration, when pitch and roll have no level reference yet,
+ *          and if this sample just lost the sensor.
+ */
+static void
+update_ramp (void)
+{
+    if ((IMU_TASK_STATE_RUNNING == g_state) &&
+        (IMU_MONITOR_CALIBRATING != imu_monitor_get_mode(&g_monitor)))
+    {
+        imu_filter_attitude_t const * const p_att =
+            imu_monitor_get_attitude(&g_monitor);
+
+        if (imu_ramp_update(p_att->pitch_deg, p_att->roll_deg))
+        {
+            if (imu_on_ramp())
+            {
+                log_line("===== imu: ramp, tilt %d deg =====\n",
+                         (int32_t)(imu_get_tilt_x10() / 10u), 0, 0);
+            }
+            else
+            {
+                log_line("===== imu: flat again =====\n", 0, 0, 0);
+            }
+        }
+    }
 }
 
 /**

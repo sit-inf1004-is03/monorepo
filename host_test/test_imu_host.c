@@ -23,6 +23,7 @@
 #include "../app_program/subsystem4/imu_pack.h"
 #include "../app_program/subsystem4/imu_monitor.h"
 #include "../app_program/subsystem4/imu_sim.h"
+#include "../app_program/subsystem4/imu.h"
 
 #define DT_S                (0.01f)
 #define CALIB_STEPS         (130u)
@@ -1056,6 +1057,112 @@ static void test_accel_only (void)
     g_no_gyro = 0;
 }
 
+static void test_ramp (void)
+{
+    /* imu_task's 10 ms: on after 6 samples, off after 10. */
+    imu_ramp_stop();
+    int const b_start_clear = !imu_is_ok() && !imu_on_ramp();
+    uint32_t on_at = 0u;
+    for (uint32_t i = 1u; (i <= 20u) && (0u == on_at); i++)
+    {
+        if (imu_ramp_update(8.0f, 0.0f))
+        {
+            on_at = i;
+        }
+    }
+    uint32_t off_at = 0u;
+    for (uint32_t i = 1u; (i <= 30u) && (0u == off_at); i++)
+    {
+        if (imu_ramp_update(1.0f, 0.0f))
+        {
+            off_at = i;
+        }
+    }
+    check("H-U35", b_start_clear && (6u == on_at) && (10u == off_at) &&
+                   !imu_on_ramp(),
+          "ramp on after 60 ms at 6 deg, off after 100 ms at 4 deg");
+
+    /* A 5-sample spike is not a ramp; between 4 and 6 deg keeps the state;
+     * nose down counts the same; roll counts as tilt.
+     */
+    imu_ramp_stop();
+    for (uint32_t i = 0u; i < 5u; i++)
+    {
+        (void)imu_ramp_update(10.0f, 0.0f);
+    }
+    int const b_spike_ignored = !imu_on_ramp();
+    (void)imu_ramp_update(0.0f, 0.0f);
+    for (uint32_t i = 0u; i < 6u; i++)
+    {
+        (void)imu_ramp_update(-8.0f, 0.0f);
+    }
+    int const b_nose_down = imu_on_ramp();
+    for (uint32_t i = 0u; i < 50u; i++)
+    {
+        (void)imu_ramp_update(5.0f, 0.0f);
+    }
+    int const b_held = imu_on_ramp();
+    imu_ramp_stop();
+    for (uint32_t i = 0u; i < 6u; i++)
+    {
+        (void)imu_ramp_update(4.5f, 4.5f);
+    }
+    uint32_t const tilt = imu_get_tilt_x10();
+    check("H-U36", b_spike_ignored && b_nose_down && b_held &&
+                   imu_on_ramp() && (tilt >= 63u) && (tilt <= 64u),
+          "spike ignored; nose down, roll and the 4-6 deg band behave");
+
+    /* Sensor lost on a ramp: never left "on a ramp". */
+    imu_ramp_stop();
+    check("H-U37", !imu_on_ramp() && !imu_is_ok() &&
+                   (0u == imu_get_tilt_x10()),
+          "sensor lost: not on a ramp, not ok, tilt 0");
+
+    /* Whole pipeline, no gyro: a 100 mm hump over 1 m has a 17 deg slope.
+     * Flat driving before it must not read as a ramp.
+     */
+    imu_monitor_t     mon;
+    imu_sim_t         sim;
+    imu_sim_profile_t prof;
+    uint32_t          on_steps = 0u;
+    int               b_false  = 0;
+
+    g_no_gyro = 1;
+    start(&mon, &sim, &prof, 0u);
+    prof.hump_height_mm = 100.0f;
+    prof.hump_length_mm = 1000.0f;
+    prof.hump_start_mm  = 400.0f;
+    prof.wheelbase_mm   = IMU_TERRAIN_WHEELBASE_MM;
+    prof.speed_mm_s     = 200.0f;
+    imu_ramp_stop();
+    for (uint32_t step = 0u; step < 1200u; step++)
+    {
+        drv_imu_sample_t     raw;
+        imu_odom_counts_t    counts;
+        imu_monitor_output_t out;
+
+        (void)imu_sim_step(&sim, &prof, DT_S, &raw);
+        counts.b_has_left  = true;
+        counts.b_has_right = true;
+        counts.left_count  = imu_sim_encoder(&sim);
+        counts.right_count = imu_sim_encoder(&sim);
+        imu_monitor_step(&mon, &raw, &counts, DT_S, &out);
+        imu_filter_attitude_t const * const p_att =
+            imu_monitor_get_attitude(&mon);
+        (void)imu_ramp_update(p_att->pitch_deg, p_att->roll_deg);
+        b_false = b_false || (imu_on_ramp() && (sim.rear_pos_mm < 200.0f));
+        on_steps += imu_on_ramp() ? 1u : 0u;
+    }
+    int const b_ended_flat = !imu_on_ramp();
+    g_no_gyro = 0;
+    imu_ramp_stop();
+    printf("       ramp pipeline: on ramp for %u ms of a 12 s run\n",
+           (unsigned)(on_steps * 10u));
+    check("H-A13", !b_false && (on_steps >= 100u) && b_ended_flat,
+          "no gyro: simulated slope through the monitor sets and clears "
+          "imu_on_ramp(), flat driving does not");
+}
+
 int main (void)
 {
     printf("[TEST] === host test run start ===\n");
@@ -1070,6 +1177,7 @@ int main (void)
     test_hump_accuracy();
     test_hump_variants();
     test_accel_only();
+    test_ramp();
     printf("[TEST] host SUMMARY %d passed, %d failed\n", g_pass, g_fail);
 
     return (0 == g_fail) ? 0 : 1;
