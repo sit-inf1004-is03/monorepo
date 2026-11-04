@@ -225,6 +225,10 @@ LOCAL void usb_service_task(INT stacd, void *exinf)
 				/* overwritten while replaying: skip ahead */
 				if((rec_total - rep_pos) > USB_REC_SIZE) {
 					rep_pos = rec_total - USB_REC_SIZE;
+					/* all of it overwritten: end the replay */
+					if((W)(rep_pos - rep_end) > 0) {
+						rep_pos = rep_end;
+					}
 				}
 				while(count < USB_TX_CHUNK && count < available &&
 				      rep_pos != rep_end) {

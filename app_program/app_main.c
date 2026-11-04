@@ -117,9 +117,12 @@ EXPORT INT usermain(void)
 
 	tm_printf((UB*)"all subsystems started\n\n");
 
-	/* LOCAL TEST ONLY: no remote yet */
+#if !APP_TEST && !TM_NET_LWIP
+	/* LOCAL TEST ONLY: a build with no network has no remote, so it starts
+	   by itself.  Wi-Fi builds wait for START; test builds send their own. */
 	tk_dly_tsk(3000);
 	CHECK(nav_post_remote(NAV_REMOTE_START), "nav START");
+#endif
 
 #if APP_TEST
 	/* Test build (make TEST=1): run every subsystem's tests in turn,
