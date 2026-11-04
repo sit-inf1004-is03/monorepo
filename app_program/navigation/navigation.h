@@ -14,7 +14,8 @@
  *                                     nav_post_bypass_passed(),
  *                                     nav_post_search(),
  *                                     nav_is_search_wait()
- *   Any subsystem, its own bits only: nav_raise_fault()
+ *   Any subsystem, its own bits only: nav_raise_fault(),
+ *                                     nav_clear_fault() (degrade bits)
  *   Wi-Fi / MQTT commands (Rifa):     nav_post_remote()
  *   Everyone (telemetry, scan arm):   nav_get_state(), nav_get_faults(),
  *                                     nav_get_reason()
@@ -91,13 +92,20 @@
 #define NAV_FLT_MOTOR_STALL     (1u << 0)   // Glenn
 #define NAV_FLT_ENCODER         (1u << 1)   // Glenn
 #define NAV_FLT_LINE_LOST       (1u << 2)   // Wing
-#define NAV_FLT_IMU             (1u << 3)   // Andrew
+#define NAV_FLT_IMU             (1u << 3)   // Andrew: Degraded only, no stop.
 #define NAV_FLT_ESTOP           (1u << 4)   // Andrew
 #define NAV_FLT_NO_ECHO         (1u << 5)   // Ruien
 #define NAV_FLT_SCAN_ERROR      (1u << 6)   // Ruien
 #define NAV_FLT_WIFI_LOSS       (1u << 7)   // Rifa: Degraded only, no stop.
 #define NAV_FLT_ALL             (0xFFu)
-#define NAV_FLT_STOP_MASK       (NAV_FLT_ALL & ~NAV_FLT_WIFI_LOSS)  // G10
+
+// Degrade bits are only recorded: the car keeps running, and the owner may
+// clear its bit on recovery (nav_clear_fault()).  Every other bit stops
+// the car and stays until a remote CLEAR.  Agreed with Andrew (IMU); the
+// rest of G10 is still open.
+//
+#define NAV_FLT_DEGRADE_MASK    (NAV_FLT_IMU | NAV_FLT_WIFI_LOSS)
+#define NAV_FLT_STOP_MASK       (NAV_FLT_ALL & ~NAV_FLT_DEGRADE_MASK)
 
 // Why Navigation stopped (nav_get_reason()).
 //
@@ -124,6 +132,7 @@ ER       nav_post_search(uint32_t command);
 bool     nav_is_search_wait(void);
 uint32_t nav_get_junction_search(void);   // LOCAL: NAV_JSEARCH_
 ER       nav_raise_fault(uint32_t bits);
+ER       nav_clear_fault(uint32_t bits);
 ER       nav_post_remote(uint32_t command);
 
 uint32_t nav_get_state(void);

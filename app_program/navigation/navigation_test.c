@@ -73,6 +73,8 @@ navigation_test (void)
                (E_PAR == nav_post_search(NAV_SEARCH_FAILED + 1u)) &&
                (E_PAR == nav_raise_fault(0u)) &&
                (E_PAR == nav_raise_fault(1u << 8)) &&
+               (E_PAR == nav_clear_fault(0u)) &&
+               (E_PAR == nav_clear_fault(NAV_FLT_ESTOP)) &&
                (E_PAR == nav_post_remote(0u)) &&
                (E_PAR == nav_post_remote(4u)),
                "Navigation inputs reject out-of-range values");
@@ -217,6 +219,19 @@ m01_task (INT start_code, void * p_ext_info)
     (void) nav_post_remote(NAV_REMOTE_START);
     m01_expect_state("START again -> LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
     (void) tk_dly_tsk(1000u);
+
+    // 7b. IMU fault: recorded, the car keeps driving; cleared on recovery.
+    //
+    (void) nav_raise_fault(NAV_FLT_IMU);
+    (void) tk_dly_tsk(M01_STATE_MSEC);
+    m01_check("IMU fault: still LINE_FOLLOW and driving, bit recorded",
+              (NAV_STATE_LINE_FOLLOW == nav_get_state()) &&
+              (MOTION_ACTIVITY_STRAIGHT == motion_get_activity()) &&
+              (0u != (nav_get_faults() & NAV_FLT_IMU)));
+    (void) nav_clear_fault(NAV_FLT_IMU);
+    (void) tk_dly_tsk(M01_STATE_MSEC);
+    m01_check("IMU recovered: bit cleared",
+              (0u == (nav_get_faults() & NAV_FLT_IMU)));
 
     // 8. ESTOP: brake and hold until CLEAR; START is refused meanwhile.
     //
