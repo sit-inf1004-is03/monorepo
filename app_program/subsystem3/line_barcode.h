@@ -36,12 +36,14 @@
                                        * line sensors); 0 if the [BC] ao
                                        * print shows the opposite */
 #define BC_SAMPLE_MS        (1)       /* ~1 kHz sampling */
-#define BC_MIN_CONTRAST     (250U)    /* ADC counts black above white */
+#define BC_MIN_CONTRAST     (150U)    /* ADC counts black above white (was
+                                       * 250; 150 + MIN_SWING 80 still decode
+                                       * a 6 mm blurred spot in sim) */
 #define BC_HYST_PCT         (10U)     /* hysteresis around the midpoint */
 #define BC_SWING_PCT        (12U)     /* in a pass: rise / dip of this % of
                                        * the white-black span = an edge;
                                        * lower = more sensitive */
-#define BC_MIN_SWING        (150U)    /* ...but at least this many counts */
+#define BC_MIN_SWING        (80U)     /* ...but at least this many counts */
 #define BC_GLITCH_MS        (3U)      /* shorter pulses are noise */
 #define BC_END_GAP_MS       (1000U)   /* no edge this long = pass over */
 #define BC_MAX_ELEMENTS     (49U)     /* up to *XYZ* (5 characters) */

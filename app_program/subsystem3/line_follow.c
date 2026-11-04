@@ -22,9 +22,12 @@
 
 /* ---- calibration (measured; re-check on the track) ------------------- */
 #define WHITE_LEVEL_C   (180)
-#define BLACK_LEVEL_C   (3833)
+#define BLACK_LEVEL_C   (2550)    /* LOCAL: was 3833; logs show C on black
+                                   * tape peaks ~2280-2540 (2026-11-03) */
 #define WHITE_LEVEL_R   (152)
-#define BLACK_LEVEL_R   (3921)
+#define BLACK_LEVEL_R   (1450)    /* LOCAL: was 3921; R peaks ~1390-1420,
+                                   * so R read <= 33 % and right curves
+                                   * steered only level 1 (r ~23 cm) */
 #define LINE_LOST_FRAC  (0.15f)   /* below this on BOTH sensors => lost */
 #define LINE_BOTH_BLACK (0.80f)   /* above this on BOTH sensors => junction/
                                    * on-centre: go STRAIGHT, don't hard-turn */
@@ -59,9 +62,10 @@
 #define LINE_LOST_LEVEL (2)       /* turn level used to swing back to line */
 #define LINE_JUNC_SAMPLES (2U)    /* LOCAL: both black this many loops in a
                                    * row after a barcode = the T junction */
-#define LINE_JUNC_BLACK (0.22f)   /* LOCAL: "black" for the T check (both
-                                   * sensors). Log: crossbar both 32,
-                                   * line following both 0-1. */
+#define LINE_JUNC_BLACK (0.50f)   /* LOCAL: T check, both sensors. 0.22
+                                   * with the old black levels (crossbar
+                                   * both 32); now crossbar ~95, line
+                                   * following ~0-3. */
 #define LINE_JUNC_TURN_DEG (65U)  /* LOCAL: junction turn = a fixed angle
                                    * by encoder, line ignored (it coasts
                                    * ~5 more = ~90).  Still too much ->
@@ -421,6 +425,17 @@ EXPORT void line_task(INT stacd, void * exinf)
                 level = LINE_LOST_LEVEL;
             }
             else if (g_err_filt < -LINE_LOST_SIDE)
+            {
+                level = -LINE_LOST_LEVEL;
+            }
+            else if (g_last_level >= LINE_LOST_LEVEL)
+            {
+                /* LOCAL: lost in the middle while already turning hard
+                 * (a loop / tight curve: the line slipped out between
+                 * the sensors): keep turning, don't drive off straight. */
+                level = LINE_LOST_LEVEL;
+            }
+            else if (g_last_level <= -LINE_LOST_LEVEL)
             {
                 level = -LINE_LOST_LEVEL;
             }
