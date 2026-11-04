@@ -42,6 +42,31 @@ IMPORT void	tm_tusb_discard_input(void);
 #define USB_TX_MASK		(USB_TX_SIZE - 1U)
 #define USB_TX_CHUNK		64U
 
+/*
+ * LOCAL (s5-local-test): flight recorder.  Every console byte is also kept
+ * in rec_buffer, newest overwriting oldest, even with no host attached.
+ * When a serial monitor opens the port (DTR rises), the recorder is sent
+ * first, then live output continues.  So: run the car on battery, plug the
+ * USB in WITHOUT resetting, open the monitor, and read what happened.
+ */
+#define USB_REC_SIZE		32768U
+#define USB_REC_MASK		(USB_REC_SIZE - 1U)
+
+LOCAL UB		rec_buffer[USB_REC_SIZE];
+LOCAL volatile UW	rec_total;	/* bytes ever written (wraps) */
+LOCAL UW		rep_pos;	/* replay cursor (rec_total units) */
+LOCAL UW		rep_end;	/* replay stops here */
+LOCAL UB		rep_active;
+LOCAL UB		was_connected;
+
+LOCAL void rep_banner(const char *text)
+{
+	while(*text != '\0') {
+		tm_tusb_write_char(*text++);
+	}
+	tm_tusb_write_flush();
+}
+
 LOCAL UB		tx_buffer[USB_TX_SIZE];
 LOCAL volatile UW	tx_head;
 LOCAL volatile UW	tx_tail;
@@ -175,7 +200,59 @@ LOCAL void usb_service_task(INT stacd, void *exinf)
 		/* Gate on enumeration, not on DTR.  If the host is not reading,
 		   write_available() falls to zero and the loop simply stops --
 		   it never waits. */
-		if(tm_tusb_mounted()) {
+		/* LOCAL: monitor just opened -> replay the recorder.  The
+		   tx ring holds only a copy of recorded bytes, so it is
+		   emptied; output after rep_end goes through it as usual. */
+		if(tm_usb_link_state == 3 && !was_connected) {
+			tx_lock_enter(&intsts);
+			tx_tail = tx_head;
+			rep_end = rec_total;
+			rep_pos = (rep_end > USB_REC_SIZE)
+				  ? (rep_end - USB_REC_SIZE) : 0U;
+			tx_lock_leave(intsts);
+			rep_active = 1;
+			rep_banner("\r\n===== RECORDED LOG (before you "
+				   "connected) =====\r\n");
+		}
+		was_connected = (tm_usb_link_state == 3) ? 1 : 0;
+		if(!was_connected) rep_active = 0;
+
+		if(tm_tusb_mounted() && rep_active) {
+			available = tm_tusb_write_available();
+			while(available > 0 && rep_active) {
+				count = 0;
+				tx_lock_enter(&intsts);
+				/* overwritten while replaying: skip ahead */
+				if((rec_total - rep_pos) > USB_REC_SIZE) {
+					rep_pos = rec_total - USB_REC_SIZE;
+					/* all of it overwritten: end the replay */
+					if((W)(rep_pos - rep_end) > 0) {
+						rep_pos = rep_end;
+					}
+				}
+				while(count < USB_TX_CHUNK && count < available &&
+				      rep_pos != rep_end) {
+					chunk[count++] =
+					    rec_buffer[rep_pos & USB_REC_MASK];
+					rep_pos++;
+				}
+				tx_lock_leave(intsts);
+				for(UW i = 0; i < count; i++) {
+					tm_tusb_write_char((char)chunk[i]);
+				}
+				available -= count;
+				if(rep_pos == rep_end) {
+					rep_active = 0;
+					tm_tusb_write_flush();
+					rep_banner("\r\n===== END OF RECORDED "
+						   "LOG, LIVE FROM HERE "
+						   "=====\r\n");
+				}
+			}
+			tm_tusb_write_flush();
+		}
+
+		if(tm_tusb_mounted() && !rep_active) {
 			available = tm_tusb_write_available();
 			while(available > 0) {
 				count = 0;
@@ -272,6 +349,8 @@ EXPORT void tm_usb_console_put(const UB *buf, INT size)
 
 	tx_lock_enter(&intsts);
 	while(size-- > 0) {
+		rec_buffer[rec_total & USB_REC_MASK] = *buf;	/* LOCAL */
+		rec_total++;
 		next = (tx_head + 1U) & USB_TX_MASK;
 		if(next == tx_tail) {		/* full: drop, and count it */
 			tm_usb_dropped++;

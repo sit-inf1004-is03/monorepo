@@ -262,10 +262,13 @@ EXPORT W dev_i2c_llctl( UW unit, INT cmd, UW p1, UW p2, UW *pp)
 		out_w(I2C_TX_TL(unit), 0);
 		out_w(I2C_DMA_CR(unit), I2C_DMA_CR_RDMAE | I2C_DMA_CR_TDMAE);
 
-		/* Set Baudrate (400Kbts)*/
-		out_w(I2C_FS_SCL_HCNT(unit), 126);
-		out_w(I2C_FS_SCL_LCNT(unit), 187);
-		out_w(I2C_FS_SPKLEN(unit), 187/16);
+		/* Set Baudrate.  LOCAL TEST (s5-local-test): 100 kbit/s
+		 * (was 400) for margin against motor noise on the IMU
+		 * cable: 125 MHz / 100 kHz = 1250 clocks, 500 high + 750
+		 * low, as the Pico SDK's i2c_set_baudrate() does. */
+		out_w(I2C_FS_SCL_HCNT(unit), 500);
+		out_w(I2C_FS_SCL_LCNT(unit), 750);
+		out_w(I2C_FS_SPKLEN(unit), 750/16);
 		out_w(I2C_SDA_HOLD(unit), 38);
 
 		/* I2C interrupt enable */

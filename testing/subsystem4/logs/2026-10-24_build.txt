@@ -1,0 +1,58 @@
+================= make CONSOLE=uart WIFI=none
+(no warnings in subsystem4/common)
+tools/elf2uf2 mtk3pico_smp1_uart.elf mtk3pico_smp1_uart.uf2
+ 
+================= make CONSOLE=uart WIFI=none TEST=1
+(no warnings in subsystem4/common)
+tools/elf2uf2 mtk3pico_smp1_uart_test.elf mtk3pico_smp1_uart_test.uf2
+ 
+================= make CONSOLE=uart WIFI=none SMP=0 TEST=1
+(no warnings in subsystem4/common)
+tools/elf2uf2 mtk3pico_smp0_uart_test.elf mtk3pico_smp0_uart_test.uf2
+ 
+================= make 
+(no warnings in subsystem4/common)
+tools/elf2uf2 mtk3pico_smp1_usb_cdc_wifi.elf mtk3pico_smp1_usb_cdc_wifi.uf2
+ 
+================= make TEST=1
+(no warnings in subsystem4/common)
+tools/elf2uf2 mtk3pico_smp1_usb_cdc_wifi_test.elf mtk3pico_smp1_usb_cdc_wifi_test.uf2
+ 
+-rwxr-xr-x 1 andrew andrew  956064 Oct 24 17:23 mtk3pico_smp0_uart_test.elf
+-rw-r--r-- 1 andrew andrew  124928 Oct 24 17:23 mtk3pico_smp0_uart_test.uf2
+-rwxr-xr-x 1 andrew andrew 1081128 Oct 24 17:23 mtk3pico_smp1_uart.elf
+-rw-r--r-- 1 andrew andrew  133632 Oct 24 17:23 mtk3pico_smp1_uart.uf2
+-rwxr-xr-x 1 andrew andrew 1112408 Oct 24 17:23 mtk3pico_smp1_uart_test.elf
+-rw-r--r-- 1 andrew andrew  145408 Oct 24 17:23 mtk3pico_smp1_uart_test.uf2
+-rwxr-xr-x 1 andrew andrew 2772268 Oct 24 17:23 mtk3pico_smp1_usb_cdc_wifi.elf
+-rw-r--r-- 1 andrew andrew  596480 Oct 24 17:23 mtk3pico_smp1_usb_cdc_wifi.uf2
+-rwxr-xr-x 1 andrew andrew 2814688 Oct 24 17:23 mtk3pico_smp1_usb_cdc_wifi_test.elf
+-rw-r--r-- 1 andrew andrew  611328 Oct 24 17:23 mtk3pico_smp1_usb_cdc_wifi_test.uf2
+=== strict warnings, APP_TEST=0
+=== strict warnings, APP_TEST=1
+=== size of Buddy 4 objects (normal build: make CONSOLE=uart WIFI=none)
+   text	   data	    bss	    dec	    hex	filename
+   1204	      0	      4	   1208	    4b8	mtkernel_3/app_program/subsystem4/drv_i2c1.o
+    491	      1	      1	    493	    1ed	mtkernel_3/app_program/subsystem4/drv_mpu9250.o
+    184	      0	      0	    184	     b8	mtkernel_3/app_program/subsystem4/drv_us_timer.o
+   1472	      0	      0	   1472	    5c0	mtkernel_3/app_program/subsystem4/imu_filter.o
+    384	      0	      0	    384	    180	mtkernel_3/app_program/subsystem4/imu_impact.o
+   1448	      0	      0	   1448	    5a8	mtkernel_3/app_program/subsystem4/imu_math.o
+    900	      0	      0	    900	    384	mtkernel_3/app_program/subsystem4/imu_monitor.o
+    356	      0	      0	    356	    164	mtkernel_3/app_program/subsystem4/imu_motion.o
+    384	      0	      0	    384	    180	mtkernel_3/app_program/subsystem4/imu_odom.o
+    864	      0	      0	    864	    360	mtkernel_3/app_program/subsystem4/imu_pack.o
+      0	      0	      0	      0	      0	mtkernel_3/app_program/subsystem4/imu_sim.o
+   2241	      0	    484	   2725	    aa5	mtkernel_3/app_program/subsystem4/imu_task.o
+   1468	      0	      0	   1468	    5bc	mtkernel_3/app_program/subsystem4/imu_terrain.o
+     32	      0	      0	     32	     20	mtkernel_3/app_program/subsystem4/subsystem4.o
+      0	      0	      0	      0	      0	mtkernel_3/app_program/subsystem4/subsystem4_test.o
+    220	      0	      0	    220	     dc	mtkernel_3/app_program/common/bitpack.o
+    488	      0	      4	    492	    1ec	mtkernel_3/app_program/common/faults.o
+  12136	      1	    493	  12630	   3156	(TOTALS)
+=== libm / float symbols linked
+(no libm functions linked)
+20003f44 00000004 b g_aux_word
+20003f08 00000004 b g_snapshot_word
+20003ee4 00000020 b g_stats
+20003f48 00000178 b g_monitor

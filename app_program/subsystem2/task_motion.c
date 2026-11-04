@@ -50,10 +50,14 @@
 #define MIN_SPEED_MM_S      (80u)       // Speed at the end of the slow zone.
 #define BALANCE_PER_PULSE   (2.0f)      // mm/s per pulse of count difference.
 #define BALANCE_MAX_MM_S    (60.0f)
-#define TURN_STEP_MM_S      (20.0f)     // Speed difference per turn level.
-#define PIVOT_SPEED_MM_S    (150.0f)    // Calibrate with test M1.
+#define TURN_STEP_MM_S      (12.0f)     // Speed difference per turn level.
+#define STEER_SMOOTH        (0.5f)      // LOCAL TEST: 0..1, lower = smoother.
+#define PIVOT_SPEED_MM_S    (80.0f)    // Calibrate with test M1.
 
 #define STALL_USEC          (500000u)   // No pulse for this long: stall.
+#define STALL_MIN_MM_S      (20.0f)     // LOCAL: a wheel told to go slower
+                                        // than this (inner wheel of a hard
+                                        // steer) is not checked for stall.
 #define PIVOT_TIMEOUT_USEC  (5000000u)  // PROVISIONAL: see motion_pivot_step.
 
 #define EVT_STOP_TURN       (1u << 0)   // Motion's own flag until G1/G2.
@@ -99,6 +103,10 @@ static int32_t volatile  g_turn_level   = 0;
 //
 static uint32_t volatile g_speed_cap    = 0u;
 
+// LOCAL TEST (ramp boost): written by Line Following only.  0 = none.
+//
+static uint32_t volatile g_speed_floor  = 0u;
+
 // Written by task_motion only.
 //
 static uint32_t volatile g_faults        = 0u;
@@ -111,6 +119,10 @@ static uint32_t volatile g_activity      = MOTION_ACTIVITY_IDLE;
 static motion_move_t     g_move;
 static motion_speed_t    g_speed;
 static pid_ctrl_t        g_pid[DRV_ENCODER_WHEELS];
+// LOCAL: stall check skips a wheel that is slow on purpose, and gives a
+// wheel STALL_USEC to start after it is told to move again.
+static bool              g_b_wheel_slow[DRV_ENCODER_WHEELS];
+static uint32_t          g_wheel_go_usec[DRV_ENCODER_WHEELS];
 
 static void     motion_task(INT start_code, void * p_ext_info);
 static void     motion_on_event(UINT pattern);
@@ -302,6 +314,19 @@ motion_set_speed_cap (uint32_t speed_mm_s)
 {
     g_speed_cap = ((speed_mm_s > MOTION_SPEED_MAX_MM_S) ?
                    MOTION_SPEED_MAX_MM_S : speed_mm_s);
+}
+
+/*!
+ * @brief LOCAL TEST (ramp boost): lowest speed of a straight, above the
+ *        command's speed and Navigation's cap (more push on a ramp).
+ *
+ * @param[in] speed_mm_s  0 = none, else 1 to MOTION_SPEED_MAX_MM_S.
+ */
+void
+motion_set_speed_floor (uint32_t speed_mm_s)
+{
+    g_speed_floor = ((speed_mm_s > MOTION_SPEED_MAX_MM_S) ?
+                     MOTION_SPEED_MAX_MM_S : speed_mm_s);
 }
 
 /*!
@@ -578,9 +603,13 @@ motion_cmd_valid (motion_cmd_t const * p_cmd)
                    (p_cmd->distance_mm >= 1u) &&
                    (p_cmd->distance_mm <= MOTION_DISTANCE_MAX_MM));
     }
-    else if (MOTION_CMD_PIVOT == p_cmd->type)
+    else if ((MOTION_CMD_PIVOT == p_cmd->type) ||
+             (MOTION_CMD_SWING == p_cmd->type))
     {
-        b_valid = (p_cmd->direction <= MOTION_DIR_RIGHT);
+        // LOCAL (s5-local-test): speed_mm_s 0 = PIVOT_SPEED_MM_S, else
+        // that speed (the bypass line search pivots slowly).
+        b_valid = ((p_cmd->direction <= MOTION_DIR_RIGHT) &&
+                   (p_cmd->speed_mm_s <= MOTION_SPEED_MAX_MM_S));
     }
     else
     {
@@ -623,9 +652,16 @@ motion_straight_step (uint32_t now_usec, float dt_sec)
         uint32_t const left_mm = drv_encoder_pulses_to_mm(
                                      g_move.target_pulses - done);
         uint32_t const cap     = g_speed_cap;
-        uint32_t const wanted  = (((0u != cap) &&
+        uint32_t const floor_v = g_speed_floor;
+        uint32_t       wanted  = (((0u != cap) &&
                                    (cap < g_move.cmd.speed_mm_s)) ?
                                   cap : g_move.cmd.speed_mm_s);
+
+        if (floor_v > wanted)
+        {
+            wanted = floor_v;   // LOCAL TEST: ramp boost.
+        }
+
         float const    cruise  = (float) wanted;
         float          speed   = motion_ramp(dt_sec, cruise);
 
@@ -663,7 +699,14 @@ motion_straight_step (uint32_t now_usec, float dt_sec)
 
         bool const b_back = (MOTION_DIR_BACKWARDS == g_move.cmd.direction);
 
-        motion_drive((speed + steer), (speed - steer), b_back, b_back,
+        // LOCAL TEST (smooth steering): never reverse the inner wheel, and
+        // ease the steer in over ~60 ms instead of jumping each period.
+        static float s_steer = 0.0f;
+
+        steer    = motion_clamp(steer, -speed, speed);
+        s_steer += STEER_SMOOTH * (steer - s_steer);
+
+        motion_drive((speed + s_steer), (speed - s_steer), b_back, b_back,
                      dt_sec);
     }
 }
@@ -693,6 +736,25 @@ motion_pivot_step (uint32_t now_usec, float dt_sec)
         g_faults = MOTION_FAULT_STALL;
         motion_finish(MOTION_FAULT, MOTION_REASON_STALL);
     }
+    else if (MOTION_CMD_SWING == g_move.cmd.type)
+    {
+        // LOCAL: one-wheel turn.  The inner wheel is held (duty 0 =
+        // brake), the outer one drives forwards at the pivot speed.
+        //
+        float const target = ((0u == g_move.cmd.speed_mm_s) ?
+                              PIVOT_SPEED_MM_S :
+                              (float) g_move.cmd.speed_mm_s);
+        float const speed  = motion_ramp(dt_sec, target);
+        bool const  b_left = (MOTION_DIR_LEFT == g_move.cmd.direction);
+        uint32_t const outer = b_left ? DRV_ENCODER_RIGHT :
+                                        DRV_ENCODER_LEFT;
+        int32_t const duty = motion_wheel_duty(outer, speed, dt_sec);
+
+        (void) drv_motor_set((b_left ? DRV_MOTOR_LEFT : DRV_MOTOR_RIGHT),
+                             0);
+        (void) drv_motor_set((b_left ? DRV_MOTOR_RIGHT : DRV_MOTOR_LEFT),
+                             duty);
+    }
     else
     {
         uint32_t const left   = motion_moved(DRV_ENCODER_LEFT);
@@ -701,7 +763,10 @@ motion_pivot_step (uint32_t now_usec, float dt_sec)
         // Cast: as in motion_straight_step().
         //
         int32_t const difference = (int32_t) left - (int32_t) right;
-        float const   speed      = motion_ramp(dt_sec, PIVOT_SPEED_MM_S);
+        float const   target     = ((0u == g_move.cmd.speed_mm_s) ?
+                                    PIVOT_SPEED_MM_S :
+                                    (float) g_move.cmd.speed_mm_s);
+        float const   speed      = motion_ramp(dt_sec, target);
         float const   steer      =
             motion_clamp((-BALANCE_PER_PULSE * (float) difference),
                          -BALANCE_MAX_MM_S, BALANCE_MAX_MM_S);
@@ -729,7 +794,22 @@ motion_stalled (uint32_t now_usec)
     {
         for (uint32_t wheel = 0u; wheel < DRV_ENCODER_WHEELS; wheel++)
         {
-            if (drv_encoder_get_idle_usec(wheel) >= STALL_USEC)
+            // LOCAL: a swing turn holds its inner wheel still on purpose.
+            //
+            bool const b_held =
+                ((STATE_PIVOT == g_move.state) &&
+                 (MOTION_CMD_SWING == g_move.cmd.type) &&
+                 (wheel == ((MOTION_DIR_LEFT == g_move.cmd.direction) ?
+                            DRV_ENCODER_LEFT : DRV_ENCODER_RIGHT)));
+
+            // LOCAL: slowed on purpose (hard steer), or only just told
+            // to move again: not a stall.
+            bool const b_resting =
+                g_b_wheel_slow[wheel] ||
+                ((now_usec - g_wheel_go_usec[wheel]) < STALL_USEC);
+
+            if ((!b_held) && (!b_resting) &&
+                (drv_encoder_get_idle_usec(wheel) >= STALL_USEC))
             {
                 b_stalled = true;
             }
@@ -752,6 +832,20 @@ static void
 motion_drive (float left_mm_s, float right_mm_s, bool b_left_back,
               bool b_right_back, float dt_sec)
 {
+    float const   want[DRV_ENCODER_WHEELS] = { left_mm_s, right_mm_s };
+
+    // LOCAL: note which wheels are slowed on purpose (stall check).
+    for (uint32_t wheel = 0u; wheel < DRV_ENCODER_WHEELS; wheel++)
+    {
+        bool const b_slow = (want[wheel] < STALL_MIN_MM_S);
+
+        if (g_b_wheel_slow[wheel] && !b_slow)
+        {
+            g_wheel_go_usec[wheel] = gpio_irq_get_time_usec();
+        }
+        g_b_wheel_slow[wheel] = b_slow;
+    }
+
     int32_t const left  = motion_wheel_duty(DRV_ENCODER_LEFT, left_mm_s,
                                             dt_sec);
     int32_t const right = motion_wheel_duty(DRV_ENCODER_RIGHT, right_mm_s,

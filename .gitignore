@@ -7,9 +7,11 @@ Release
 *.map
 *.o
 *.d
+*.exe
 build_make/tools/elf2uf2
 tools/elf2uf2/elf2uf2
 build_make/.build_profile
+host_test/build/
 
 # Real WiFi credentials -- never commit these. Copy config/wifi_secrets.example.h
 # to config/wifi_secrets.h and fill in your own network's SSID/password.
@@ -24,3 +26,4 @@ config/wifi_secrets.h
 
 # macOS
 .DS_Store
+config/wifi_secrets.h

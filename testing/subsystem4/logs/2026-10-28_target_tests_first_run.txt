@@ -1,0 +1,54 @@
+RPI-RP2 at D: at 19:23:10
+copied mtk3pico_smp1_usb_cdc_wifi_test.uf2
+Pico on COM13
+BYTES: 2459
+
+
+microT-Kernel Version 3.00
+
+
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+all subsystems started
+
+imu: task started, period 10 ms
+[TEST] === test run start ===
+[TEST] S1-U01 PASS  cyclic handler is running
+wifi: cyw43_utk_task starting (proc 1)
+wifi: cyw43_init() ...
+wifi: cyw43_init() returned, bringing interface up ...
+imu: LSM303D (no gyro) found at 0x1e, WHO_AM_I 0x49
+imu: calibrated (forced=0)
+[TEST] S1-U02 PASS  LED task sleeps between ticks
+[TEST] subsystem1 SUMMARY 2 passed, 0 failed
+[TEST] S2-U01 PASS  sample values stay within 0..100
+[TEST] S2-U02 PASS  free slots and free blocks within pool size
+[TEST] subsystem2 SUMMARY 2 passed, 0 failed
+[TEST] INT-01 PASS  samples flow from subsystem 2 to subsystem 3
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 2 passed, 0 failed
+[TEST] S4-U01 PASS  MPU-9250 found on I2C1 and calibrated (READY_IMU set)
+[TEST] S4-U03 PASS  still car: STATIONARY, LEVEL, |pitch| < 2 deg, no ESTOP
+[TEST] subsystem4 bring-up SUMMARY 2 passed, 0 failed
+[TEST]   cycles/s 101, overruns 0, max exec 30096 us
+[TEST] S4-U02 FAIL  100 samples/s, no overrun, worst cycle < 2 ms   (../app_program/subsystem4/subsystem4_test.c:136)
+[TEST] subsystem4 timing SUMMARY 0 passed, 1 failed
+[TEST] S4-U04 PASS  snapshot golden vector matches the host build
+[TEST] S4-U09 PASS  12-bit encoder wrap and clamp helpers on target
+[TEST] subsystem4 packing SUMMARY 2 passed, 0 failed
+[TEST]   stress errors A 0, B 0, handler 0/44
+[TEST] S4-U05 PASS  fault flag: 2 tasks + 1 handler, no lost or phantom bits
+[TEST] subsystem4 fault flag SUMMARY 1 passed, 0 failed
+[TEST]   ESTOP wake-up after 106059 us
+[TEST] S4-U06 FAIL  impact sets ESTOP and wakes a waiter within 25 ms   (../app_program/subsystem4/subsystem4_test.c:258)
+[TEST] S4-U07 FAIL  snapshot shows ESTOP; IMU clears it after 0.5 s settled   (../app_program/subsystem4/subsystem4_test.c:263)
+[TEST] subsystem4 estop SUMMARY 0 passed, 2 failed
+[TEST]   sim hump peak x10 = 480, mean 288 us, worst 833 us per sample
+[TEST] S4-U08 FAIL  50 mm simulated hump within 10 % on target; step < 0.5 ms   (../app_program/subsystem4/subsystem4_test.c:325)
+[TEST] subsystem4 algorithm SUMMARY 0 passed, 1 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+
+
+[exited with code 0]

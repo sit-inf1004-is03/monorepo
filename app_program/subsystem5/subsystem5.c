@@ -1,29 +1,42 @@
-/*
- *	subsystem5.c
- *	Subsystem 5 -- <name>.  EMPTY TEMPLATE.
+/** @file subsystem5.c
  *
- *	subsystem5_init():  create this subsystem's kernel objects
- *	                    (semaphores, mailboxes, ...).  Do not start
- *	                    tasks here.
- *	subsystem5_start(): create and start this subsystem's tasks, e.g.
- *	    ID tid = app_start_task(my_task, S5_PRI_MAIN, 0, "my_task");
- *	    return (tid < E_OK) ? tid : E_OK;
+ * @brief Subsystem 5 -- Obstacle Scan: creates its objects and starts its
+ *        task (see subsystem5.h).
  *
- *	Drivers for this subsystem's hardware go in this folder as
- *	drv_<name>.c / drv_<name>.h, called only from the task that owns
- *	the peripheral (TEAM.md section 3).
- *
- *	Record every pin, task, object and interface in TEAM.md.
+ * Coding standard: BARR-C:2018.
  */
 
 #include "subsystem5.h"
+#include "drv_ultrasonic.h"
+#include "drv_servo.h"
+#include "obstacle_scan.h"
 
-EXPORT ER subsystem5_init(void)
+/*!
+ * @brief  Set up the sensor and servo.  The ECHO handler is registered
+ *         with gpio_irq here, as gpio_irq.h requires (from _init only).
+ * @return E_OK, or the error from ultrasonic_init().
+ */
+EXPORT ER
+subsystem5_init(void)
 {
-	return E_OK;
+    ER const result = ultrasonic_init();
+
+    servo_init();
+
+    return (result);
 }
 
-EXPORT ER subsystem5_start(void)
+/*!
+ * @brief  Start obstacle_scan_task (priority 20, any core).
+ * @return E_OK, or the error from app_start_task().
+ */
+EXPORT ER
+subsystem5_start(void)
 {
-	return E_OK;
+    ID const tid = app_start_task((FP)obstacle_scan_task, S5_PRI_MAIN, 0u,
+                                  "obstacle_scan_task");
+
+    return ((tid < E_OK) ? (ER)tid : E_OK);
 }
+
+/*** end of file ***/

@@ -1,0 +1,27 @@
+RPI-RP2 at D: at 17:57:47
+copied imu_i2c_scan.uf2
+Pico on COM4
+BYTES: 560
+
+===== IMU chip ID, round 1 =====
+GP2 (SDA) HIGH, GP3 (SCL) HIGH  [Pico pull-ups off]
+Scan GP2/GP3: nothing
+
+===== IMU chip ID, round 2 =====
+GP2 (SDA) HIGH, GP3 (SCL) HIGH  [Pico pull-ups off]
+Scan GP2/GP3: nothing
+
+===== IMU chip ID, round 3 =====
+GP2 (SDA) HIGH, GP3 (SCL) HIGH  [Pico pull-ups off]
+Scan GP2/GP3: nothing
+
+===== IMU chip ID, round 4 =====
+GP2 (SDA) HIGH, GP3 (SCL) HIGH  [Pico pull-ups off]
+Scan GP2/GP3: nothing
+
+===== IMU chip ID, round 5 =====
+GP2 (SDA) HIGH, GP3 (SCL) HIGH  [Pico pull-ups off]
+Scan GP2/GP3: nothing
+
+
+[exited with code 0]
