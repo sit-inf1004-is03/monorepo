@@ -66,6 +66,11 @@
 //
 #define NAV_SIDE_LEFT           (0u)
 #define NAV_SIDE_RIGHT          (1u)
+
+// LOCAL: nav_get_junction_search(): which way the T turn went.
+#define NAV_JSEARCH_NONE        (0u)
+#define NAV_JSEARCH_LEFT        (1u)
+#define NAV_JSEARCH_RIGHT       (2u)
 #define NAV_BYPASS_CM_MAX       (511u)  // 9-bit distance fields.
 
 // Bypass line search verdicts (Obstacle Scan), 3 bits.
@@ -117,6 +122,7 @@ ER       nav_post_bypass_plan(uint32_t side, uint32_t out_cm,
 ER       nav_post_bypass_passed(void);
 ER       nav_post_search(uint32_t command);
 bool     nav_is_search_wait(void);
+uint32_t nav_get_junction_search(void);   // LOCAL: NAV_JSEARCH_
 ER       nav_raise_fault(uint32_t bits);
 ER       nav_post_remote(uint32_t command);
 

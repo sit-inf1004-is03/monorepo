@@ -58,7 +58,10 @@
 #if (1 == NAV_JUNC_SWING)
 // A swing moves the axle centre forwards by the half track, so stop that
 // much short: sensors on the crossbar -> creep the rest only.
-#define NAV_JUNC_CREEP_MM   (NAV_CROSS_MM - NAV_HALF_TRACK_MM)
+#define NAV_JUNC_EXTRA_MM   (30u)       // LOCAL: buffer, creep this much
+                                        // further past the T (2-5 cm).
+#define NAV_JUNC_CREEP_MM   (NAV_CROSS_MM - NAV_HALF_TRACK_MM + \
+                             NAV_JUNC_EXTRA_MM)
 #else
 #define NAV_JUNC_CREEP_MM   (NAV_CROSS_MM)
 #endif
@@ -173,6 +176,10 @@ static uint32_t volatile g_state  = NAV_STATE_IDLE;
 static uint32_t volatile g_faults = 0u;
 static uint32_t volatile g_reason = NAV_REASON_NONE;
 static bool     volatile g_b_search_wait = false;   // In P_SEARCH_WAIT.
+// LOCAL: the search wait follows a T turn (not a bypass): the turn's
+// side (NAV_JSEARCH_), else NONE.  Obstacle Scan reads it for its
+// line search.
+static uint32_t volatile g_junc_search   = NAV_JSEARCH_NONE;
 
 // Used by the Navigation task only.  Static storage starts zeroed:
 // P_IDLE, nothing pending.
@@ -379,6 +386,17 @@ bool
 nav_is_search_wait (void)
 {
     return (g_b_search_wait);
+}
+
+/*!
+ * @brief LOCAL: while the search wait follows a T turn, that turn's
+ *        side, NAV_JSEARCH_LEFT / _RIGHT; NAV_JSEARCH_NONE otherwise
+ *        (bypass search, or no search).  Read only, for Obstacle Scan.
+ */
+uint32_t
+nav_get_junction_search (void)
+{
+    return (g_b_search_wait ? g_junc_search : NAV_JSEARCH_NONE);
 }
 
 /*!
@@ -621,6 +639,9 @@ nav_on_reply (motion_reply_t const * p_reply)
     }
     else if (MOTION_FAULT == p_reply->status)
     {
+        // LOCAL debug: Motion's reason (MOTION_REASON_ in motion.h).
+        tm_printf((UB *) "[NAV] Motion fault, reason %lu\n",
+                  (unsigned long) p_reply->reason);
         nav_halt(NAV_STATE_FAULT, NAV_REASON_MOTION);
     }
     else if (P_BRAKING == g_ctx.phase)
@@ -653,6 +674,16 @@ nav_on_move_done (void)
             {
                 g_ctx.turns_left--;
                 nav_send_pivot(g_ctx.turn_dir, 0u);
+            }
+            else if (NAV_LINE_ON != g_line_state)
+            {
+                // LOCAL: the T turn ended off the line (overshot, or the
+                // angle cap): Obstacle Scan's zig-zag search finds it.
+                tm_printf((UB *) "[NAV] T turn ended off the line:"
+                          " search\n");
+                g_junc_search = (MOTION_DIR_LEFT == g_ctx.turn_dir) ?
+                                NAV_JSEARCH_LEFT : NAV_JSEARCH_RIGHT;
+                nav_enter(P_SEARCH_WAIT);
             }
             else
             {
@@ -999,6 +1030,11 @@ nav_enter (uint32_t phase)
     g_ctx.phase     = phase;
     g_b_search_wait = (P_SEARCH_WAIT == phase);
 
+    if ((P_SEARCH_WAIT != phase) && (P_SEARCH_PIVOT != phase))
+    {
+        g_junc_search = NAV_JSEARCH_NONE; // LOCAL: the T-turn search is over.
+    }
+
     switch (phase)
     {
         case P_FOLLOW:
@@ -1131,6 +1167,14 @@ nav_brake_then (uint32_t phase, uint32_t state)
 static void
 nav_halt (uint32_t state, uint32_t reason)
 {
+    // LOCAL debug: say why the car stopped.
+    tm_printf((UB *) "[NAV] STOP: %s (phase %lu, faults 0x%lx)\n",
+              (NAV_REASON_FAULT_BIT == reason)      ? "fault bit" :
+              (NAV_REASON_MOTION == reason)         ? "Motion fault" :
+              (NAV_REASON_LINE_NOT_FOUND == reason) ? "line not found" :
+              (NAV_REASON_REMOTE_STOP == reason)    ? "remote stop" :
+                                                      "other",
+              (unsigned long) g_ctx.phase, (unsigned long) g_faults);
     motion_set_speed_cap(0u);
     g_reason         = reason;
     g_ctx.b_barcode  = false;

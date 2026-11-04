@@ -14,6 +14,7 @@
  */
 #include "line_barcode.h"
 #include "../subsystem2/motion.h"
+#include "../subsystem2/drv_encoder.h"   /* LOCAL: junction turn angle */
 #include "../navigation/navigation.h"
 
 #define LINE_C_CHAN     (0U)      /* GP26 centre = ADC0 */
@@ -56,10 +57,16 @@
 #define LINE_LEVEL_STEP (1)       /* max turn-level change per 20 ms loop  */
 #define LINE_LOST_SIDE  (0.20f)   /* |error| at loss above this => that side */
 #define LINE_LOST_LEVEL (2)       /* turn level used to swing back to line */
-#define LINE_JUNC_SAMPLES (3U)    /* LOCAL: both black this many loops in a
+#define LINE_JUNC_SAMPLES (2U)    /* LOCAL: both black this many loops in a
                                    * row after a barcode = the T junction */
-#define LINE_JUNC_BLACK (0.65f)   /* LOCAL: "black" for the T check (both
-                                   * sensors); lower = easier to trigger */
+#define LINE_JUNC_BLACK (0.22f)   /* LOCAL: "black" for the T check (both
+                                   * sensors). Log: crossbar both 32,
+                                   * line following both 0-1. */
+#define LINE_JUNC_TURN_DEG (65U)  /* LOCAL: junction turn = a fixed angle
+                                   * by encoder, line ignored (it coasts
+                                   * ~5 more = ~90).  Still too much ->
+                                   * lower; too little -> raise. */
+#define LINE_HALF_TRACK_MM (70U)  /* LOCAL: wheel centre to car centre */
 #define LINE_JUNC_SEEN  (0.35f)   /* LOCAL debug: both sensors above this
                                    * = something across the line; its
                                    * darkest point is printed after */
@@ -79,6 +86,8 @@ static bool         g_b_in_pivot   = false;  /* LOCAL: junction pivot on */
 static bool         g_b_junc_hold  = false;  /* LOCAL: T posted: drive
                                               * straight until the pivot */
 static bool         g_b_pivot_armed = false; /* LOCAL: white seen in it */
+static uint32_t     g_pivot_start  = 0U;     /* LOCAL: L+R count at start */
+static bool         g_b_pivot_done = false;  /* LOCAL: StopTurn sent */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -247,20 +256,51 @@ EXPORT void line_task(INT stacd, void * exinf)
             bool const b_on    = ((c >= LINE_LOST_FRAC) ||
                                   (r >= LINE_LOST_FRAC));
 
-            static uint8_t s_print = 0U;
+            /* LOCAL debug: after a barcode, one line per dark patch
+             * (either sensor > LINE_JUNC_SEEN): peak of each sensor,
+             * peak of BOTH together, raw ADC peaks, length in loops.
+             * Shows whether the crossbar is seen and how dark. */
+            static uint8_t  s_len    = 0U;
+            static int32_t  s_pk_c   = 0;
+            static int32_t  s_pk_r   = 0;
+            static int32_t  s_pk_b   = 0;
+            static uint16_t s_raw_c  = 0U;
+            static uint16_t s_raw_r  = 0U;
 
-            if (b_junc && (MOTION_ACTIVITY_STRAIGHT == act))
+            if (b_junc && ((c > LINE_JUNC_SEEN) || (r > LINE_JUNC_SEEN)))
             {
-                s_print++;
+                int32_t const pc = (int32_t)(c * 100.0f);
+                int32_t const pr = (int32_t)(r * 100.0f);
+                int32_t const pb = (pc < pr) ? pc : pr;
 
-                if (s_print >= LINE_JUNC_PRINT)
+                s_pk_c  = (pc > s_pk_c) ? pc : s_pk_c;
+                s_pk_r  = (pr > s_pk_r) ? pr : s_pk_r;
+                s_pk_b  = (pb > s_pk_b) ? pb : s_pk_b;
+                s_raw_c = (raw_c > s_raw_c) ? raw_c : s_raw_c;
+                s_raw_r = (raw_r > s_raw_r) ? raw_r : s_raw_r;
+                if (s_len < 255U)
                 {
-                    s_print = 0U;
-                    tm_printf((UB*)"[LINE] waiting for T: c=%d r=%d"
-                              " (both > %d)\n", (int)(c * 100.0f),
-                              (int)(r * 100.0f),
-                              (int)(LINE_JUNC_BLACK * 100.0f));
+                    s_len++;
                 }
+            }
+            else if (s_len > 0U)
+            {
+                tm_printf((UB*)"[LINE] dark: c %d r %d both %d (T > %d)"
+                          " raw c %u r %u, %u loops\n", (int)s_pk_c,
+                          (int)s_pk_r, (int)s_pk_b,
+                          (int)(LINE_JUNC_BLACK * 100.0f),
+                          (unsigned)s_raw_c, (unsigned)s_raw_r,
+                          (unsigned)s_len);
+                s_len   = 0U;
+                s_pk_c  = 0;
+                s_pk_r  = 0;
+                s_pk_b  = 0;
+                s_raw_c = 0U;
+                s_raw_r = 0U;
+            }
+            else
+            {
+                /* white, nothing to report */
             }
 
             /* Debug, always: how dark did BOTH sensors get together? */
@@ -301,6 +341,7 @@ EXPORT void line_task(INT stacd, void * exinf)
                         {
                             (void)nav_post_junction();
                             g_b_junc_hold = true;
+                            barcode_beep(1U, BC_BEEP_T_MS);
                             tm_printf((UB*)"[LINE] T junction\n");
                         }
                         else
@@ -323,26 +364,40 @@ EXPORT void line_task(INT stacd, void * exinf)
 
             if (b_junc && (MOTION_ACTIVITY_PIVOT == act))
             {
+                /* Both wheels' distance added = 2 x half-track x angle,
+                 * for a one-wheel turn and for a pivot alike. */
+                uint32_t const sum =
+                    drv_encoder_get_count(DRV_ENCODER_LEFT) +
+                    drv_encoder_get_count(DRV_ENCODER_RIGHT);
+
                 if (!g_b_in_pivot)
                 {
                     g_b_in_pivot    = true;
                     g_b_pivot_armed = false;
+                    g_b_pivot_done  = false;
+                    g_pivot_start   = sum;
                 }
 
-                if (!b_on)
+                uint32_t const turned_mm =
+                    drv_encoder_pulses_to_mm(sum - g_pivot_start);
+                uint32_t const deg = (turned_mm * 573U) /
+                                     (20U * LINE_HALF_TRACK_MM);
+
+                if (g_b_pivot_done)
                 {
-                    g_b_pivot_armed = true;
+                    /* StopTurn sent; Motion is ending the pivot. */
                 }
-                else if (g_b_pivot_armed)
+                else if (deg >= LINE_JUNC_TURN_DEG)
                 {
                     (void)motion_stop_turn();
-                    g_b_pivot_armed = false;    /* Once per pivot. */
+                    g_b_pivot_done  = true;         /* once per pivot */
                     g_b_resync      = true;
-                    tm_printf((UB*)"[LINE] turn: line found\n");
+                    tm_printf((UB*)"[LINE] turn: %u deg done, line %s\n",
+                              (unsigned)deg, b_on ? "seen" : "not seen");
                 }
                 else
                 {
-                    /* Still on the line it started on. */
+                    /* Turning: the line is ignored until the angle. */
                 }
             }
             else

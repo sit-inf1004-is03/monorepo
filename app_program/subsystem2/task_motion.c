@@ -55,6 +55,9 @@
 #define PIVOT_SPEED_MM_S    (80.0f)    // Calibrate with test M1.
 
 #define STALL_USEC          (500000u)   // No pulse for this long: stall.
+#define STALL_MIN_MM_S      (20.0f)     // LOCAL: a wheel told to go slower
+                                        // than this (inner wheel of a hard
+                                        // steer) is not checked for stall.
 #define PIVOT_TIMEOUT_USEC  (5000000u)  // PROVISIONAL: see motion_pivot_step.
 
 #define EVT_STOP_TURN       (1u << 0)   // Motion's own flag until G1/G2.
@@ -112,6 +115,10 @@ static uint32_t volatile g_activity      = MOTION_ACTIVITY_IDLE;
 static motion_move_t     g_move;
 static motion_speed_t    g_speed;
 static pid_ctrl_t        g_pid[DRV_ENCODER_WHEELS];
+// LOCAL: stall check skips a wheel that is slow on purpose, and gives a
+// wheel STALL_USEC to start after it is told to move again.
+static bool              g_b_wheel_slow[DRV_ENCODER_WHEELS];
+static uint32_t          g_wheel_go_usec[DRV_ENCODER_WHEELS];
 
 static void     motion_task(INT start_code, void * p_ext_info);
 static void     motion_on_event(UINT pattern);
@@ -771,7 +778,13 @@ motion_stalled (uint32_t now_usec)
                  (wheel == ((MOTION_DIR_LEFT == g_move.cmd.direction) ?
                             DRV_ENCODER_LEFT : DRV_ENCODER_RIGHT)));
 
-            if ((!b_held) &&
+            // LOCAL: slowed on purpose (hard steer), or only just told
+            // to move again: not a stall.
+            bool const b_resting =
+                g_b_wheel_slow[wheel] ||
+                ((now_usec - g_wheel_go_usec[wheel]) < STALL_USEC);
+
+            if ((!b_held) && (!b_resting) &&
                 (drv_encoder_get_idle_usec(wheel) >= STALL_USEC))
             {
                 b_stalled = true;
@@ -795,6 +808,20 @@ static void
 motion_drive (float left_mm_s, float right_mm_s, bool b_left_back,
               bool b_right_back, float dt_sec)
 {
+    float const   want[DRV_ENCODER_WHEELS] = { left_mm_s, right_mm_s };
+
+    // LOCAL: note which wheels are slowed on purpose (stall check).
+    for (uint32_t wheel = 0u; wheel < DRV_ENCODER_WHEELS; wheel++)
+    {
+        bool const b_slow = (want[wheel] < STALL_MIN_MM_S);
+
+        if (g_b_wheel_slow[wheel] && !b_slow)
+        {
+            g_wheel_go_usec[wheel] = gpio_irq_get_time_usec();
+        }
+        g_b_wheel_slow[wheel] = b_slow;
+    }
+
     int32_t const left  = motion_wheel_duty(DRV_ENCODER_LEFT, left_mm_s,
                                             dt_sec);
     int32_t const right = motion_wheel_duty(DRV_ENCODER_RIGHT, right_mm_s,

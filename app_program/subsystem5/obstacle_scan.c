@@ -220,6 +220,7 @@ typedef struct
 } scan_ctx_t;
 
 static void     on_watch(scan_ctx_t * p_ctx);
+static bool     junction_search(scan_ctx_t * p_ctx);
 static void     on_wait_brake(scan_ctx_t * p_ctx);
 static void     on_coarse(scan_ctx_t * p_ctx);
 static void     on_fine(scan_ctx_t * p_ctx);
@@ -280,7 +281,10 @@ obstacle_scan_task(INT stacd, void * p_exinf)
         switch (fld_get(ctx.state_word, F_STATE_SHIFT, F_STATE_MASK))
         {
         case ST_WATCH:
-            on_watch(&ctx);
+            if (!junction_search(&ctx))
+            {
+                on_watch(&ctx);
+            }
         break;
 
         case ST_WAIT_BRAKE:
@@ -327,6 +331,7 @@ on_watch(scan_ctx_t * p_ctx)
 
     update_silence(p_ctx, reading);
 
+
     if (dist < TRIGGER_CM)
     {
         if (near < CONFIRM_PINGS)       // Check before increment: 2 bits.
@@ -369,6 +374,47 @@ on_watch(scan_ctx_t * p_ctx)
     {
         (void)tk_dly_tsk(WATCH_PERIOD_MS);
     }
+}
+
+/*!
+ * @brief  LOCAL: a T turn ended off the line (Navigation waits in its
+ *         search with nav_get_junction_search() set): start the bypass
+ *         line search (BYPASS, leg ALIGN).  "+" (the first wiggle) is back
+ *         the way the turn came, as after a bypass to that side.
+ * @return true if the search was started.
+ */
+static bool
+junction_search(scan_ctx_t * p_ctx)
+{
+    bool b_started = false;
+
+#if (0 == S5_STANDALONE)
+    uint32_t const junc = nav_get_junction_search();
+
+    if ((NAV_JSEARCH_NONE != junc) &&
+        (NAV_STATE_BYPASS == nav_get_state()))
+    {
+        uint16_t const side = (NAV_JSEARCH_LEFT == junc) ?
+                              (uint16_t)OBS_SIDE_LEFT :
+                              (uint16_t)OBS_SIDE_RIGHT;
+
+        (void)tm_sprintf(g_log, (UB *)"[S5] T turn off the line: search,"
+                         " first %s", (OBS_SIDE_LEFT == side) ? "right"
+                                                              : "left");
+        log_text(g_log);
+        p_ctx->state_word = ST_WATCH;   // Clears the near / print bits.
+        enter(p_ctx, ST_BYPASS);
+        p_ctx->state_word = fld_set(p_ctx->state_word, F_LEG_SHIFT,
+                                    F_LEG_MASK, LEG_ALIGN);
+        p_ctx->state_word = fld_set(p_ctx->state_word, F_SIDE_SHIFT,
+                                    F_SIDE_MASK, side);
+        b_started = true;
+    }
+#else
+    (void)p_ctx;
+#endif
+
+    return (b_started);
 }
 
 /*!

@@ -39,8 +39,9 @@
  *
  * Beep (BC_BEEP 1): the Robo Pico buzzer on GP22 (PWM slice 3, 2 kHz)
  *   beeps once per letter number, A = 1 ... D = 4; a read with no
- *   command gives one long beep.  Driven from the sampling loop, so
- *   sampling never stops.
+ *   command gives three short chirps.  Line Following gives one long
+ *   beep (barcode_beep()) at a T with a command.  Driven from the
+ *   sampling loop, so sampling never stops.
  *
  * This file deliberately does NOT include <string.h> (the kernel's
  * syslib.h size_t typedef conflicts with newlib's).
@@ -90,6 +91,7 @@
                              (BUZZER_SLICE * BUZZER_PWM_STRIDE))
 #define BUZZER_RESET_DONE   (RESETS_RESET + 0x08U)
 #define BEEP_LONG_MS        (400U)
+#define BEEP_CHIRP_MS       (30U)   /* read, but no command: 3 chirps */
 
 /* Code 39: 9 elements, first element = bit 8, 1 = thick. */
 typedef struct
@@ -605,7 +607,7 @@ static void finish_pass(void)
         }
         else
         {
-            beep_start(1U, BEEP_LONG_MS);   /* Read, but no command. */
+            beep_start(3U, BEEP_CHIRP_MS);  /* Read, but no command. */
         }
     }
     else if (g_count >= CHAR_ELEMENTS)
@@ -723,6 +725,12 @@ static void beep_tick(void)
 /* ===================================================================== *
  *  Public
  * ===================================================================== */
+
+/* LOCAL: beep from another module (Line Following at the T). */
+void barcode_beep(uint8_t count, uint16_t on_ms)
+{
+    beep_start(count, on_ms);
+}
 
 ER barcode_init(void)
 {

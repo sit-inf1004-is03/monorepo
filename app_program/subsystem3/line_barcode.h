@@ -79,5 +79,8 @@ line_state_t line_get_state(void);
 ER           barcode_init(void);
 void         barcode_task(INT stacd, void * exinf);
 const char * barcode_cmd_name(barcode_cmd_t cmd);
+void         barcode_beep(uint8_t count, uint16_t on_ms);   /* LOCAL */
+#define BC_BEEP_T_MS        (500U)    /* LOCAL: one long beep = T reached
+                                       * with a barcode command: turning */
 
 #endif /* LINE_BARCODE_H */
