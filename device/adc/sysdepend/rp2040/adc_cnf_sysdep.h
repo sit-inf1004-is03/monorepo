@@ -41,7 +41,7 @@
  */
 #define	DEVCONF_ADC_PIN_INIT_0	FALSE
 #define	DEVCONF_ADC_PIN_INIT_1	FALSE
-#define	DEVCONF_ADC_PIN_INIT_2	FALSE
+#define	DEVCONF_ADC_PIN_INIT_2	TRUE	// LOCAL: GP28 barcode
 #define	DEVCONF_ADC_PIN_INIT_3	FALSE
 
 /* Interrupt t priority */

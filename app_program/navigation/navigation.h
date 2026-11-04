@@ -10,7 +10,10 @@
  *                                     nav_post_junction(),
  *                                     nav_set_line_state()
  *   Obstacle Scan (Ruien):            nav_post_obstacle(),
- *                                     nav_post_bypass_plan()
+ *                                     nav_post_bypass_plan(),
+ *                                     nav_post_bypass_passed(),
+ *                                     nav_post_search(),
+ *                                     nav_is_search_wait()
  *   Any subsystem, its own bits only: nav_raise_fault(),
  *                                     nav_clear_fault() (degrade bits)
  *   Wi-Fi / MQTT commands (Rifa):     nav_post_remote()
@@ -28,6 +31,7 @@
 #ifndef NAVIGATION_H
 #define NAVIGATION_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "../app.h"
@@ -63,7 +67,19 @@
 //
 #define NAV_SIDE_LEFT           (0u)
 #define NAV_SIDE_RIGHT          (1u)
-#define NAV_BYPASS_CM_MAX       (511u)  // 9-bit distance field.
+
+// LOCAL: nav_get_junction_search(): which way the T turn went.
+#define NAV_JSEARCH_NONE        (0u)
+#define NAV_JSEARCH_LEFT        (1u)
+#define NAV_JSEARCH_RIGHT       (2u)
+#define NAV_BYPASS_CM_MAX       (511u)  // 9-bit distance fields.
+
+// Bypass line search verdicts (Obstacle Scan), 3 bits.
+//
+#define NAV_SEARCH_LEFT         (1u)    // One search pivot left.
+#define NAV_SEARCH_RIGHT        (2u)    // One search pivot right.
+#define NAV_SEARCH_FOUND        (3u)    // Line on: follow it.
+#define NAV_SEARCH_FAILED       (4u)    // Give up: LINE_NOT_FOUND.
 
 // Remote commands.
 //
@@ -109,7 +125,12 @@ ER       nav_post_barcode(uint32_t command);
 ER       nav_post_junction(void);
 ER       nav_set_line_state(uint32_t state);
 ER       nav_post_obstacle(void);
-ER       nav_post_bypass_plan(uint32_t side, uint32_t distance_cm);
+ER       nav_post_bypass_plan(uint32_t side, uint32_t out_cm,
+                              uint32_t past_cm, uint32_t back_cm);
+ER       nav_post_bypass_passed(void);
+ER       nav_post_search(uint32_t command);
+bool     nav_is_search_wait(void);
+uint32_t nav_get_junction_search(void);   // LOCAL: NAV_JSEARCH_
 ER       nav_raise_fault(uint32_t bits);
 ER       nav_clear_fault(uint32_t bits);
 ER       nav_post_remote(uint32_t command);
@@ -118,9 +139,12 @@ uint32_t nav_get_state(void);
 uint32_t nav_get_faults(void);
 uint32_t nav_get_reason(void);
 
-uint32_t nav_plan_pack(uint32_t side, uint32_t distance_cm);
+uint32_t nav_plan_pack(uint32_t side, uint32_t out_cm, uint32_t past_cm,
+                       uint32_t back_cm);
 uint32_t nav_plan_side(uint32_t plan);
-uint32_t nav_plan_distance_cm(uint32_t plan);
+uint32_t nav_plan_out_cm(uint32_t plan);
+uint32_t nav_plan_past_cm(uint32_t plan);
+uint32_t nav_plan_back_cm(uint32_t plan);
 
 #endif /* NAVIGATION_H */
 

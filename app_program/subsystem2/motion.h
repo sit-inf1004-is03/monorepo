@@ -35,6 +35,11 @@
 //
 #define MOTION_CMD_STRAIGHT     (1u)
 #define MOTION_CMD_PIVOT        (2u)
+#define MOTION_CMD_SWING        (3u)        // LOCAL (s5-local-test): turn
+                                            // on one wheel: the inner wheel
+                                            // held, the outer one forward.
+                                            // Ended by StopTurn, like a
+                                            // pivot (activity PIVOT).
 #define MOTION_DIR_FORWARDS     (0u)        // MOTION_CMD_STRAIGHT
 #define MOTION_DIR_BACKWARDS    (1u)
 #define MOTION_DIR_LEFT         (0u)        // MOTION_CMD_PIVOT
@@ -71,7 +76,9 @@ typedef struct
 {
     uint32_t type;          // MOTION_CMD_
     uint32_t direction;     // MOTION_DIR_
-    uint32_t speed_mm_s;    // Straight only: 1 to MOTION_SPEED_MAX_MM_S.
+    uint32_t speed_mm_s;    // Straight: 1 to MOTION_SPEED_MAX_MM_S.
+                            // Pivot: 0 = default, else this speed
+                            // (LOCAL s5-local-test).
     uint32_t distance_mm;   // Straight only: at least 1.
 } motion_cmd_t;
 
@@ -89,6 +96,7 @@ void     motion_set_turn_level(int32_t level);
 ER       motion_stop_turn(void);
 ER       motion_brake(void);
 void     motion_set_speed_cap(uint32_t speed_mm_s);
+void     motion_set_speed_floor(uint32_t speed_mm_s);  // LOCAL: ramp boost
 uint32_t motion_get_activity(void);
 uint32_t motion_get_faults(void);
 uint32_t motion_get_max_loop_usec(void);

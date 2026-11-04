@@ -21,7 +21,7 @@ subsystem, ask its owner or open a pull request for them to review.
 | 2 | *example:* Producer: makes a sample every 300 ms | | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
 | 4 | IMU-based motion and terrain monitoring (GY-511 / LSM303D on I2C1) | 2501298 | | `app_program/subsystem4/`, `app_program/common/` | `testing/subsystem4/` |
-| 5 | | | | `app_program/subsystem5/` | `testing/subsystem5/` |
+| 5 | Obstacle Scan & Avoidance: ultrasonic + scan servo, bypass plan | 2502821 | | `app_program/subsystem5/` | `testing/subsystem5/` |
 
 Shared files (`app_program/app_main.c`, `app_program/app.h`, this file)
 are changed only by agreement of the team. The exception is claiming an empty
@@ -60,12 +60,12 @@ fixed.
 | GP9 | S2 | motor M1B (PWM 4B, `drv_motor`) |
 | GP10 | S2 | motor M2A (PWM 5A, `drv_motor`) |
 | GP11 | S2 | motor M2B (PWM 5B, `drv_motor`) |
-| GP12 | | |
+| GP12 | S5 | scan servo signal (PWM 6A, 50 Hz, `drv_servo`) |
 | GP13 | | |
 | GP14 | | |
 | GP15 | | |
-| GP16 | | |
-| GP17 | | |
+| GP16 | S5 | ultrasonic TRIG (output, Grove port 4, `drv_ultrasonic`) |
+| GP17 | S5 | ultrasonic ECHO (input, both edges via `gpio_irq`, Grove port 4) |
 | GP18 | | |
 | GP19 | *example:* S1 | external LED (LED + 330 Ω to GND) |
 | GP20 | | |
@@ -112,7 +112,8 @@ the drivers have no locking to stop it.
 | SPI1 | | | |
 | ADC | | | GP26–GP28 |
 | PWM slices 4, 5 | S2 | `task_motion`; `s2_test_motor_task` in `TEST=1` builds with `S2_MANUAL_M02` (task_motion leaves the motors alone while idle) | GP8–GP11. The port leaves the whole PWM block in reset (`USE_PTMR` is 0); `drv_motor_init()` releases it and never resets it again, so other slices (servo, slice 6) can rely on that |
-| GPIO interrupt (IO_IRQ_BANK0) | *shared* (`app_program/gpio_irq.c`) | interrupt on the core that runs usermain | one handler per pin, registered from `_init()`; S2: GP5, GP7 |
+| PWM slice 6 | S5 | `obstacle_scan_task` (`servo_init()` in `subsystem5_init()`) | GP12 (scan servo). `servo_init()` also releases the PWM reset, harmless after `drv_motor_init()` |
+| GPIO interrupt (IO_IRQ_BANK0) | *shared* (`app_program/gpio_irq.c`) | interrupt on the core that runs usermain | one handler per pin, registered from `_init()`; S2: GP5, GP7; S5: GP17 |
 | WiFi radio, TCP/IP, MQTT | *kernel* | `cyw43_utk_task` (built in) | GP23–25, GP29 |
 
 ### WiFi and MQTT are special
@@ -130,15 +131,14 @@ What students *can* do:
   T_CYW43_UTK_STATUS st;
   cyw43_utk_get_status(&st);   /* st.ready, st.link_status, st.ip_addr, ... */
   ```
-- **Send or receive data over the network** by adding code that *runs
-  inside the service task*. The MQTT client is in
-  `lib/liblwip/sysdepend/pico_rp2040/mqtt_utk.c`. It publishes a heartbeat
-  today. A "cloud / reporting" subsystem would add a kernel object
-  (e.g. a message buffer) that application tasks fill. The MQTT code then
-  reads it with `TMO_POL` (never blocking) and publishes it.
-  Because this changes shared library code, **agree it with the team and
-  the instructor first**, and record it as an interface in section 5.
-  It needs the `NET=lwip MQTT=1` build (README section 3).
+- **Send or receive data over the network** through the Wi-Fi / MQTT
+  bridge (`app_program/net/`, owner: Rifa), which runs inside the service
+  task without changing any kernel file. Tasks only touch message buffers:
+  `comms_publish()` / `comms_log()` queue a message for the broker, and
+  `comms_subscribe(topic, my_mbf)` in your `_init()` delivers a topic's
+  messages to your own message buffer (`app_program/comms/comms.h`).
+  Record each new topic as an interface in section 5. It needs the
+  `NET=lwip` build, **not** `MQTT=1` (`MQTT.md`, `KERNEL_ISSUES.md`).
 
 ## 4. Task priorities
 
@@ -148,11 +148,12 @@ change it only by team agreement. Write down every task you create.
 | Subsystem | Priority band | Tasks (name – priority – core) |
 |---|---|---|
 | 1 | 12–13 | *example:* led_task – 12 – any |
-| 2 | 14–15 | task_motion – 14 – core 1 (away from Wi-Fi's priority 4 task on core 0); *example:* producer_task – 14 – core 1; one of s2_test_b2_task, s2_test_motor_task, s2_test_motion_task – 15 – core 0 (`TEST=1` builds only) |
-| 3 | 16–17 | *example:* consumer_task – 16 – core 0 |
+| 2 | 14–15 | task_motion – 14 – core 1 (away from Wi-Fi's priority 4 task on core 0); one of s2_test_b2_task, s2_test_motor_task, s2_test_motion_task – 15 – core 0 (`TEST=1` builds only) |
+| 3 | 16–17 | line_task – 16 – core 0 (barcode_task – 16, not started yet) |
 | 4 | 18–19 | imu_task – 18 – any |
-| 5 | 20–21 | |
+| 5 | 20–21 | obstacle_scan_task – 20 – any |
 | Navigation | 10–11 (*proposed*) | task_navigation – 10 – core 1 (with task_motion); nav_test_m01_task – 11 – core 0 (`TEST=1` builds only) |
+| Wi-Fi / MQTT (Rifa) | 22–23 (*proposed*); 5 at start-up only | remote_task – 22 – any; telemetry_task – 23 – any; net_start – 5 – core 0 (runs once at start-up, then exits; must sit just below WiFi's 4, on its core). The bridge itself runs inside the kernel's WiFi task (4) |
 
 Core: `TP_PRC1` = core 0, `TP_PRC2` = core 1, or "any".
 
@@ -164,11 +165,11 @@ sends to it or waits on it. Agree on the data format before coding.
 
 | ID | From → To | Mechanism | Object ID name | Data / meaning | Agreed by |
 |---|---|---|---|---|---|
-| IF-01 | S2 → S3 | mailbox (owned by S3) | `mbx_samples` | `SAMPLE_MSG` in `subsystem2.h` | *example* |
-| IF-02 | S3 → S2 | semaphore + fixed memory pool (owned by S2) | `sem_slots`, `mpf_samples` | receiver returns the block, then 1 slot | *example* |
-| IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *example* |
-| IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *example* |
-| IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *example* |
+| IF-01 | S2 → S3 | mailbox (owned by S3) | `mbx_samples` | `SAMPLE_MSG` in `subsystem2.h` | *retired*: the template example was removed |
+| IF-02 | S3 → S2 | semaphore + fixed memory pool (owned by S2) | `sem_slots`, `mpf_samples` | receiver returns the block, then 1 slot | *retired*: the template example was removed |
+| IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *retired*: the template example was removed |
+| IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *retired*: the template example was removed |
+| IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *retired*: the template example was removed |
 | IF-06 | S2 → any (IMU, telemetry) | shared data, read only (owned by S2) | `drv_encoder_get_count()`, `drv_encoder_get_speed()` (mm/s) in `drv_encoder.h` | 32-bit pulses per wheel since boot, never reset, 637 per wheel revolution (0.330 mm/pulse); subtract snapshots as `UW` | *proposed* |
 | IF-07 | Navigation → S2, S2 → Navigation | 2 message buffers + event flag (owned by S2), one command at a time | `motion_send()`, `motion_wait_reply()`, `motion_brake()`, `motion_set_speed_cap()` in `motion.h` | `motion_cmd_t`: straight (direction, speed mm/s, distance mm) or pivot (direction). One `motion_reply_t` each: DONE, BRAKED (ended by `motion_brake()`), or FAULT + reason. Speed cap slows a straight (junction approach). The brake command replaces Tribunal 1's "no stop command". Layout open (G10); moves to `include/msg_formats.h` once agreed | *proposed* |
 | IF-08 | S3 (Line Following) → S2 | shared data, one writer | `motion_set_turn_level()` in `motion.h` | turn level −7..+7, every 20 ms; width open (M3) | *proposed* |
@@ -184,6 +185,9 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-S4-4 | S4 → Nav | IF-12 | `nav_raise_fault(NAV_FLT_IMU)`, `nav_clear_fault(NAV_FLT_IMU)` | IMU fault (bit 3), degrade only: raised once per outage, cleared when the sensor answers again. READY_IMU stays in `common/faults.h`, read only by S4 so far | IMU degrade: Glenn + Andrew |
 | IF-S4-5 | S2 → S4 | IF-06 | `drv_encoder_get_count()` | 32-bit cumulative count per wheel, 0.330 mm/pulse (replaces the earlier pointer proposal) | uses IF-06 as shipped; width still open (G4) |
 | IF-S4-6 | Nav → S4 | function call | `imu_task_signal_course_done()` / `imu_task_restart()` | end / start of a run | proposed by S4 |
+| IF-15 | dashboard ↔ car (Wi-Fi / MQTT) | MQTT topics `robocar/<id>/…`, via the bridge's message buffers | `comms_subscribe()`, `comms_publish()` in `comms/comms.h`; `mbf_remote`, `mbf_telemetry` | topics, commands (PING, START, STOP, CLEAR) and the 64-bit telemetry layout in `app_program/protocol.h`; the dashboard's copy is `mqtt-web-interface/src/shared/protocol.ts` | *proposed* |
+| IF-16 | S3 (Line Following), S5 (Obstacle Scan) → telemetry | shared data, read only | `line_get_state()` (S3), `ultrasonic_last_reading()` (S5) | line state (2 bits); nearest obstacle in cm (9 bits) or no echo. Linked weakly, so telemetry reports "not reported" until the function exists | *proposed* |
+| IF-17 | any → Wi-Fi / MQTT | message buffer (owned by comms) | `comms_log()`, `comms_telemetry()`, `comms_publish()` | one line of text / a packed telemetry word / any payload ≤ 128 bytes; never blocks, dropped when the queue is full | *proposed* |
 
 Each interface is tested by at least one integration test
 (`testing/integration/TEST_LOG.md`).
@@ -195,7 +199,7 @@ limit there. The numbers below are the example's usage.
 
 | Object | Limit | S1 | S2 | S3 | S4 | S5 |
 |---|---|---|---|---|---|---|
-| Task | 32 | 1 | 1 | 1 | 1 | |
+| Task | 32 | 1 | 1 | 1 | 1 | 1 |
 | Semaphore | 16 | | 1 | | | |
 | Event flag | 16 | | | | 1 | |
 | Mailbox | 12 | | | 1 | | |

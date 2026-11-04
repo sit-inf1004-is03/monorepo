@@ -14,23 +14,29 @@
  */
 #include "line_barcode.h"
 #include "../subsystem2/motion.h"
+#include "../subsystem2/drv_encoder.h"   /* LOCAL: junction turn angle */
+#include "../navigation/navigation.h"
+#include "../subsystem4/imu.h"          /* LOCAL: ramp tilt */
 
 #define LINE_C_CHAN     (0U)      /* GP26 centre = ADC0 */
 #define LINE_R_CHAN     (1U)      /* GP27 right  = ADC1 */
 
 /* ---- calibration (measured; re-check on the track) ------------------- */
 #define WHITE_LEVEL_C   (180)
-#define BLACK_LEVEL_C   (3833)
+#define BLACK_LEVEL_C   (2550)    /* LOCAL: was 3833; logs show C on black
+                                   * tape peaks ~2280-2540 (2026-11-03) */
 #define WHITE_LEVEL_R   (152)
-#define BLACK_LEVEL_R   (3921)
+#define BLACK_LEVEL_R   (1450)    /* LOCAL: was 3921; R peaks ~1390-1420,
+                                   * so R read <= 33 % and right curves
+                                   * steered only level 1 (r ~23 cm) */
 #define LINE_LOST_FRAC  (0.15f)   /* below this on BOTH sensors => lost */
 #define LINE_BOTH_BLACK (0.80f)   /* above this on BOTH sensors => junction/
                                    * on-centre: go STRAIGHT, don't hard-turn */
 
 /* ---- control --------------------------------------------------------- */
 #define LINE_LOOP_MS    (20)      /* 20 ms loop (NFR1) */
-#define LINE_KP         (5.0f)    /* lower = gentler. error(-1..1)*KP->level */
-#define LINE_SPEED_MMS  (70u)    /* forward speed (of 700 max) */
+#define LINE_KP         (4.0f)    /* was 8: saturated at e>=0.6 (bang-bang) */
+#define LINE_SPEED_MMS  (40u)    /* forward speed (of 700 max) */
 #define LINE_STEER_SIGN (-1)      /* flipped: centre-black now steers left */
 
 /* Set to 1 to run CALIBRATION MODE: the task only reads the sensors and
@@ -48,9 +54,78 @@
  * raise toward ~2.0 if one direction still corrects too little. */
 #define LINE_KP_WEAK    (1.0f)    /* 1.0 = both sides equal; raise if one is weak */
 
+/* ---- smoothing: stops the shake on straights ----------------------- */
+#define LINE_KD         (4.0f)    /* damping: resists fast swings; 0 = off */
+#define LINE_FILTER     (0.6f)    /* 0..1 error smoothing; lower = smoother */
+#define LINE_DEADBAND   (0.10f)  /* |error| below this => drive straight  */
+#define LINE_LEVEL_STEP (1)       /* max turn-level change per 20 ms loop  */
+#define LINE_EDGE_MODE  (1)       /* LOCAL: 1 = steer on the CENTRE sensor
+                                   * alone, held on the line's left edge
+                                   * (half black), so the error changes
+                                   * smoothly instead of jumping between
+                                   * the two sensors.  0 = old r - c. */
+#define LINE_EDGE_TARGET   (0.50f) /* LOCAL: centre blackness to hold */
+#define LINE_EDGE_DEADBAND (0.06f) /* LOCAL: deadband in edge mode */
+#define LINE_LOST_SIDE  (0.20f)   /* |error| at loss above this => that side */
+#define LINE_LOST_LEVEL (2)       /* turn level used to swing back to line */
+#define LINE_RAMP_EXTRA_MM (50U)  /* LOCAL: drive straight this far after
+                                   * the IMU reads flat again (wheels down,
+                                   * sensors back on the mat). */
+#define LINE_RAMP_MM_S    (120U)  /* LOCAL: straight speed on the ramp
+                                   * (cruise is 40: too little push to get
+                                   * over the top).  0 = no boost. */
+#define LINE_RAMP_SLOT_PULSES (30U)  /* LOCAL: heading history, one slot
+                                      * per ~10 mm (0.33 mm per pulse) */
+#define LINE_RAMP_SLOTS       (16U)
+#define LINE_RAMP_LOOKBACK    (10U)  /* slots: hold the heading from ~100
+                                      * mm before the tilt (line sensors
+                                      * are ahead of the wheels, so the
+                                      * last bit before the tilt steered
+                                      * on the ramp's colours) */
+#define LINE_RAMP_PULSES_PER_LEVEL (6)  /* heading error (L-R pulses,
+                                         * ~7 per deg) per turn level */
+#define LINE_RAMP_MAX_LEVEL   (3)
+#define LINE_JUNC_SAMPLES (2U)    /* LOCAL: both black this many loops in a
+                                   * row after a barcode = the T junction */
+#define LINE_JUNC_BLACK (0.50f)   /* LOCAL: T check, both sensors. 0.22
+                                   * with the old black levels (crossbar
+                                   * both 32); now crossbar ~95, line
+                                   * following ~0-3. */
+#define LINE_JUNC_TURN_DEG (65U)  /* LOCAL: junction turn = a fixed angle
+                                   * by encoder, line ignored (it coasts
+                                   * ~5 more = ~90).  Still too much ->
+                                   * lower; too little -> raise. */
+#define LINE_HALF_TRACK_MM (70U)  /* LOCAL: wheel centre to car centre */
+#define LINE_JUNC_SEEN  (0.35f)   /* LOCAL debug: both sensors above this
+                                   * = something across the line; its
+                                   * darkest point is printed after */
+#define LINE_JUNC_PRINT (10U)     /* LOCAL: after a barcode, print the two
+                                   * sensors every 10 loops (200 ms) */
+
 static ID           g_adc_dd     = -1;
 static line_state_t g_state      = LINE_SEARCHING;
 static int32_t      g_last_level = 0;
+static float        g_err_filt   = 0.0f;   /* smoothed error   */
+static float        g_err_prev   = 0.0f;   /* last loop's one  */
+static bool         g_b_resync   = true;   /* LOCAL: next ON sample has no
+                                            * valid previous error: skip D */
+static bool         g_b_was_follow = false;  /* LOCAL: hand-back edge */
+static uint8_t      g_both_count   = 0U;     /* LOCAL: both-black loops */
+static bool         g_b_in_pivot   = false;  /* LOCAL: junction pivot on */
+static bool         g_b_junc_hold  = false;  /* LOCAL: T posted: drive
+                                              * straight until the pivot */
+static bool         g_b_pivot_armed = false; /* LOCAL: white seen in it */
+static uint32_t     g_pivot_start  = 0U;     /* LOCAL: L+R count at start */
+static bool         g_b_pivot_done = false;  /* LOCAL: StopTurn sent */
+static bool         g_b_ramp       = false;  /* LOCAL: ramp hold on */
+static bool         g_b_ramp_flat  = false;  /* LOCAL: landed, finishing */
+static uint32_t     g_ramp_flat_sum = 0U;    /* LOCAL: L+R count at landing */
+static int32_t      g_hist[LINE_RAMP_SLOTS]; /* LOCAL: L-R heading, ~10 mm
+                                              * apart */
+static uint32_t     g_hist_idx   = 0U;       /* next slot to write */
+static uint32_t     g_hist_count = 0U;       /* slots filled */
+static uint32_t     g_hist_next  = 0U;       /* L+R at the next slot */
+static int32_t      g_ramp_head  = 0;        /* L-R to hold on the ramp */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -83,6 +158,45 @@ static void drive_forward(void)
     (void)motion_send(&cmd, 100);
 }
 #endif
+
+/* Tell Navigation whether the line is seen (needed to rejoin after a
+ * bypass), and steer only while Navigation is following the line, so the
+ * held turn level does not bend the bypass straights. */
+static void line_output(int32_t level)
+{
+    static line_state_t s_sent = LINE_SEARCHING;
+
+    if (g_state != s_sent)
+    {
+        s_sent = g_state;
+        (void)nav_set_line_state((LINE_ON == g_state) ? NAV_LINE_ON
+                                                      : NAV_LINE_LOST);
+    }
+
+#if LINE_SELF_DRIVE
+    motion_set_turn_level(LINE_STEER_SIGN * level);
+#else
+    {
+        uint32_t const nav = nav_get_state();
+
+        if (g_b_junc_hold)
+        {
+            /* LOCAL: creeping over the T's crossbar: no steering, so the
+             * pivot starts square to it. */
+            motion_set_turn_level(0);
+        }
+        else if ((NAV_STATE_LINE_FOLLOW == nav) ||
+                 (NAV_STATE_JUNCTION == nav))
+        {
+            motion_set_turn_level(LINE_STEER_SIGN * level);
+        }
+        else
+        {
+            motion_set_turn_level(0);
+        }
+    }
+#endif
+}
 
 ER line_init(void)
 {
@@ -145,17 +259,360 @@ EXPORT void line_task(INT stacd, void * exinf)
         }
 #endif
 
+        /* LOCAL: Navigation hands steering back (e.g. after a bypass):
+         * forget what was read while not steering (the diagonal line
+         * crossing), so only what is under the sensors now decides. */
+        {
+            uint32_t const nav = nav_get_state();
+            bool const b_follow = ((NAV_STATE_LINE_FOLLOW == nav) ||
+                                   (NAV_STATE_JUNCTION == nav));
+
+            if (b_follow && !g_b_was_follow)
+            {
+                g_err_filt   = 0.0f;
+                g_err_prev   = 0.0f;
+                g_last_level = 0;
+                g_b_resync   = true;
+            }
+            g_b_was_follow = b_follow;
+        }
+
         uint16_t raw_c = line_read(LINE_C_CHAN);
         uint16_t raw_r = line_read(LINE_R_CHAN);
         float    c     = blackness(raw_c, WHITE_LEVEL_C, BLACK_LEVEL_C);
         float    r     = blackness(raw_r, WHITE_LEVEL_R, BLACK_LEVEL_R);
 
+        /* LOCAL: ramp (no line on it, any colours).  While the IMU says
+         * tilted, and for LINE_RAMP_EXTRA_MM after it is flat again: no
+         * steering (straight), no T check, the line state Navigation sees
+         * is left as it was.  Then line following starts fresh. */
+        {
+            uint32_t const nav = nav_get_state();
+            bool const b_follow = ((NAV_STATE_LINE_FOLLOW == nav) ||
+                                   (NAV_STATE_JUNCTION == nav));
+            uint32_t const sum = drv_encoder_get_count(DRV_ENCODER_LEFT) +
+                                 drv_encoder_get_count(DRV_ENCODER_RIGHT);
+            bool const b_tilt = imu_on_ramp();
+            int32_t const head =
+                (int32_t)(drv_encoder_get_count(DRV_ENCODER_LEFT) -
+                          drv_encoder_get_count(DRV_ENCODER_RIGHT));
+
+            /* Heading history while following normally. */
+            if (!b_follow)
+            {
+                g_hist_count = 0U;
+            }
+            else if ((!g_b_ramp) &&
+                     ((0U == g_hist_count) ||
+                      ((int32_t)(sum - g_hist_next) >= 0)))
+            {
+                g_hist[g_hist_idx] = head;
+                g_hist_idx = (g_hist_idx + 1U) % LINE_RAMP_SLOTS;
+                if (g_hist_count < LINE_RAMP_SLOTS)
+                {
+                    g_hist_count++;
+                }
+                g_hist_next = sum + (2U * LINE_RAMP_SLOT_PULSES);
+            }
+            else
+            {
+                /* Between slots. */
+            }
+
+            if (b_follow && b_tilt)
+            {
+                if (!g_b_ramp)
+                {
+                    uint32_t const back =
+                        (g_hist_count > LINE_RAMP_LOOKBACK) ?
+                        LINE_RAMP_LOOKBACK : g_hist_count;
+
+                    g_ramp_head = head;
+                    if (back > 0U)
+                    {
+                        g_ramp_head = g_hist[(g_hist_idx + LINE_RAMP_SLOTS
+                                              - back) % LINE_RAMP_SLOTS];
+                    }
+                    tm_printf((UB*)"[LINE] ramp: straight, line ignored"
+                              " (tilt %u deg); heading from %u cm back,"
+                              " now off by %d pulses (~7 = 1 deg)\n",
+                              (unsigned)(imu_get_tilt_x10() / 10U),
+                              (unsigned)back, (int)(head - g_ramp_head));
+                }
+                g_b_ramp      = true;
+                g_b_ramp_flat = false;
+                motion_set_speed_floor(LINE_RAMP_MM_S);
+            }
+            else if (g_b_ramp && b_follow)
+            {
+                if (!g_b_ramp_flat)
+                {
+                    g_b_ramp_flat   = true;
+                    g_ramp_flat_sum = sum;
+                    motion_set_speed_floor(0U);   /* landed: back to cruise */
+                }
+                else if ((drv_encoder_pulses_to_mm(sum - g_ramp_flat_sum) /
+                          2U) >= LINE_RAMP_EXTRA_MM)
+                {
+                    g_b_ramp      = false;
+                    g_b_ramp_flat = false;
+                    motion_set_speed_floor(0U);
+                    tm_printf((UB*)"[LINE] ramp done: line following\n");
+                }
+                else
+                {
+                    /* Landed: a few cm more straight. */
+                }
+            }
+            else
+            {
+                if (g_b_ramp)
+                {
+                    motion_set_speed_floor(0U);
+                }
+                g_b_ramp      = false;  /* Not following: Navigation owns it */
+                g_b_ramp_flat = false;
+            }
+
+            if (g_b_ramp)
+            {
+                g_err_filt    = 0.0f;
+                g_err_prev    = 0.0f;
+                g_last_level  = 0;
+                g_b_resync    = true;
+                g_both_count  = 0U;
+                g_b_junc_hold = false;
+
+                /* Hold the pre-ramp heading: left wheel ahead (car turned
+                 * right) -> steer left.  Motion's +level turns right. */
+                {
+                    int32_t lvl = -((head - g_ramp_head) /
+                                    LINE_RAMP_PULSES_PER_LEVEL);
+
+                    if (lvl > LINE_RAMP_MAX_LEVEL)
+                    {
+                        lvl = LINE_RAMP_MAX_LEVEL;
+                    }
+                    else if (lvl < -LINE_RAMP_MAX_LEVEL)
+                    {
+                        lvl = -LINE_RAMP_MAX_LEVEL;
+                    }
+                    else
+                    {
+                        /* In range. */
+                    }
+                    line_output(LINE_STEER_SIGN * lvl);
+                }
+                tk_dly_tsk(LINE_LOOP_MS);
+                continue;
+            }
+        }
+
+        /* LOCAL: barcode junctions.  Navigation is JUNCTION after a
+         * barcode.  (1) While it still drives the line, both sensors
+         * black for LINE_JUNC_SAMPLES loops = the T's crossbar: report
+         * the junction once.  (2) In its turn pivot, StopTurn when a
+         * sensor sees the line after having seen white (so not on the
+         * line the pivot starts on). */
+        {
+            bool const b_junc  = (NAV_STATE_JUNCTION == nav_get_state());
+            uint32_t const act = motion_get_activity();
+            bool const b_on    = ((c >= LINE_LOST_FRAC) ||
+                                  (r >= LINE_LOST_FRAC));
+
+            /* LOCAL debug: after a barcode, one line per dark patch
+             * (either sensor > LINE_JUNC_SEEN): peak of each sensor,
+             * peak of BOTH together, raw ADC peaks, length in loops.
+             * Shows whether the crossbar is seen and how dark. */
+            static uint8_t  s_len    = 0U;
+            static int32_t  s_pk_c   = 0;
+            static int32_t  s_pk_r   = 0;
+            static int32_t  s_pk_b   = 0;
+            static uint16_t s_raw_c  = 0U;
+            static uint16_t s_raw_r  = 0U;
+
+            if (b_junc && ((c > LINE_JUNC_SEEN) || (r > LINE_JUNC_SEEN)))
+            {
+                int32_t const pc = (int32_t)(c * 100.0f);
+                int32_t const pr = (int32_t)(r * 100.0f);
+                int32_t const pb = (pc < pr) ? pc : pr;
+
+                s_pk_c  = (pc > s_pk_c) ? pc : s_pk_c;
+                s_pk_r  = (pr > s_pk_r) ? pr : s_pk_r;
+                s_pk_b  = (pb > s_pk_b) ? pb : s_pk_b;
+                s_raw_c = (raw_c > s_raw_c) ? raw_c : s_raw_c;
+                s_raw_r = (raw_r > s_raw_r) ? raw_r : s_raw_r;
+                if (s_len < 255U)
+                {
+                    s_len++;
+                }
+            }
+            else if (s_len > 0U)
+            {
+                tm_printf((UB*)"[LINE] dark: c %d r %d both %d (T > %d)"
+                          " raw c %u r %u, %u loops\n", (int)s_pk_c,
+                          (int)s_pk_r, (int)s_pk_b,
+                          (int)(LINE_JUNC_BLACK * 100.0f),
+                          (unsigned)s_raw_c, (unsigned)s_raw_r,
+                          (unsigned)s_len);
+                s_len   = 0U;
+                s_pk_c  = 0;
+                s_pk_r  = 0;
+                s_pk_b  = 0;
+                s_raw_c = 0U;
+                s_raw_r = 0U;
+            }
+            else
+            {
+                /* white, nothing to report */
+            }
+
+            /* Debug, always: how dark did BOTH sensors get together? */
+            {
+                static int32_t s_peak = -1;     /* -1 = nothing across */
+                float const    both   = (c < r) ? c : r;
+
+                if (both >= LINE_JUNC_SEEN)
+                {
+                    if ((int32_t)(both * 100.0f) > s_peak)
+                    {
+                        s_peak = (int32_t)(both * 100.0f);
+                    }
+                }
+                else if (s_peak >= 0)
+                {
+                    tm_printf((UB*)"[LINE] crossbar? both sensors reached"
+                              " %d (T needs > %d)%s\n", (int)s_peak,
+                              (int)(LINE_JUNC_BLACK * 100.0f),
+                              b_junc ? "" : " [no barcode: ignored]");
+                    s_peak = -1;
+                }
+                else
+                {
+                    /* Nothing across the line. */
+                }
+            }
+
+            if ((c > LINE_JUNC_BLACK) && (r > LINE_JUNC_BLACK))
+            {
+                if (g_both_count < LINE_JUNC_SAMPLES)
+                {
+                    g_both_count++;
+
+                    if (LINE_JUNC_SAMPLES == g_both_count)
+                    {
+                        if (b_junc && (MOTION_ACTIVITY_STRAIGHT == act))
+                        {
+                            (void)nav_post_junction();
+                            g_b_junc_hold = true;
+                            barcode_beep(1U, BC_BEEP_T_MS);
+                            tm_printf((UB*)"[LINE] T junction\n");
+                        }
+                        else
+                        {
+                            tm_printf((UB*)"[LINE] T seen, no barcode:"
+                                      " straight on\n");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                g_both_count = 0U;
+            }
+
+            if ((!b_junc) || (MOTION_ACTIVITY_PIVOT == act))
+            {
+                g_b_junc_hold = false;  /* Pivot started, or not a T. */
+            }
+
+            if (b_junc && (MOTION_ACTIVITY_PIVOT == act))
+            {
+                /* Both wheels' distance added = 2 x half-track x angle,
+                 * for a one-wheel turn and for a pivot alike. */
+                uint32_t const sum =
+                    drv_encoder_get_count(DRV_ENCODER_LEFT) +
+                    drv_encoder_get_count(DRV_ENCODER_RIGHT);
+
+                if (!g_b_in_pivot)
+                {
+                    g_b_in_pivot    = true;
+                    g_b_pivot_armed = false;
+                    g_b_pivot_done  = false;
+                    g_pivot_start   = sum;
+                }
+
+                uint32_t const turned_mm =
+                    drv_encoder_pulses_to_mm(sum - g_pivot_start);
+                uint32_t const deg = (turned_mm * 573U) /
+                                     (20U * LINE_HALF_TRACK_MM);
+
+                if (g_b_pivot_done)
+                {
+                    /* StopTurn sent; Motion is ending the pivot. */
+                }
+                else if (deg >= LINE_JUNC_TURN_DEG)
+                {
+                    (void)motion_stop_turn();
+                    g_b_pivot_done  = true;         /* once per pivot */
+                    g_b_resync      = true;
+                    tm_printf((UB*)"[LINE] turn: %u deg done, line %s\n",
+                              (unsigned)deg, b_on ? "seen" : "not seen");
+                }
+                else
+                {
+                    /* Turning: the line is ignored until the angle. */
+                }
+            }
+            else
+            {
+                g_b_in_pivot = false;
+            }
+        }
+
         int32_t level;
 
         if ((c < LINE_LOST_FRAC) && (r < LINE_LOST_FRAC))
         {
-            g_state = LINE_LOST;
-            level   = g_last_level;           /* hold last turn to re-acquire */
+            g_state    = LINE_LOST;
+            g_b_resync = true;    /* LOCAL: no D kick when the line returns */
+
+            /* Lost: turn towards the side the line was last seen on.
+             * Near the middle (line between the sensors on a straight):
+             * drive straight instead of holding an old turn. */
+            if (g_err_filt > LINE_LOST_SIDE)
+            {
+                level = LINE_LOST_LEVEL;
+            }
+            else if (g_err_filt < -LINE_LOST_SIDE)
+            {
+                level = -LINE_LOST_LEVEL;
+            }
+            else if (g_last_level >= LINE_LOST_LEVEL)
+            {
+                /* LOCAL: lost in the middle while already turning hard
+                 * (a loop / tight curve: the line slipped out between
+                 * the sensors): keep turning, don't drive off straight. */
+                level = LINE_LOST_LEVEL;
+            }
+            else if (g_last_level <= -LINE_LOST_LEVEL)
+            {
+                level = -LINE_LOST_LEVEL;
+            }
+            else
+            {
+                level = 0;
+            }
+
+            if (level > (g_last_level + LINE_LEVEL_STEP))
+            {
+                level = g_last_level + LINE_LEVEL_STEP;
+            }
+            else if (level < (g_last_level - LINE_LEVEL_STEP))
+            {
+                level = g_last_level - LINE_LEVEL_STEP;
+            }
+            g_last_level = level;
         }
         else
         {
@@ -165,9 +622,20 @@ EXPORT void line_task(INT stacd, void * exinf)
              * treat as straight instead of a hard turn. */
             if ((c > LINE_BOTH_BLACK) && (r > LINE_BOTH_BLACK))
             {
+                /* LOCAL: ease back to straight at LINE_LEVEL_STEP per loop
+                 * instead of snapping to 0 (that jerked on straights). */
                 level = 0;
-                g_last_level = 0;
-                motion_set_turn_level(LINE_STEER_SIGN * level);
+                if (g_last_level > LINE_LEVEL_STEP)
+                {
+                    level = g_last_level - LINE_LEVEL_STEP;
+                }
+                else if (g_last_level < -LINE_LEVEL_STEP)
+                {
+                    level = g_last_level + LINE_LEVEL_STEP;
+                }
+                g_last_level = level;
+                g_b_resync   = true;  /* LOCAL: no D kick afterwards */
+                line_output(level);
 #if LINE_DEBUG
                 tm_printf((UB*)"C=%4u R=%4u e=%d lvl=%d BOTH-BLK\n",
                           (unsigned)raw_c, (unsigned)raw_r,
@@ -183,20 +651,64 @@ EXPORT void line_task(INT stacd, void * exinf)
              *   centre black -> error -  (the other direction)
              * This is required because, on your layout, centre-black and
              * right-black must correct in opposite directions. */
+#if LINE_EDGE_MODE
+            /* LOCAL edge following: the centre sensor sits on the line's
+             * left edge.  More black (line moved left) -> negative error
+             * (steer left); less black (line moved right) -> positive.
+             * Scaled x2 to the same -1..+1 range as r - c.  The right
+             * sensor still decides LOST, T junctions and both-black. */
+            float error = (2.0f * (LINE_EDGE_TARGET - c)) - LINE_TRIM;
+#else
             float error = (r - c) - LINE_TRIM;
+#endif
 
             /* Asymmetric gain: the weak side (negative error on a
              * centre+right layout) gets a stronger push so both
              * directions correct more evenly. */
             float kp = (error < 0.0f) ? (LINE_KP * LINE_KP_WEAK) : LINE_KP;
-            float out = kp * error;
+
+            /* 1. Smooth the error: one noisy reading can't jerk the car. */
+            g_err_filt += LINE_FILTER * (error - g_err_filt);
+
+            /* LOCAL: first sample after LOST / both-black / hand-back:
+             * the previous error is stale, so no derivative this time. */
+            if (g_b_resync)
+            {
+                g_err_prev = g_err_filt;
+                g_b_resync = false;
+            }
+
+            /* 2. Small errors on a straight: just go straight. */
+            float p_err = g_err_filt;
+#if LINE_EDGE_MODE
+            if ((p_err < LINE_EDGE_DEADBAND) && (p_err > -LINE_EDGE_DEADBAND))
+#else
+            if ((p_err < LINE_DEADBAND) && (p_err > -LINE_DEADBAND))
+#endif
+            {
+                p_err = 0.0f;
+            }
+
+            /* 3. P + D: D pushes back against a fast swing (overshoot). */
+            float out = (kp * p_err) + (LINE_KD * (g_err_filt - g_err_prev));
+            g_err_prev = g_err_filt;
             level = (int32_t)(out + ((out >= 0.0f) ? 0.5f : -0.5f));
             if (level > MOTION_TURN_LEVEL_MAX)       { level = MOTION_TURN_LEVEL_MAX;  }
             else if (level < -MOTION_TURN_LEVEL_MAX) { level = -MOTION_TURN_LEVEL_MAX; }
+
+            /* 4. Change the turn gradually, one step per loop. */
+            if (level > (g_last_level + LINE_LEVEL_STEP))
+            {
+                level = g_last_level + LINE_LEVEL_STEP;
+            }
+            else if (level < (g_last_level - LINE_LEVEL_STEP))
+            {
+                level = g_last_level - LINE_LEVEL_STEP;
+            }
             g_last_level = level;
         }
 
-        motion_set_turn_level(LINE_STEER_SIGN * level);
+        line_output(level);
 
 #if LINE_DEBUG
         tm_printf((UB*)"C=%4u R=%4u e=%d lvl=%d %s\n",
