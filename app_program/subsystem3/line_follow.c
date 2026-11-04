@@ -59,6 +59,13 @@
 #define LINE_FILTER     (0.6f)    /* 0..1 error smoothing; lower = smoother */
 #define LINE_DEADBAND   (0.10f)  /* |error| below this => drive straight  */
 #define LINE_LEVEL_STEP (1)       /* max turn-level change per 20 ms loop  */
+#define LINE_EDGE_MODE  (1)       /* LOCAL: 1 = steer on the CENTRE sensor
+                                   * alone, held on the line's left edge
+                                   * (half black), so the error changes
+                                   * smoothly instead of jumping between
+                                   * the two sensors.  0 = old r - c. */
+#define LINE_EDGE_TARGET   (0.50f) /* LOCAL: centre blackness to hold */
+#define LINE_EDGE_DEADBAND (0.06f) /* LOCAL: deadband in edge mode */
 #define LINE_LOST_SIDE  (0.20f)   /* |error| at loss above this => that side */
 #define LINE_LOST_LEVEL (2)       /* turn level used to swing back to line */
 #define LINE_RAMP_EXTRA_MM (50U)  /* LOCAL: drive straight this far after
@@ -644,7 +651,16 @@ EXPORT void line_task(INT stacd, void * exinf)
              *   centre black -> error -  (the other direction)
              * This is required because, on your layout, centre-black and
              * right-black must correct in opposite directions. */
+#if LINE_EDGE_MODE
+            /* LOCAL edge following: the centre sensor sits on the line's
+             * left edge.  More black (line moved left) -> negative error
+             * (steer left); less black (line moved right) -> positive.
+             * Scaled x2 to the same -1..+1 range as r - c.  The right
+             * sensor still decides LOST, T junctions and both-black. */
+            float error = (2.0f * (LINE_EDGE_TARGET - c)) - LINE_TRIM;
+#else
             float error = (r - c) - LINE_TRIM;
+#endif
 
             /* Asymmetric gain: the weak side (negative error on a
              * centre+right layout) gets a stronger push so both
@@ -664,7 +680,11 @@ EXPORT void line_task(INT stacd, void * exinf)
 
             /* 2. Small errors on a straight: just go straight. */
             float p_err = g_err_filt;
+#if LINE_EDGE_MODE
+            if ((p_err < LINE_EDGE_DEADBAND) && (p_err > -LINE_EDGE_DEADBAND))
+#else
             if ((p_err < LINE_DEADBAND) && (p_err > -LINE_DEADBAND))
+#endif
             {
                 p_err = 0.0f;
             }
