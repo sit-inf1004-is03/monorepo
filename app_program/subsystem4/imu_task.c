@@ -26,7 +26,7 @@
 #include "../app.h"
 #include "../common/faults.h"
 #include "imu_task.h"
-#include "imu.h"
+#include "imu_ramp.h"
 #include "imu_monitor.h"
 #include "imu_pack.h"
 #include "drv_i2c1.h"

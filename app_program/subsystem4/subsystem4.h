@@ -15,7 +15,7 @@
  *            imu_pack.h (snapshot 4 B, aux 4 B, event 2 B).
  *   Buddy 2  nothing to call: the IMU reads the wheel encoder counts with
  *            drv_encoder_get_count() (IF-06, subsystem2/drv_encoder.h).
- *   Buddy 3  imu_on_ramp(), imu_get_tilt_x10(), imu_is_ok() (imu.h).
+ *   Buddy 3  imu_on_ramp(), imu_get_tilt_x10(), imu_is_ok() (imu_ramp.h).
  *   Nav      the IMU raises and clears NAV_FLT_IMU (IF-12, degrade only:
  *            the car keeps driving); Nav calls
  *            imu_task_signal_course_done() at the end of the run.

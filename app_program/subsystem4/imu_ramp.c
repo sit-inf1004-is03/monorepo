@@ -1,6 +1,6 @@
 /*!
- * @file    imu.c
- * @brief   Ramp detection from imu_task's pitch and roll (see imu.h).
+ * @file    imu_ramp.c
+ * @brief   Ramp detection from imu_task's pitch and roll (see imu_ramp.h).
  *
  * Ramp on at IMU_RAMP_ON_DEG for IMU_ON_SAMPLES samples, off at
  * IMU_RAMP_OFF_DEG for IMU_OFF_SAMPLES; between the two the state is kept.
@@ -11,7 +11,7 @@
  * bits or less, so readers on either core need no lock.
  */
 
-#include "imu.h"
+#include "imu_ramp.h"
 
 // imu_task runs every 10 ms, where this module used to run every 20 ms, so
 // the sample counts are doubled to keep the same 60 ms and 100 ms.

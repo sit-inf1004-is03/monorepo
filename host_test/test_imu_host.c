@@ -23,7 +23,7 @@
 #include "../app_program/subsystem4/imu_pack.h"
 #include "../app_program/subsystem4/imu_monitor.h"
 #include "../app_program/subsystem4/imu_sim.h"
-#include "../app_program/subsystem4/imu.h"
+#include "../app_program/subsystem4/imu_ramp.h"
 
 #define DT_S                (0.01f)
 #define CALIB_STEPS         (130u)
