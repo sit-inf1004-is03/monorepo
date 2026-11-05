@@ -53,6 +53,25 @@
  *   18 % for a hump twice the wheelbase long).  Setting
  *   IMU_TERRAIN_WHEELBASE_MM to 0 selects that simpler method.
  *
+ * Side hump: one rear wheel rides over the ramp while the other wheel and
+ * the ball stay on the ground.  The rear axle centre rises half the height
+ * and the ball does not, so the nose goes DOWN (measured 2026-11-05 on the
+ * 10 mm ramp, car held still: pitch -4.5 and -5.1 deg, roll -6.0 and +6.5
+ * deg), and pitch never reaches +IMU_TERRAIN_CLIMB_DEG.  So roll measures
+ * it, with the two rear wheels IMU_TERRAIN_TRACK_MM (T) apart:
+ *       h = T * sin(roll)
+ * This runs alongside the four states above, while the region is LEVEL:
+ * a side hump opens after IMU_TERRAIN_PERSIST_SAMPLES beyond
+ * +/-IMU_TERRAIN_SIDE_ON_DEG on the same side while the car moves, and
+ * closes after IMU_TERRAIN_SIDE_OFF_SAMPLES within +/-IMU_TERRAIN_LEVEL_DEG.
+ * The result goes through HUMP_CLOSED like any other hump, with
+ * imu_terrain_hump_t.side set, and max_pitch_deg holding the peak roll.
+ * Roll must return to the level band before another side hump can open, so
+ * a dropout or a long sideways slope is reported once.  A climb that opens
+ * meanwhile takes over and the side hump is dropped, so one ramp is not
+ * counted twice.  Tilt beyond the tilt limit (car lifted or falling) drops
+ * it too.
+ *
  * The published peak is 7 bits, 0..127 mm, plus a saturation flag (Tribunal
  * 1, 2.6); IMU_TERRAIN_HEIGHT_GAIN is the calibration factor to be set from
  * the end-to-end hump test (T4) against measured humps.
@@ -88,6 +107,20 @@
 #define IMU_TERRAIN_TILT_PITCH_DEG      (25.0f)
 #define IMU_TERRAIN_TILT_ROLL_DEG       (20.0f)
 
+/*
+ * Side hump.  Flat-ground roll stayed within 2 deg on the car, turns
+ * included, which sets the threshold.  The gain comes from six car runs over
+ * the measured 10 mm ramp on 2026-11-05 with a gain of 0.83 (right wheel
+ * 10.8, 10.6, 11.3 mm; left 12.1, 11.6, 12.0 mm): one value centres both
+ * sides, and the left reads about 1 mm above the right.  Roll also reads
+ * higher driven than held still (about 7 deg against 6.3).  One ramp only;
+ * check against a second known height.
+ */
+#define IMU_TERRAIN_TRACK_MM            (110.0f)  /* measured on the car */
+#define IMU_TERRAIN_SIDE_GAIN           (0.73f)
+#define IMU_TERRAIN_SIDE_ON_DEG         (4.0f)
+#define IMU_TERRAIN_SIDE_OFF_SAMPLES    (10u)     /* 100 ms               */
+
 /** Terrain state, 2 bits. */
 typedef enum
 {
@@ -97,14 +130,24 @@ typedef enum
     IMU_TERRAIN_HUMP_CLOSED = 3
 } imu_terrain_state_t;
 
+/** Which rear wheel rode over a hump.  Roll is left side up positive. */
+typedef enum
+{
+    IMU_TERRAIN_SIDE_NONE  = 0,     /**< Ordinary hump, measured by pitch. */
+    IMU_TERRAIN_SIDE_LEFT  = 1,
+    IMU_TERRAIN_SIDE_RIGHT = 2
+} imu_terrain_side_t;
+
 /** Result of one closed hump. */
 typedef struct
 {
     float32_t peak_mm;          /**< Full-precision estimate (after gain). */
     uint8_t   peak_mm_packed;   /**< Rounded and clamped to 0..127.        */
     bool      b_saturated;      /**< true if the estimate exceeded 127 mm. */
-    uint8_t   max_pitch_deg;    /**< Steepest climb, whole degrees, 0..31. */
+    uint8_t   max_pitch_deg;    /**< Steepest climb, whole degrees, 0..31;
+                                     peak roll for a side hump.            */
     bool      b_cut_short;      /**< Closed by distance limit or impact.   */
+    imu_terrain_side_t side;    /**< Wheel on the hump, or SIDE_NONE.      */
 } imu_terrain_hump_t;
 
 /** Terrain state.  Treat as opaque outside imu_terrain.c. */
@@ -130,6 +173,15 @@ typedef struct
     bool               b_rear_climbs;   /**< Which height model runs.     */
     bool               b_result_ready;
     imu_terrain_hump_t result;
+    float32_t          roll_window[IMU_TERRAIN_PEAK_WINDOW];
+    float32_t          side_peak_deg;   /**< Largest median |roll|.       */
+    float32_t          side_travel_mm;
+    uint32_t           roll_head;
+    uint32_t           roll_count;
+    uint32_t           side_count;      /**< Samples towards open/close.  */
+    imu_terrain_side_t side;            /**< Side being counted or open.  */
+    bool               b_side_open;
+    bool               b_side_armed;    /**< Roll was level since last.   */
 } imu_terrain_t;
 
 void                imu_terrain_init (imu_terrain_t * p_terrain);
@@ -144,6 +196,7 @@ bool                imu_terrain_take_result (imu_terrain_t * p_terrain,
                                              imu_terrain_hump_t * p_hump);
 imu_terrain_state_t imu_terrain_get_state (imu_terrain_t const * p_terrain);
 bool                imu_terrain_is_tilted (imu_terrain_t const * p_terrain);
+bool                imu_terrain_side_is_open (imu_terrain_t const * p_terrain);
 float32_t           imu_terrain_get_run_peak_mm (
                         imu_terrain_t const * p_terrain);
 uint32_t            imu_terrain_get_hump_count (

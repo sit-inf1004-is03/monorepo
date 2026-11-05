@@ -31,6 +31,7 @@
  *   bits 13-15  type (imu_pack_event_t)
  *   bits  0-12  payload:
  *     HUMP         [6:0] peak mm, [7] saturated, [12:8] max pitch deg 0..31
+ *                  (peak roll deg for a side hump, see imu_terrain.h)
  *     MOTION       [1:0] new motion class
  *     TERRAIN      [1:0] new terrain state
  *     IMPACT       [7:0] peak |a|-1g deviation, 0.1 g/LSB, 0..25.5 g

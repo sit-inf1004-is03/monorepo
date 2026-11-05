@@ -64,6 +64,13 @@ Same C sources as the firmware, compiled with a PC compiler and fed simulated se
 | H-A10 | Board mounted upside down (level roll near ±180°), 0.87 g, left side lifted 25° | S4-M01 finding, 28 Oct | roll error < 5°, no 360° jump, yaw rate < 20 °/s |
 | H-A11 | 0.87 g sensor, still, calibrating | Week 6 6.3 (calibration) | calibrated in 1 s, not forced |
 | H-A12 | 0.87 g sensor pushed along the floor during calibration (no gyro) | Week 6 6.3 (restart if moving) | restarts; level reference within 0.5° |
+| H-U39..40 | Side hump: one rear wheel on a 10 mm ramp, right and left | one-wheel test, 5 Nov | one hump per pass, correct side, height within 20 % |
+| H-U41 | Roll under the threshold; roll on a stopped car | one-wheel test, 5 Nov | no hump |
+| H-U42 | 40 ms roll jolt alone, then straight into a climb | one-wheel test, 5 Nov | opens nothing; adds under 12 % to the peak |
+| H-U43..44 | Ramp under the middle; side hump then a climb | one-wheel test, 5 Nov | one ordinary hump, not two |
+| H-U45 | Sensor lost on a side hump | one-wheel test, 5 Nov | reported once, cut short, no second hump |
+| H-U46..47 | Long sideways slope; car lifted past the tilt limit | one-wheel test, 5 Nov | closed once at the distance limit; no hump |
+| H-A18 | Replay of the logged right-wheel run of 5 Nov | one-wheel test, 5 Nov | one side hump, height within 20 % |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
@@ -108,3 +115,8 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-11-04 | car, 10 mm ramp, 3 runs, wiring secured | not yet committed | Andrew (with AI assistance) | PASS (before gain: 27 % high) | console logs pasted in session | Peak 13.6, 12.1, 12.4 mm (mean 12.7). One hump per run, ramp handoff worked, no FAULT, sensor stayed at 0x1d. Sets `IMU_TERRAIN_FLAT_GAIN` to 0.8 (gives 10.9, 9.7, 9.9 mm). One ramp only |
 | 2026-11-04 | H-* (64 checks) | not yet committed | Andrew (with AI assistance) | PASS (64/64) | `logs/2026-11-04_host_tests_flat_gain.txt` | Gain applied to the rear-on-flat model only; H-A16 and H-U38 judge the height before the gain, because the simulator has no on-ramp over-read. Hump trace off. Gain not yet confirmed on the car |
 | 2026-11-04 | car, 10 mm ramp, 1 run, gain 0.8 | not yet committed | Andrew (with AI assistance) | PASS | console log pasted in session | Peak 10.1 mm, packed 10 mm. One hump, ramp handoff worked, no FAULT, sensor stayed at 0x1d. Auto-START still works in the no-network build. One run on one ramp; a second height is not checked |
+| 2026-11-05 | car, 10 mm ramp, held still, one rear wheel or the ball on the peak | feature/s4-side-hump | Andrew (with AI assistance) | PASS (model) | console logs pasted in session | Right wheel pitch -4.5, roll -6.0; left pitch -5.1, roll +6.5; ball pitch +8.4, roll about 0 (averages from raw accel). Nose down on either wheel, so `CLIMBING` cannot open. Right wheel up is negative roll. Track width measured 110 mm |
+| 2026-11-05 | H-* (74 checks, adds H-U39..47, H-A18) | feature/s4-side-hump | Andrew (with AI assistance) | PASS (74/74) | `logs/2026-11-05_host_tests_side_hump.txt` | Side hump measured from roll, height = 110 mm * sin(roll) * gain. `imu_task.c` changes (log lines, encoder heading) are not host tested |
+| 2026-11-05 | build | feature/s4-side-hump | Andrew (with AI assistance) | PASS | none | Normal and TEST=1 images build and link with no warnings at gain 0.73. On-target `make TEST=1` tests not re-run |
+| 2026-11-05 | car, 10 mm ramp, one wheel, 6 runs, gain 0.83 | feature/s4-side-hump | Andrew (with AI assistance) | PARTIAL (one run over 20 %) | console logs pasted in session | Right wheel 10.8, 10.6, 11.3 mm; left 12.1, 11.6, 12.0 mm. Correct side every run, no FAULT. Gain lowered to 0.73 |
+| 2026-11-05 | car, 10 mm ramp, 3 runs, gain 0.73 | feature/s4-side-hump | Andrew (with AI assistance) | PASS | console logs pasted in session | Middle `HUMP` 9.2 mm, no side hump; right wheel 10.0 mm; left wheel 11.3 mm. No FAULT. One run each. Left reads about 1 mm above right. Gain from one ramp: a second known height is not checked |

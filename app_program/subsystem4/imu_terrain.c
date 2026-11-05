@@ -28,7 +28,9 @@
 #define HUMP_COUNT_MAX      (255u)
 
 static void     reset_model (imu_terrain_t * p_terrain);
-static float32_t median_pitch (imu_terrain_t * p_terrain, float32_t pitch_deg);
+static void     reset_side (imu_terrain_t * p_terrain);
+static float32_t median_push (float32_t * p_window, uint32_t * p_head,
+                              uint32_t * p_count, float32_t value);
 static void     track_height (imu_terrain_t * p_terrain, float32_t pitch_deg,
                               float32_t distance_mm);
 static bool     level_step (imu_terrain_t * p_terrain, float32_t pitch_deg,
@@ -37,7 +39,17 @@ static bool     climbing_step (imu_terrain_t * p_terrain,
                                float32_t pitch_deg, float32_t distance_mm);
 static bool     descending_step (imu_terrain_t * p_terrain,
                                  float32_t pitch_deg, float32_t distance_mm);
+static bool     side_step (imu_terrain_t * p_terrain, float32_t roll_deg,
+                           float32_t distance_mm, bool b_moving);
+static void     side_watch (imu_terrain_t * p_terrain, float32_t roll_deg,
+                            bool b_moving);
+static bool     side_measure (imu_terrain_t * p_terrain, float32_t roll_deg,
+                              float32_t distance_mm);
 static void     close_hump (imu_terrain_t * p_terrain, bool b_cut_short);
+static void     close_side_hump (imu_terrain_t * p_terrain, bool b_cut_short);
+static void     finish_hump (imu_terrain_t * p_terrain, float32_t peak_mm,
+                             float32_t steepest_deg, imu_terrain_side_t side,
+                             bool b_cut_short);
 static void     update_tilt (imu_terrain_t * p_terrain, float32_t pitch_deg,
                              float32_t roll_deg);
 static uint32_t get_field (imu_terrain_t const * p_terrain, uint32_t shift,
@@ -73,7 +85,9 @@ imu_terrain_init (imu_terrain_t * p_terrain)
         p_terrain->hump_count     = 0u;
         p_terrain->state_bits     = 0u;
         p_terrain->b_result_ready = false;
+        p_terrain->b_side_armed   = false;
         reset_model(p_terrain);
+        reset_side(p_terrain);
     }
 }
 
@@ -91,6 +105,7 @@ imu_terrain_reset_region (imu_terrain_t * p_terrain)
         set_field(p_terrain, 0u, COUNT_SHIFT, COUNT_WIDTH);
         set_field(p_terrain, 0u, LEVEL_COUNT_SHIFT, LEVEL_COUNT_WIDTH);
         reset_model(p_terrain);
+        reset_side(p_terrain);
     }
 }
 
@@ -120,6 +135,18 @@ imu_terrain_update (imu_terrain_t * p_terrain, float32_t pitch_deg,
             case IMU_TERRAIN_LEVEL:
                 b_changed = level_step(p_terrain, pitch_deg, distance,
                                        b_moving);
+
+                if (b_changed)
+                {
+                    /* A climb opened: it measures this ramp from here on. */
+                    p_terrain->b_side_armed = false;
+                    reset_side(p_terrain);
+                }
+                else
+                {
+                    b_changed = side_step(p_terrain, roll_deg, distance,
+                                          b_moving);
+                }
             break;
 
             case IMU_TERRAIN_CLIMBING:
@@ -161,6 +188,15 @@ imu_terrain_force_close (imu_terrain_t * p_terrain)
         {
             close_hump(p_terrain, true);
             b_closed = true;
+        }
+        else if (p_terrain->b_side_open)
+        {
+            close_side_hump(p_terrain, true);
+            b_closed = true;
+        }
+        else
+        {
+            /* Nothing open. */
         }
 
         imu_terrain_reset_region(p_terrain);
@@ -240,6 +276,17 @@ imu_terrain_is_tilted (imu_terrain_t const * p_terrain)
 }
 
 /**
+ * @brief   Whether a side hump is being measured.
+ * @param   p_terrain  Terrain state.
+ * @return  true from the moment it opens until it closes.
+ */
+bool
+imu_terrain_side_is_open (imu_terrain_t const * p_terrain)
+{
+    return ((NULL != p_terrain) && p_terrain->b_side_open);
+}
+
+/**
  * @brief   Highest hump peak of the run (FR6 "highest hump peak").
  * @param   p_terrain  Terrain state.
  * @return  Peak in mm, after the calibration gain; 0 if no hump yet.
@@ -285,44 +332,63 @@ reset_model (imu_terrain_t * p_terrain)
 }
 
 /**
- * @brief   Median of the last IMU_TERRAIN_PEAK_WINDOW pitch samples.  A jolt
+ * @brief   Clear the side hump measurement.  b_side_armed is kept: it says
+ *          whether roll has been level, which this does not change.
+ * @param   p_terrain  Terrain state.
+ */
+static void
+reset_side (imu_terrain_t * p_terrain)
+{
+    p_terrain->side_peak_deg  = 0.0f;
+    p_terrain->side_travel_mm = 0.0f;
+    p_terrain->roll_head      = 0u;
+    p_terrain->roll_count     = 0u;
+    p_terrain->side_count     = 0u;
+    p_terrain->side           = IMU_TERRAIN_SIDE_NONE;
+    p_terrain->b_side_open    = false;
+}
+
+/**
+ * @brief   Median of the last IMU_TERRAIN_PEAK_WINDOW samples.  A jolt
  *          shorter than half the window is dropped entirely, where a low-pass
  *          would only spread it out, and the top of a real ramp is hardly
  *          clipped.
- * @param   p_terrain  Terrain state.
- * @param   pitch_deg  New sample.
+ * @param   p_window  Ring of IMU_TERRAIN_PEAK_WINDOW samples.
+ * @param   p_head    Next slot in the ring.
+ * @param   p_count   Samples held so far.
+ * @param   value     New sample.
  * @return  Median of the samples held so far.
  */
 static float32_t
-median_pitch (imu_terrain_t * p_terrain, float32_t pitch_deg)
+median_push (float32_t * p_window, uint32_t * p_head, uint32_t * p_count,
+             float32_t value)
 {
     float32_t sorted[IMU_TERRAIN_PEAK_WINDOW];
 
-    p_terrain->pitch_window[p_terrain->window_head] = pitch_deg;
-    p_terrain->window_head = (p_terrain->window_head + 1u) %
-                             IMU_TERRAIN_PEAK_WINDOW;
+    p_window[*p_head] = value;
+    *p_head = (*p_head + 1u) % IMU_TERRAIN_PEAK_WINDOW;
 
-    if (p_terrain->window_count < IMU_TERRAIN_PEAK_WINDOW)
+    if (*p_count < IMU_TERRAIN_PEAK_WINDOW)
     {
-        p_terrain->window_count++;
+        (*p_count)++;
     }
 
     /* Insertion sort; the window is small and only runs during a hump. */
-    for (uint32_t i = 0u; i < p_terrain->window_count; i++)
+    for (uint32_t i = 0u; i < *p_count; i++)
     {
-        float32_t const value = p_terrain->pitch_window[i];
-        uint32_t        slot  = i;
+        float32_t const sample = p_window[i];
+        uint32_t        slot   = i;
 
-        while ((slot > 0u) && (sorted[slot - 1u] > value))
+        while ((slot > 0u) && (sorted[slot - 1u] > sample))
         {
             sorted[slot] = sorted[slot - 1u];
             slot--;
         }
 
-        sorted[slot] = value;
+        sorted[slot] = sample;
     }
 
-    return (sorted[p_terrain->window_count / 2u]);
+    return (sorted[*p_count / 2u]);
 }
 
 /**
@@ -343,7 +409,10 @@ track_height (imu_terrain_t * p_terrain, float32_t pitch_deg,
     {
         /* Rear wheels beside the ramp: the rear stays at ground level. */
         p_terrain->front_mm = IMU_TERRAIN_WHEELBASE_MM *
-            imu_math_sin_deg(median_pitch(p_terrain, pitch_deg));
+            imu_math_sin_deg(median_push(p_terrain->pitch_window,
+                                         &p_terrain->window_head,
+                                         &p_terrain->window_count,
+                                         pitch_deg));
     }
     else if (0u == p_terrain->history_bins)
     {
@@ -584,18 +653,177 @@ descending_step (imu_terrain_t * p_terrain, float32_t pitch_deg,
 }
 
 /**
- * @brief   Finalise the peak, update run statistics, enter HUMP_CLOSED.
+ * @brief   One LEVEL sample of the side hump measurement (see imu_terrain.h).
+ * @param   p_terrain    Terrain state.
+ * @param   roll_deg     Filtered roll.
+ * @param   distance_mm  Distance travelled.
+ * @param   b_moving     Encoders (or vibration) show movement.
+ * @return  true on closing a side hump.
+ */
+static bool
+side_step (imu_terrain_t * p_terrain, float32_t roll_deg,
+           float32_t distance_mm, bool b_moving)
+{
+    bool b_changed = false;
+
+    if (imu_terrain_is_tilted(p_terrain))
+    {
+        /* Lifted or falling: this roll says nothing about a hump. */
+        p_terrain->b_side_armed = false;
+        reset_side(p_terrain);
+    }
+    else if (p_terrain->b_side_open)
+    {
+        b_changed = side_measure(p_terrain, roll_deg, distance_mm);
+    }
+    else
+    {
+        side_watch(p_terrain, roll_deg, b_moving);
+    }
+
+    return (b_changed);
+}
+
+/**
+ * @brief   No side hump open: watch for sustained roll to one side.  Samples
+ *          outside the level band already feed the median, so the rise
+ *          before the threshold is not lost.
+ * @param   p_terrain  Terrain state.
+ * @param   roll_deg   Filtered roll.
+ * @param   b_moving   Encoders (or vibration) show movement.
+ */
+static void
+side_watch (imu_terrain_t * p_terrain, float32_t roll_deg, bool b_moving)
+{
+    float32_t const size = imu_math_abs(roll_deg);
+
+    if (size < IMU_TERRAIN_LEVEL_DEG)
+    {
+        p_terrain->b_side_armed = true;
+        reset_side(p_terrain);
+    }
+    else
+    {
+        imu_terrain_side_t const side = (roll_deg < 0.0f) ?
+            IMU_TERRAIN_SIDE_RIGHT : IMU_TERRAIN_SIDE_LEFT;
+        (void)median_push(p_terrain->roll_window, &p_terrain->roll_head,
+                          &p_terrain->roll_count, size);
+
+        if (p_terrain->b_side_armed && b_moving &&
+            (size > IMU_TERRAIN_SIDE_ON_DEG) &&
+            ((0u == p_terrain->side_count) || (side == p_terrain->side)))
+        {
+            p_terrain->side = side;
+            p_terrain->side_count++;
+
+            if (p_terrain->side_count >= IMU_TERRAIN_PERSIST_SAMPLES)
+            {
+                p_terrain->b_side_open   = true;
+                p_terrain->side_count    = 0u;
+                p_terrain->side_peak_deg = IMU_TERRAIN_SIDE_ON_DEG;
+            }
+        }
+        else
+        {
+            p_terrain->side_count = 0u;
+        }
+    }
+}
+
+/**
+ * @brief   Side hump open: track the peak and watch for level roll.
+ * @param   p_terrain    Terrain state.
+ * @param   roll_deg     Filtered roll.
+ * @param   distance_mm  Distance travelled.
+ * @return  true on closing the side hump.
+ */
+static bool
+side_measure (imu_terrain_t * p_terrain, float32_t roll_deg,
+              float32_t distance_mm)
+{
+    bool            b_closed = false;
+    float32_t const size     = imu_math_abs(roll_deg);
+    float32_t const median   = median_push(p_terrain->roll_window,
+                                           &p_terrain->roll_head,
+                                           &p_terrain->roll_count, size);
+
+    /* A part-full window can be mostly jolt, so wait until it is full. */
+    if ((IMU_TERRAIN_PEAK_WINDOW == p_terrain->roll_count) &&
+        (median > p_terrain->side_peak_deg))
+    {
+        p_terrain->side_peak_deg = median;
+    }
+
+    p_terrain->side_travel_mm += distance_mm;
+    p_terrain->side_count = (size < IMU_TERRAIN_LEVEL_DEG) ?
+                            (p_terrain->side_count + 1u) : 0u;
+
+    if (p_terrain->side_count >= IMU_TERRAIN_SIDE_OFF_SAMPLES)
+    {
+        close_side_hump(p_terrain, false);
+        b_closed = true;
+    }
+    else if (p_terrain->side_travel_mm >= IMU_TERRAIN_MAX_HUMP_MM)
+    {
+        close_side_hump(p_terrain, true);
+        b_closed = true;
+    }
+    else
+    {
+        /* Still on the hump. */
+    }
+
+    return (b_closed);
+}
+
+/**
+ * @brief   Finalise a pitch hump.
  * @param   p_terrain    Terrain state.
  * @param   b_cut_short  true if closed by the distance limit or an impact.
  */
 static void
 close_hump (imu_terrain_t * p_terrain, bool b_cut_short)
 {
+    finish_hump(p_terrain,
+                p_terrain->peak_mm *
+                (p_terrain->b_rear_climbs ? IMU_TERRAIN_HEIGHT_GAIN :
+                                            IMU_TERRAIN_FLAT_GAIN),
+                p_terrain->max_pitch_deg, IMU_TERRAIN_SIDE_NONE, b_cut_short);
+}
+
+/**
+ * @brief   Finalise a side hump.  Roll must level out before the next one.
+ * @param   p_terrain    Terrain state.
+ * @param   b_cut_short  true if closed by the distance limit or an impact.
+ */
+static void
+close_side_hump (imu_terrain_t * p_terrain, bool b_cut_short)
+{
+    float32_t const peak_deg = p_terrain->side_peak_deg;
+
+    finish_hump(p_terrain,
+                IMU_TERRAIN_TRACK_MM * imu_math_sin_deg(peak_deg) *
+                IMU_TERRAIN_SIDE_GAIN,
+                peak_deg, p_terrain->side, b_cut_short);
+    p_terrain->b_side_armed = false;
+    reset_side(p_terrain);
+}
+
+/**
+ * @brief   Publish a hump result, update run statistics, enter HUMP_CLOSED.
+ * @param   p_terrain     Terrain state.
+ * @param   peak          Peak height in mm, after gain.
+ * @param   steepest_deg  Steepest pitch, or peak roll for a side hump.
+ * @param   side          Wheel on the hump, or IMU_TERRAIN_SIDE_NONE.
+ * @param   b_cut_short   true if closed by the distance limit or an impact.
+ */
+static void
+finish_hump (imu_terrain_t * p_terrain, float32_t peak,
+             float32_t steepest_deg, imu_terrain_side_t side,
+             bool b_cut_short)
+{
     imu_terrain_hump_t * const p_result = &p_terrain->result;
-    float32_t const peak    = p_terrain->peak_mm *
-        (p_terrain->b_rear_climbs ? IMU_TERRAIN_HEIGHT_GAIN :
-                                    IMU_TERRAIN_FLAT_GAIN);
-    int32_t const   rounded = imu_math_round(peak);
+    int32_t const rounded = imu_math_round(peak);
 
     /* Clamp then pack (bitpack.h rule 1): 0..127 plus a saturation flag. */
     p_result->peak_mm        = (peak > 0.0f) ? peak : 0.0f;
@@ -606,9 +834,10 @@ close_hump (imu_terrain_t * p_terrain, bool b_cut_short)
     p_result->b_saturated    = (rounded > (int32_t)IMU_TERRAIN_PEAK_MAX_MM);
     /* Cast: clamped to 0..31, fits in uint8_t. */
     p_result->max_pitch_deg  = (uint8_t)bitpack_clamp_s32(
-                                   imu_math_round(p_terrain->max_pitch_deg),
+                                   imu_math_round(steepest_deg),
                                    0, MAX_PITCH_FIELD);
     p_result->b_cut_short    = b_cut_short;
+    p_result->side           = side;
 
     if (p_result->peak_mm > p_terrain->run_peak_mm)
     {
