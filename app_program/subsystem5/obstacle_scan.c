@@ -519,6 +519,8 @@ on_fine(scan_ctx_t * p_ctx)
                          (UINT)lateral_cm);
         log_text(g_log);
         enter(p_ctx, ST_BYPASS);
+        p_ctx->state_word = fld_set(p_ctx->state_word, F_PASS_SHIFT,
+                                    F_PASS_MASK, PASS_IDLE);
         p_ctx->state_word = fld_set(p_ctx->state_word, F_LEG_SHIFT,
                                     F_LEG_MASK, LEG_OUT);
 #if (0 == S5_STANDALONE)
