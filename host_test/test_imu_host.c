@@ -1335,6 +1335,267 @@ static void test_rear_flat (void)
           "sensor lost on a hump: reported once, cut short, peak kept");
 }
 
+/* Feed the terrain a triangle of roll, up to peak_deg and back, with the
+ * nose-down pitch a car with one wheel on a ramp shows, then level ground.
+ * Returns the number of humps closed; *p_hump holds the last.
+ */
+static uint32_t side_pass (imu_terrain_t * p_terrain, float peak_deg,
+                           imu_terrain_hump_t * p_hump)
+{
+    uint32_t humps = 0u;
+
+    for (uint32_t i = 0u; i < 400u; i++)
+    {
+        float const frac = (i < 200u) ? ((float)i / 200.0f) :
+                                        ((float)(400u - i) / 200.0f);
+        float const roll = peak_deg * frac;
+
+        (void)imu_terrain_update(p_terrain, -0.76f * fabsf(roll), roll, 0.5f,
+                                 true);
+        humps += imu_terrain_take_result(p_terrain, p_hump) ? 1u : 0u;
+    }
+    for (uint32_t i = 0u; i < 50u; i++)
+    {
+        (void)imu_terrain_update(p_terrain, 0.0f, 0.0f, 0.5f, true);
+        humps += imu_terrain_take_result(p_terrain, p_hump) ? 1u : 0u;
+    }
+
+    return (humps);
+}
+
+static void test_side_hump (void)
+{
+    imu_terrain_t      terrain;
+    imu_terrain_hump_t hump;
+    float const        expect = IMU_TERRAIN_TRACK_MM *
+                                sinf(7.2f * 0.0174533f) *
+                                IMU_TERRAIN_SIDE_GAIN;
+
+    /* Right wheel: roll negative, nose down.  7.2 deg is the driven peak of the
+     * 10 mm ramp. */
+    imu_terrain_init(&terrain);
+    uint32_t humps = side_pass(&terrain, -7.2f, &hump);
+
+    printf("       right wheel: peak %.1f mm, roll %u deg\n",
+           (double)hump.peak_mm, (unsigned)hump.max_pitch_deg);
+    check("H-U39", (1u == humps) && (IMU_TERRAIN_SIDE_RIGHT == hump.side) &&
+                   !hump.b_cut_short && (fabsf(hump.peak_mm - 10.0f) <= 2.0f) &&
+                   (hump.peak_mm <= expect) && (7u == hump.max_pitch_deg) &&
+                   (1u == imu_terrain_get_hump_count(&terrain)) &&
+                   (IMU_TERRAIN_LEVEL == imu_terrain_get_state(&terrain)),
+          "right wheel on a ramp: one side hump, height within 20 %");
+
+    /* Left wheel: same height, other sign, and a second pass counts too. */
+    humps = side_pass(&terrain, 7.2f, &hump);
+    check("H-U40", (1u == humps) && (IMU_TERRAIN_SIDE_LEFT == hump.side) &&
+                   (fabsf(hump.peak_mm - 10.0f) <= 2.0f) &&
+                   (2u == imu_terrain_get_hump_count(&terrain)),
+          "left wheel on a ramp: reported as the left side, second hump");
+
+    /* Roll under the threshold, and a stopped car tilted by hand: neither
+     * is a hump.
+     */
+    imu_terrain_init(&terrain);
+    humps = side_pass(&terrain, 3.5f, &hump);
+
+    uint32_t held = 0u;
+
+    for (uint32_t i = 0u; i < 300u; i++)
+    {
+        (void)imu_terrain_update(&terrain, -5.0f, 7.0f, 0.0f, false);
+        held += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+        held += imu_terrain_side_is_open(&terrain) ? 1u : 0u;
+    }
+    check("H-U41", (0u == humps) && (0u == held),
+          "roll under the threshold, or on a stopped car, is not a hump");
+
+    /* A 40 ms jolt alone opens nothing.  Straight into a real climb, it
+     * does not set the peak.
+     */
+    imu_terrain_init(&terrain);
+    uint32_t jolt_open = 0u;
+
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+    }
+    for (uint32_t i = 0u; i < 4u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, -9.0f, 0.5f, true);
+        jolt_open += imu_terrain_side_is_open(&terrain) ? 1u : 0u;
+    }
+    for (uint32_t i = 0u; i < 20u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+        jolt_open += imu_terrain_side_is_open(&terrain) ? 1u : 0u;
+    }
+    for (uint32_t i = 0u; i < 4u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, -9.0f, 0.5f, true);
+    }
+    for (uint32_t i = 0u; i < 100u; i++)
+    {
+        float const roll = ((i >= 50u) && (i < 54u)) ? -12.0f : -6.0f;
+
+        (void)imu_terrain_update(&terrain, -4.0f, roll, 0.5f, true);
+    }
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+    }
+    int const   b_side   = imu_terrain_take_result(&terrain, &hump);
+    float const six_deg  = IMU_TERRAIN_TRACK_MM * sinf(6.0f * 0.0174533f) *
+                           IMU_TERRAIN_SIDE_GAIN;
+
+    check("H-U42", (0u == jolt_open) && b_side &&
+                   (hump.peak_mm <= (six_deg * 1.12f)),
+          "40 ms roll jolt: opens nothing, adds under 12 % to the peak");
+
+    /* Middle of the car: a pitch hump with roll near zero is not changed. */
+    imu_terrain_init(&terrain);
+    uint32_t mid_humps = 0u;
+
+    for (uint32_t i = 0u; i < 200u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 8.0f, 1.0f, 0.5f, true);
+        mid_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    for (uint32_t i = 0u; i < 300u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+        mid_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    check("H-U43", (1u == mid_humps) && (IMU_TERRAIN_SIDE_NONE == hump.side),
+          "ramp under the middle: still one ordinary hump");
+
+    /* A diagonal pass that climbs and rolls is one hump, not two. */
+    imu_terrain_init(&terrain);
+    uint32_t diag_humps = 0u;
+
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+    }
+    for (uint32_t i = 0u; i < 200u; i++)
+    {
+        float const pitch = (i < 20u) ? 0.0f : 8.0f;
+
+        (void)imu_terrain_update(&terrain, pitch, -6.0f, 0.5f, true);
+        diag_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    for (uint32_t i = 0u; i < 300u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+        diag_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    check("H-U44", (1u == diag_humps) && (IMU_TERRAIN_SIDE_NONE == hump.side),
+          "side hump then a climb: the climb takes over, one hump");
+
+    /* Sensor lost on the ramp: kept, cut short, and not opened again. */
+    imu_terrain_init(&terrain);
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+    }
+    for (uint32_t i = 0u; i < 100u; i++)
+    {
+        (void)imu_terrain_update(&terrain, -4.0f, -6.0f, 0.5f, true);
+    }
+    int const b_lost = imu_terrain_force_close(&terrain);
+    int const b_kept = imu_terrain_take_result(&terrain, &hump);
+    uint32_t  reopen = 0u;
+
+    for (uint32_t i = 0u; i < 100u; i++)
+    {
+        (void)imu_terrain_update(&terrain, -4.0f, -6.0f, 0.5f, true);
+        reopen += imu_terrain_side_is_open(&terrain) ? 1u : 0u;
+    }
+    check("H-U45", b_lost && b_kept && hump.b_cut_short &&
+                   (IMU_TERRAIN_SIDE_RIGHT == hump.side) &&
+                   (hump.peak_mm > 5.0f) && (0u == reopen) &&
+                   (1u == imu_terrain_get_hump_count(&terrain)),
+          "sensor lost on a side hump: kept once, cut short, no second hump");
+
+    /* A sideways slope that never ends: one hump at the distance limit. */
+    imu_terrain_init(&terrain);
+    uint32_t slope_humps = 0u;
+
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+    }
+    for (uint32_t i = 0u; i < 2000u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 6.0f, 2.0f, true);
+        slope_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    check("H-U46", (1u == slope_humps) && hump.b_cut_short,
+          "long sideways slope: closed once at the distance limit");
+
+    /* Lifted by hand: past the tilt limit, the side hump is dropped. */
+    imu_terrain_init(&terrain);
+    uint32_t lift_humps = 0u;
+
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+    }
+    for (uint32_t i = 0u; i < 100u; i++)
+    {
+        float const roll = (i < 40u) ? -6.0f : -40.0f;
+
+        (void)imu_terrain_update(&terrain, 0.0f, roll, 0.5f, true);
+        lift_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    for (uint32_t i = 0u; i < 50u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 0.5f, true);
+        lift_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    check("H-U47", (0u == lift_humps),
+          "car lifted past the tilt limit: no hump reported");
+
+    /* Replay of the driven right-wheel run of 2026-11-05: the trace lines
+     * of cycles 950 to 1200 (every 0.5 s), joined by straight lines.
+     */
+    static float const logged_roll[]  = { -2.0f, -3.0f, -4.0f, -6.0f, -3.0f,
+                                          -1.0f };
+    static float const logged_pitch[] = { -1.0f, -2.0f, -3.0f, -3.0f, -5.0f,
+                                          0.0f };
+
+    imu_terrain_init(&terrain);
+    uint32_t run_humps = 0u;
+
+    for (uint32_t i = 0u; i < 30u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 1.0f, true);
+    }
+    for (uint32_t seg = 0u; seg < 5u; seg++)
+    {
+        for (uint32_t i = 0u; i < 50u; i++)
+        {
+            float const frac  = (float)i / 50.0f;
+            float const roll  = logged_roll[seg] + (frac *
+                                (logged_roll[seg + 1u] - logged_roll[seg]));
+            float const pitch = logged_pitch[seg] + (frac *
+                                (logged_pitch[seg + 1u] - logged_pitch[seg]));
+
+            (void)imu_terrain_update(&terrain, pitch, roll, 1.0f, true);
+            run_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+        }
+    }
+    for (uint32_t i = 0u; i < 50u; i++)
+    {
+        (void)imu_terrain_update(&terrain, 0.0f, 0.0f, 1.0f, true);
+        run_humps += imu_terrain_take_result(&terrain, &hump) ? 1u : 0u;
+    }
+    printf("       logged run: peak %.1f mm\n", (double)hump.peak_mm);
+    check("H-A18", (1u == run_humps) &&
+                   (IMU_TERRAIN_SIDE_RIGHT == hump.side) &&
+                   (fabsf(hump.peak_mm - 10.0f) <= 2.0f),
+          "logged right-wheel run: one side hump, height within 20 %");
+}
+
 int main (void)
 {
     printf("[TEST] === host test run start ===\n");
@@ -1351,6 +1612,7 @@ int main (void)
     test_accel_only();
     test_ramp();
     test_rear_flat();
+    test_side_hump();
     printf("[TEST] host SUMMARY %d passed, %d failed\n", g_pass, g_fail);
 
     return (0 == g_fail) ? 0 : 1;

@@ -86,6 +86,9 @@ static bool                 g_b_fault_reported  = false;
 static bool                 g_b_ready_beeped    = false;
 static uint32_t             g_cycle_read_us     = 0u;   /* this cycle only */
 static uint32_t             g_cycle_lines       = 0u;   /* this cycle only */
+static int32_t              g_enc_head          = 0;    /* left - right    */
+static int32_t              g_side_start_head   = 0;    /* at side hump open */
+static bool                 g_b_side_open       = false;
 #if (1 == IMU_TASK_TRACE_ENABLE)
 /* Largest impact inputs since the last trace line, so short jolts that
  * fall between trace lines still show (impact tuning, test S4-M03).
@@ -105,6 +108,7 @@ static void      sensor_lost (imu_pack_fault_reason_t reason);
 static void      report_fault (imu_pack_fault_reason_t reason);
 static void      report_recovered (void);
 static void      report_hump (imu_terrain_hump_t const * p_hump);
+static void      update_side_heading (void);
 static void      finish_course (void);
 #if (1 == IMU_TASK_HUMP_TRACE)
 static void      trace_hump (void);
@@ -610,8 +614,13 @@ process_sample (drv_imu_sample_t * p_sample)
 #endif
 
     read_encoders(&counts);
+    /* Cast: the wrapped difference of two cumulative counts, as line_follow
+     * computes it.
+     */
+    g_enc_head = (int32_t)(counts.left_count - counts.right_count);
     imu_monitor_step(&g_monitor, p_sample, &counts, measure_dt(), &out);
     handle_outputs(&out);
+    update_side_heading();
     update_ramp();
 #if (1 == IMU_TASK_HUMP_TRACE)
     trace_hump();
@@ -816,12 +825,45 @@ report_hump (imu_terrain_hump_t const * p_hump)
                imu_pack_hump_payload(p_hump->peak_mm_packed,
                                      p_hump->b_saturated,
                                      p_hump->max_pitch_deg));
-    log_tenths("===== imu: HUMP peak %d.%d mm, packed %d mm =====\n",
-               p_hump->peak_mm, (int32_t)p_hump->peak_mm_packed);
+    if (IMU_TERRAIN_SIDE_NONE == p_hump->side)
+    {
+        log_tenths("===== imu: HUMP peak %d.%d mm, packed %d mm =====\n",
+                   p_hump->peak_mm, (int32_t)p_hump->peak_mm_packed);
+    }
+    else
+    {
+        log_tenths((IMU_TERRAIN_SIDE_RIGHT == p_hump->side) ?
+                   "===== imu: SIDE HUMP right wheel, peak %d.%d mm, "
+                   "packed %d mm =====\n" :
+                   "===== imu: SIDE HUMP left wheel, peak %d.%d mm, "
+                   "packed %d mm =====\n",
+                   p_hump->peak_mm, (int32_t)p_hump->peak_mm_packed);
+        log_line("imu: side hump roll %d deg, heading moved %d pulses "
+                 "(~7 = 1 deg)\n", (int32_t)p_hump->max_pitch_deg,
+                 g_enc_head - g_side_start_head, 0);
+    }
 #if (1 == IMU_TASK_HUMP_TRACE)
     log_line("imu h: max pitch %d deg\n",
              (int32_t)p_hump->max_pitch_deg, 0, 0);
 #endif
+}
+
+/**
+ * @brief   Note the encoder heading when a side hump opens, so report_hump()
+ *          can say how far the car turned across it.  The compass cannot
+ *          tell: it swings by tens of degrees around the ramp.
+ */
+static void
+update_side_heading (void)
+{
+    bool const b_open = imu_terrain_side_is_open(&g_monitor.terrain);
+
+    if (b_open && !g_b_side_open)
+    {
+        g_side_start_head = g_enc_head;
+    }
+
+    g_b_side_open = b_open;
 }
 
 /**
