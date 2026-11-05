@@ -1,5 +1,5 @@
 /*!
- * @file    imu.h
+ * @file    imu_ramp.h
  * @brief   Ramp detection for Line Following, part of Subsystem 4.
  *
  * Written for the ramp in s5-local-test, now fed by imu_task, the only
@@ -13,8 +13,8 @@
  * down ramps both read positive.
  */
 
-#ifndef IMU_H
-#define IMU_H
+#ifndef IMU_RAMP_H
+#define IMU_RAMP_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -35,4 +35,4 @@ bool     imu_is_ok(void);           // imu_task has good calibrated data.
 bool     imu_on_ramp(void);         // Tilted (with hysteresis).
 uint32_t imu_get_tilt_x10(void);    // Tilt in 0.1 deg.
 
-#endif // IMU_H
+#endif // IMU_RAMP_H

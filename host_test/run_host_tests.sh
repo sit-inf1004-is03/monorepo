@@ -24,7 +24,7 @@ $CC -std=c99 -O2 -Wall -Wextra -Wshadow -Wdouble-promotion -Wundef \
     "$SRC/subsystem4/imu_pack.c" \
     "$SRC/subsystem4/imu_monitor.c" \
     "$SRC/subsystem4/imu_sim.c" \
-    "$SRC/subsystem4/imu.c" \
+    "$SRC/subsystem4/imu_ramp.c" \
     "$HERE/test_imu_host.c" \
     -lm -o "$OUT/test_imu_host"
 

@@ -50,7 +50,7 @@ Same C sources as the firmware, compiled with a PC compiler and fed simulated se
 | H-U22..25 | Impact detection, recovery, hump suppression, hold-off | Week 6 6.3.2 rules 2–3, Tribunal 1.1 | as described |
 | H-U26..31 | Motion classes; acceleration not read as climbing; drift removed at stops | Week 6 6.3.1, Tribunal 1.2 "accelerometer-only pitch" | as described |
 | H-U32..34 | Climb then level closes the hump after one wheelbase, or 1 s with no distance; a short flat top then nose-down still goes through DESCENDING | car never tips nose down on the hump | as described |
-| H-U35..37, H-A13 | Ramp detection (`imu.c`): on after 60 ms at 6°, off after 100 ms at 4°, spike ignored, cleared when the sensor is lost; simulated slope through the monitor | IF-S4-7 | as described |
+| H-U35..37, H-A13 | Ramp detection (`imu_ramp.c`): on after 60 ms at 6°, off after 100 ms at 4°, spike ignored, cleared when the sensor is lost; simulated slope through the monitor | IF-S4-7 | as described |
 | H-A14..15 | Sensor back on a slope keeps the level (ramp there, not on flat ground); resume refused before the first calibration | IF-S4-7 | as described |
 | H-A16, H-U38 | Rear wheels beside the ramp: one hump, height within 20 %; a 40 ms pitch spike adds less than 12 % | FR3, NFR4 | as described |
 | H-A17 | Sensor lost on a hump: reported once, cut short, peak kept | FR3 | as described |

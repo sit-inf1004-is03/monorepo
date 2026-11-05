@@ -16,7 +16,7 @@
 #include "../subsystem2/motion.h"
 #include "../subsystem2/drv_encoder.h"   /* LOCAL: junction turn angle */
 #include "../navigation/navigation.h"
-#include "../subsystem4/imu.h"          /* LOCAL: ramp tilt */
+#include "../subsystem4/imu_ramp.h"     /* LOCAL: ramp tilt */
 
 #define LINE_C_CHAN     (0U)      /* GP26 centre = ADC0 */
 #define LINE_R_CHAN     (1U)      /* GP27 right  = ADC1 */
