@@ -15,8 +15,10 @@
 
 /* Same sample as the dashboard's test (mqtt-web-interface/src/shared/
    protocol.test.ts): the two sides must agree bit for bit */
-#define GOLDEN_WORD	6601995533221430314ULL
-#define GOLDEN_TEXT	"6601995533221430314"
+#define GOLDEN_WORD	11213681551648818218ULL
+#define GOLDEN_TEXT	"11213681551648818218"
+#define GOLDEN_W1	8090835030ULL
+#define GOLDEN_PAYLOAD	"11213681551648818218 8090835030"
 
 LOCAL BOOL parses(const char *text, COMMS_CMD *cmd)
 {
@@ -41,8 +43,9 @@ EXPORT void comms_test(void)
 {
 	COMMS_CMD	cmd;
 	NET_BACKOFF	b = NET_BACKOFF_INIT(1000, 8000);
-	UB		text[24];
+	UB		text[COMMS_TELEMETRY_TEXT_MAX];
 	UD		w = 0;
+	UD		words[TLM_WORDS];
 	UW		d1, d2, d3, d4, d5;
 
 	TEST_INIT();
@@ -89,6 +92,21 @@ EXPORT void comms_test(void)
 		   tlm_get(w, TLM_FAULTS) == 0x84 &&
 		   tlm_get(w, TLM_SPEED_RIGHT) == TLM_SPEED_MAX,
 		   "telemetry word matches the dashboard's golden sample");
+
+	/* CO-U10: word 1 and the two-word payload match the dashboard */
+	words[0] = w;
+	words[1] = 0;
+	words[1] = tlm_put(words[1], TLM_W1_IMU_MOTION, 2);	/* cruising */
+	words[1] = tlm_put(words[1], TLM_W1_IMU_TERRAIN, 1);	/* climbing */
+	words[1] = tlm_put(words[1], TLM_W1_IMU_OK, 1);
+	words[1] = tlm_put(words[1], TLM_W1_BARCODE, 'B');
+	words[1] = tlm_put(words[1], TLM_W1_BARCODE_COUNT, 5);
+	words[1] = tlm_put(words[1], TLM_W1_DISTANCE, 123456);	/* 1234.56 m */
+	d1 = (comms_format_telemetry(text, words, TLM_WORDS) ==
+	      (INT)sizeof(GOLDEN_PAYLOAD) - 1);
+	TEST_CHECK("CO-U10", words[1] == GOLDEN_W1 && d1 &&
+		   same_text(text, GOLDEN_PAYLOAD),
+		   "word 1 and \"<word 0> <word 1>\" match the dashboard");
 
 	/* CO-U06/07: backoff doubles up to the limit, jitter stays in
 	   [step/2, step], and a reset starts again from the minimum */

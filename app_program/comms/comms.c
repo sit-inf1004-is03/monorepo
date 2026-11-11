@@ -24,6 +24,7 @@ LOCAL NET_SUB		subs[COMMS_MAX_SUBS];
 LOCAL NET_BRIDGE	bridge;
 LOCAL BOOL		started;
 LOCAL UW		tx_refused;	/* dropped before reaching the bridge */
+LOCAL COMMS_LOG_TAP	log_tap;
 
 EXPORT ER comms_init(void)
 {
@@ -101,20 +102,44 @@ EXPORT ER comms_publish(const char *topic, const void *data, INT len,
 
 EXPORT ER comms_log(const char *text)
 {
-	INT	len = 0;
+	COMMS_LOG_TAP	tap = log_tap;	/* read once: it may change meanwhile */
+	INT		len = 0;
 
 	while (len < NET_PAYLOAD_MAX && text[len] != '\0') {
 		len++;
 	}
 
+	if (tap != NULL) {
+		tap(text);
+	}
 	tm_printf((UB*)"%s\n", text);
 	return comms_publish(COMMS_DEVICE_TOPIC(TOPIC_LOG), text, len, FALSE);
 }
 
-EXPORT ER comms_telemetry(UD word)
+EXPORT void comms_set_log_tap(COMMS_LOG_TAP tap)
+{
+	log_tap = tap;			/* one store: safe from any task */
+}
+
+EXPORT INT comms_format_telemetry(UB *buf, const UD *words, INT count)
+{
+	INT	len = 0;
+	INT	i;
+
+	for (i = 0; i < count && i < TLM_WORDS; i++) {
+		if (i > 0) {
+			buf[len++] = ' ';
+		}
+		len += comms_format_u64(&buf[len], words[i]);
+	}
+	buf[len] = '\0';
+	return len;
+}
+
+EXPORT ER comms_telemetry(const UD *words, INT count)
 {
 	NET_INFO	info;
-	UB		text[24];
+	UB		text[COMMS_TELEMETRY_TEXT_MAX];
 	INT		len;
 
 	/* A sample is only worth sending while it is current */
@@ -123,7 +148,7 @@ EXPORT ER comms_telemetry(UD word)
 		return E_TMOUT;
 	}
 
-	len = comms_format_u64(text, word);
+	len = comms_format_telemetry(text, words, count);
 	return comms_publish(COMMS_DEVICE_TOPIC(TOPIC_TELEMETRY), text, len,
 			     FALSE);
 }

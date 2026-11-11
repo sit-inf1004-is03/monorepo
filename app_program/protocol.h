@@ -1,7 +1,7 @@
 /*
  *	protocol.h
  *	What the car and the dashboard say to each other over MQTT.
- *	Owner: Wi-Fi / MQTT (Rifa).  TEAM.md interfaces IF-15 .. IF-17.
+ *	Owner: Wi-Fi / MQTT (Rifa).  TEAM.md interfaces IF-15 .. IF-18.
  *
  *	THE DASHBOARD HAS A COPY OF THIS FILE:
  *	    mqtt-web-interface/src/shared/protocol.ts
@@ -13,8 +13,10 @@
  *	    robocar/<id>/status     "online" / "offline"  (retained; "offline"
  *	                            is the MQTT last will, sent by the broker
  *	                            when the car drops off without saying so)
- *	    robocar/<id>/telemetry  one unsigned 64-bit integer in decimal,
- *	                            e.g. "6601995533221430314", packed as TLM_*
+ *	    robocar/<id>/telemetry  unsigned 64-bit integers in decimal, one
+ *	                            space apart: "<word 0> <word 1>", packed
+ *	                            as TLM_* and TLM_W1_* (layout 2)
+ *	    robocar/<id>/event      something that happened: "<EVT_*> [arg ...]"
  *	    robocar/<id>/log        one line of plain text
  *
  *	  dashboard -> car
@@ -22,8 +24,8 @@
  *	    robocar/all/cmd         the same, for every car at once
  *	    robocar/<id>/config     a setting:  "<CFG_*> <value>"
  *
- *	A command or setting is decimal integers separated by spaces, the
- *	first being the identifier, e.g. "1" = CMD_START.  At most
+ *	A command, setting or event is decimal integers separated by spaces,
+ *	the first being the identifier, e.g. "1" = CMD_START.  At most
  *	COMMS_MAX_ARGS arguments; missing arguments read as 0.
  */
 
@@ -36,6 +38,7 @@
 #define TOPIC_STATUS		"status"
 #define TOPIC_TELEMETRY		"telemetry"
 #define TOPIC_LOG		"log"
+#define TOPIC_EVENT		"event"
 #define TOPIC_CMD		"cmd"
 #define TOPIC_CONFIG		"config"
 
@@ -59,13 +62,32 @@
 #define CFG_TELEMETRY_ENABLE	2	/* 0 = stop sending, 1 = send */
 
 /* ---------------------------------------------------------------------
- *  Telemetry: one 64-bit word, fields packed from bit 0 upwards.
+ *  Events, on robocar/<id>/event (task: telemetry).  Sent once, when it
+ *  happens; queued while offline like log lines.  Same format as a
+ *  command: the identifier, then its arguments.
+ * --------------------------------------------------------------------- */
+#define EVT_HUMP	0	/* <height mm> <1 = over 127 mm> <tilt deg>
+				   a hump closed (imu_task_read_event, IF-S4-3);
+				   tilt is the largest pitch, or roll when only
+				   one rear wheel rode over it */
+#define EVT_BARCODE	1	/* <letter, as its ASCII code>
+				   a barcode was read (S3, IF-18) */
+
+/* ---------------------------------------------------------------------
+ *  Telemetry: 64-bit words, fields packed from bit 0 upwards.  Sent as
+ *  TLM_WORDS decimal numbers, one space apart.
+ *
+ *  Word 0 has the layout of version 1, unchanged except that its version
+ *  field now reads 2: a reader that takes only the first number reads it
+ *  exactly as a layout 1 word.  Word 1 (TLM_W1_*) was added in layout 2, when word 0 was
+ *  full.  To add a field, use word 1's spare bits; when those run out,
+ *  add a word 2 the same way and bump TLM_LAYOUT.
  *
  *  Each field is written as "offset, width" so it can be passed straight
  *  to tlm_put()/tlm_get():   word = tlm_put(word, TLM_NAV_STATE, state);
  *  Every field is unsigned.  Sources are the team's interfaces in TEAM.md.
  * --------------------------------------------------------------------- */
-/*	name			offset, bits	   meaning (source) */
+/*	word 0			offset, bits	   meaning (source) */
 #define TLM_SEQ			 0, 8	/* sample counter, wraps; gaps = loss */
 #define TLM_NAV_STATE		 8, 3	/* NAV_STATE_*  (nav_get_state, IF-14) */
 #define TLM_NAV_REASON		11, 3	/* NAV_REASON_* (nav_get_reason, IF-14) */
@@ -85,10 +107,30 @@
 #define TLM_VERSION		62, 2	/* layout version: TLM_LAYOUT */
 /*					   64 bits used of 64 */
 
-#define TLM_LAYOUT		1	/* bump when the layout above changes */
+/*	word 1			offset, bits	   meaning (source) */
+#define TLM_W1_IMU_MOTION	 0, 2	/* IMU motion class: 0 stationary,
+					   1 accelerating, 2 cruising, 3 turning
+					   (imu_task_get_snapshot, IF-S4-1) */
+#define TLM_W1_IMU_TERRAIN	 2, 2	/* IMU terrain: 0 level, 1 climbing,
+					   2 descending, 3 hump just closed
+					   (imu_task_get_snapshot, IF-S4-1) */
+#define TLM_W1_IMU_OK		 4, 1	/* 1 = the two above are live (imu_is_ok,
+					   IF-S4-7); 0 = no IMU data, ignore them */
+#define TLM_W1_BARCODE		 5, 7	/* last barcode letter, ASCII; 0 = none
+					   read since power-on (S3, IF-18) */
+#define TLM_W1_BARCODE_COUNT	12, 4	/* barcodes read, wraps: a change means
+					   a new read, even of the same letter */
+#define TLM_W1_DISTANCE		16, 20	/* cm travelled since power-on, mean of
+					   both wheels, 1048575 = that or more
+					   (drv_encoder_get_count, IF-06) */
+/*					   36 bits used of 64; 36-63 are 0 */
+
+#define TLM_LAYOUT		2	/* bump when the layout above changes */
+#define TLM_WORDS		2	/* words sent in this layout */
 #define TLM_LINE_UNKNOWN	3
 #define TLM_SPEED_MAX		1023
 #define TLM_OBSTACLE_NONE	511
+#define TLM_DISTANCE_MAX	1048575
 
 /* Store value in a field (excess high bits are cut off) */
 static inline unsigned long long tlm_put(unsigned long long word,
