@@ -135,7 +135,9 @@ EXPORT INT usermain(void)
 	subsystem1_test();
 	subsystem2_test();
 	subsystem3_test();
+	telemetry_hold_imu_events(TRUE);  /* S4-U06 reads them itself */
 	subsystem4_test();
+	telemetry_hold_imu_events(FALSE);
 	subsystem5_test();
 	navigation_test();
 	tm_printf((UB*)"[TEST] === test run end ===\n");
