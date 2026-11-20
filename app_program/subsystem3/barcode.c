@@ -137,6 +137,25 @@ static uint16_t g_levels[BC_MAX_ELEMENTS];  /* each element's extreme */
 
 static UB       g_log[LOG_LEN];
 
+/* LOCAL (dashboard barcode map): what each character means at the next
+ * T, set from the dashboard (CFG_BARCODE_DIR) on the day.  36 characters,
+ * '0'-'9' then 'A'-'Z', 3 bits each (a barcode_cmd_t; CMD_NONE = ignored),
+ * 10 per 32-bit word, so one store changes one word.  Written only by the
+ * telemetry task (barcode_set_cmd()), read by barcode_task.  Defaults: A-D
+ * = LEFT, RIGHT, STRAIGHT, U-TURN, as before; every other one ignored. */
+#define BC_MAP_FIRST_LETTER (10U)           /* index of 'A' */
+#define BC_MAP_PER_WORD     (10U)
+#define BC_MAP_WORDS        (4U)
+#define BC_MAP_BITS         (3U)
+#define BC_MAP_MASK         (0x7UL)
+#define BC_MAP_ALL_NONE     (0x24924924UL)  /* CMD_NONE in all 10 slots */
+#define BC_MAP_W1_DEFAULT   (0x24924688UL)  /* A-D as above, E-J NONE */
+
+static volatile uint32_t g_bc_map[BC_MAP_WORDS] =
+{
+    BC_MAP_ALL_NONE, BC_MAP_W1_DEFAULT, BC_MAP_ALL_NONE, BC_MAP_ALL_NONE
+};
+
 /* Beep pattern: halves left (on, off, on ...) and ms left in this half. */
 static uint8_t  g_beep_halves  = 0U;
 static uint16_t g_beep_ms      = 0U;
@@ -156,6 +175,7 @@ static char          decode_char(uint16_t const * p_w);
 static bool          decode(uint16_t const * p_w, uint16_t n,
                             char * p_letter, bool b_reverse);
 static barcode_cmd_t letter_to_cmd(char letter);
+static int16_t       map_index(char letter);
 static void          log_line(void);
 static void          buzzer_init(void);
 static void          beep_start(uint8_t count, uint16_t on_ms);
@@ -543,34 +563,48 @@ static bool decode(uint16_t const * p_w, uint16_t n, char * p_letter,
     return (b_ok);
 }
 
+/* LOCAL: the character's meaning from the dashboard map (g_bc_map). */
 static barcode_cmd_t letter_to_cmd(char letter)
 {
-    barcode_cmd_t cmd;
+    int16_t const idx = map_index(letter);
+    barcode_cmd_t cmd = CMD_NONE;
+    uint32_t      bits;
 
-    switch (letter)
+    if (idx >= 0)
     {
-        case 'A':
-            cmd = CMD_A_LEFT;
-            break;
+        bits = (g_bc_map[(uint16_t)idx / BC_MAP_PER_WORD] >>
+                (BC_MAP_BITS * ((uint16_t)idx % BC_MAP_PER_WORD))) &
+               BC_MAP_MASK;
 
-        case 'B':
-            cmd = CMD_B_RIGHT;
-            break;
-
-        case 'C':
-            cmd = CMD_C_STRAIGHT;
-            break;
-
-        case 'D':
-            cmd = CMD_D_UTURN;
-            break;
-
-        default:
-            cmd = CMD_NONE;
-            break;
+        if (bits < (uint32_t)CMD_NONE)
+        {
+            cmd = (barcode_cmd_t)bits;
+        }
     }
 
     return (cmd);
+}
+
+/* '0'-'9' -> 0-9, 'A'-'Z' -> 10-35, anything else -1. */
+static int16_t map_index(char letter)
+{
+    int16_t idx = -1;
+
+    if ((letter >= '0') && (letter <= '9'))
+    {
+        idx = (int16_t)(letter - '0');
+    }
+    else if ((letter >= 'A') && (letter <= 'Z'))
+    {
+        idx = (int16_t)((int16_t)(letter - 'A') +
+                        (int16_t)BC_MAP_FIRST_LETTER);
+    }
+    else
+    {
+        /* Not in the map: ignored. */
+    }
+
+    return (idx);
 }
 
 /* A pass has ended: decode it, log it, tell Navigation. */
@@ -836,6 +870,46 @@ const char * barcode_cmd_name(barcode_cmd_t cmd)
     }
 
     return (p_name);
+}
+
+/* LOCAL: set what one character means (CMD_NONE = ignore it).  Called
+ * only by the telemetry task (the map's one writer). */
+bool barcode_set_cmd(char letter, barcode_cmd_t cmd)
+{
+    int16_t const idx  = map_index(letter);
+    bool          b_ok = false;
+    uint16_t      word;
+    uint16_t      shift;
+    uint32_t      value;
+
+    if ((idx >= 0) && (cmd <= CMD_NONE))
+    {
+        word  = (uint16_t)((uint16_t)idx / BC_MAP_PER_WORD);
+        shift = (uint16_t)(BC_MAP_BITS *
+                           ((uint16_t)idx % BC_MAP_PER_WORD));
+        value = g_bc_map[word] & ~(BC_MAP_MASK << shift);
+        g_bc_map[word] = value | ((uint32_t)cmd << shift);  /* one store */
+        b_ok = true;
+    }
+
+    return (b_ok);
+}
+
+/* LOCAL: what one character means now (CMD_NONE if ignored). */
+barcode_cmd_t barcode_get_cmd(char letter)
+{
+    return (letter_to_cmd(letter));
+}
+
+/* LOCAL: ignore every character (before setting the day's letters). */
+void barcode_clear_cmds(void)
+{
+    uint16_t word;
+
+    for (word = 0U; word < BC_MAP_WORDS; word++)
+    {
+        g_bc_map[word] = BC_MAP_ALL_NONE;
+    }
 }
 
 /*** end of file ***/
