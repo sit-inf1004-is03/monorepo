@@ -99,6 +99,8 @@
 #define OBS_PIVOT_MIN_STEP      (3u)    // 45 deg.
 #define OBS_PIVOT_MAX_STEP      (3u)    // 45 deg.
 #define OBS_OUT_MAX_CM          (40u)
+#define OBS_OUT_EXTRA_CM        (5u)    // Out leg this much longer than
+                                        // needed: more room for big boxes.
 
 // Turn-in angle (x 15 deg): shallow so Line Following has time to see
 // the line.  The back leg is the straight-line distance to the line at
