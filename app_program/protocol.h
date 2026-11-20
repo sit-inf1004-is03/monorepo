@@ -60,6 +60,14 @@
  * --------------------------------------------------------------------- */
 #define CFG_TELEMETRY_PERIOD	1	/* ms between samples, 100..60000 */
 #define CFG_TELEMETRY_ENABLE	2	/* 0 = stop sending, 1 = send */
+/* LOCAL (s5 branch): barcode meanings, set on the day.  Each answers on
+   log with the whole map, e.g. "barcodes: A=L K=R" (L, R, S = straight,
+   U = U-turn).  Kept until the car restarts: send them again after that. */
+#define CFG_BARCODE_DIR		3	/* <character, as its ASCII code: '0'-'9',
+					   'A'-'Z'> <0 left, 1 right, 2 straight,
+					   3 U-turn, 4 ignore> (barcode_cmd_t) */
+#define CFG_BARCODE_CLEAR	4	/* ignore every character */
+#define CFG_BARCODE_SHOW	5	/* only report the map */
 
 /* ---------------------------------------------------------------------
  *  Events, on robocar/<id>/event (task: telemetry).  Sent once, when it

@@ -82,6 +82,14 @@ ER           barcode_init(void);
 void         barcode_task(INT stacd, void * exinf);
 const char * barcode_cmd_name(barcode_cmd_t cmd);
 void         barcode_beep(uint8_t count, uint16_t on_ms);   /* LOCAL */
+
+/* LOCAL: barcode map, set from the dashboard (protocol.h CFG_BARCODE_*):
+ * what each character '0'-'9', 'A'-'Z' means at the next T.  Defaults
+ * A-D = LEFT, RIGHT, STRAIGHT, U-TURN; others ignored (CMD_NONE).
+ * barcode_set_cmd() and barcode_clear_cmds(): telemetry task only. */
+bool          barcode_set_cmd(char letter, barcode_cmd_t cmd);
+barcode_cmd_t barcode_get_cmd(char letter);
+void          barcode_clear_cmds(void);
 #define BC_BEEP_T_MS        (500U)    /* LOCAL: one long beep = T reached
                                        * with a barcode command: turning */
 

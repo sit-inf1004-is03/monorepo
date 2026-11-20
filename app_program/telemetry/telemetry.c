@@ -40,6 +40,7 @@
 #include "../subsystem2/drv_encoder.h"
 #include "../subsystem4/subsystem4.h"
 #include "../subsystem4/imu_ramp.h"
+#include "../subsystem3/line_barcode.h"	/* LOCAL: barcode map */
 
 #define PERIOD_MIN_MS	100
 #define PERIOD_MAX_MS	60000
@@ -144,6 +145,51 @@ EXPORT UD telemetry_sample_w1(void)
 	return w;
 }
 
+/* LOCAL: "barcodes: A=L B=R K=S", every character not ignored, cut with
+   " ..." to fit size bytes with the '\0'. */
+LOCAL void barcode_map_text(UB *line, INT size)
+{
+	static const char	chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	static const char	dirs[] = "LRSU";	/* CMD_A_LEFT.. */
+	INT		n = tm_sprintf(line, (const UB*)"barcodes:");
+	INT		i;
+	INT		shown = 0;
+	barcode_cmd_t	c;
+
+	for (i = 0; chars[i] != '\0'; i++) {
+		c = barcode_get_cmd(chars[i]);
+		if (c == CMD_NONE) {
+			continue;
+		}
+		if (n + 9 > size) {		/* " K=L" + " ..." + '\0' */
+			n += tm_sprintf(&line[n], (const UB*)" ...");
+			break;
+		}
+		line[n++] = ' ';
+		line[n++] = (UB)chars[i];
+		line[n++] = '=';
+		line[n++] = (UB)dirs[c];
+		shown++;
+	}
+	line[n] = '\0';
+	if (shown == 0) {
+		tm_sprintf(&line[n], (const UB*)" none (all ignored)");
+	}
+}
+
+/* LOCAL: CFG_BARCODE_DIR <ASCII code> <barcode_cmd_t>; TRUE if it was set */
+LOCAL BOOL set_barcode(const COMMS_CMD *cmd)
+{
+	W	letter = cmd->arg[0];
+	W	dir = cmd->arg[1];
+
+	if (cmd->argc < 2 || letter < 0 || letter > 127 ||
+	    dir < 0 || dir > (W)CMD_NONE) {
+		return FALSE;
+	}
+	return barcode_set_cmd((char)letter, (barcode_cmd_t)dir) ? TRUE : FALSE;
+}
+
 LOCAL void apply_setting(const COMMS_MSG *msg)
 {
 	COMMS_CMD	cmd;
@@ -170,6 +216,25 @@ LOCAL void apply_setting(const COMMS_MSG *msg)
 		telemetry_enabled = (cmd.arg[0] != 0);
 		tm_sprintf(line, (const UB*)"telemetry: %s",
 			   telemetry_enabled ? "on" : "off");
+		break;
+
+	case CFG_BARCODE_DIR:
+		if (!set_barcode(&cmd)) {
+			tm_sprintf(line, (const UB*)"telemetry: barcode setting"
+				   " needs <'0'-'9' or 'A'-'Z' as ASCII code>"
+				   " <0-4>");
+			break;
+		}
+		barcode_map_text(line, NET_PAYLOAD_MAX);
+		break;
+
+	case CFG_BARCODE_CLEAR:
+		barcode_clear_cmds();
+		barcode_map_text(line, NET_PAYLOAD_MAX);
+		break;
+
+	case CFG_BARCODE_SHOW:
+		barcode_map_text(line, NET_PAYLOAD_MAX);
 		break;
 
 	default:
