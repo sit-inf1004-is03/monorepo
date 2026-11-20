@@ -14,6 +14,7 @@
 #include "../subsystem2/drv_encoder.h"
 #include "../subsystem4/subsystem4.h"
 #include "../subsystem4/imu_ramp.h"
+#include "../subsystem3/line_barcode.h"	/* LOCAL: barcode map */
 #include "../test_report.h"
 
 #if APP_TEST
@@ -100,6 +101,26 @@ EXPORT void telemetry_test(void)
 	send(CFG_TELEMETRY_ENABLE, 1);
 	send(CFG_TELEMETRY_PERIOD, (W)before);
 	tk_dly_tsk(50);
+
+	/* TL-U05 (LOCAL): the dashboard sets what a barcode means.  "3 75 1"
+	   = K turns right; A keeps its default; "4" ignores everything; a bad
+	   direction is refused.  Ends with the defaults A-D back. */
+	deliver(mbf_telemetry, COMMS_DEVICE_TOPIC(TOPIC_CONFIG), "3 75 1");
+	deliver(mbf_telemetry, COMMS_DEVICE_TOPIC(TOPIC_CONFIG), "3 75 9");
+	tk_dly_tsk(50);
+	accepted = (barcode_get_cmd('K') == CMD_B_RIGHT &&
+		    barcode_get_cmd('A') == CMD_A_LEFT) ? 1 : 0;
+	deliver(mbf_telemetry, COMMS_DEVICE_TOPIC(TOPIC_CONFIG), "4");
+	tk_dly_tsk(50);
+	rejected = (barcode_get_cmd('K') == CMD_NONE &&
+		    barcode_get_cmd('A') == CMD_NONE &&
+		    barcode_get_cmd('*') == CMD_NONE) ? 1 : 0;
+	(void)barcode_set_cmd('A', CMD_A_LEFT);
+	(void)barcode_set_cmd('B', CMD_B_RIGHT);
+	(void)barcode_set_cmd('C', CMD_C_STRAIGHT);
+	(void)barcode_set_cmd('D', CMD_D_UTURN);
+	TEST_CHECK("TL-U05", accepted && rejected,
+		   "barcode map: set from config, cleared, bad values refused");
 
 	/* INT-16 (IF-06, IF-09, IF-14): a sample carries what the other
 	   subsystems report.  The car may be moving, so check ranges, and
