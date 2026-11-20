@@ -294,7 +294,8 @@ uint16_t
 obs_out_cm(uint16_t lateral_cm, uint16_t pivot_step)
 {
     uint32_t dist = div_up((uint32_t)lateral_cm * TAN_SCALE,
-                           g_sin_x100[clamp_step(pivot_step)]);
+                           g_sin_x100[clamp_step(pivot_step)]) +
+                    OBS_OUT_EXTRA_CM;
 
     if (dist > OBS_OUT_MAX_CM)
     {

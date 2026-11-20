@@ -86,10 +86,12 @@ subsystem5_test(void)
                "fine scan edge step and lateral distance");
 
     // Three legs, 25 cm ahead, 24 cm sideways, 45 deg out:
-    // out 24 / 0.71 = 34; past 25 + 15 + 8 + 5 - 34 x 0.71 (24) = 29;
-    // back 34 x 0.71 / sin 30 deg (49) + 15 slack = 64.  The out leg is
-    // capped at OBS_OUT_MAX_CM; the past leg is never 0.
-    TEST_CHECK("S5-U08", (34u == obs_out_cm(24u, 3u)) &&
+    // out 24 / 0.71 = 34, + OBS_OUT_EXTRA_CM; past 25 + 15 + 8 + 5 -
+    // 34 x 0.71 (24) = 29; back 34 x 0.71 / sin 30 deg (49) + 15 slack =
+    // 64.  The out leg is capped at OBS_OUT_MAX_CM; the past leg is
+    // never 0.
+    TEST_CHECK("S5-U08", ((34u + OBS_OUT_EXTRA_CM) ==
+                          obs_out_cm(24u, 3u)) &&
                (29u == obs_past_cm(25u, 34u, 3u)) &&
                (64u == obs_back_cm(34u, 3u)) &&
                (OBS_OUT_MAX_CM == obs_out_cm(100u, 1u)) &&
