@@ -27,6 +27,7 @@
 #include "../common/faults.h"
 #include "imu_task.h"
 #include "imu_ramp.h"
+#include "imu_flip.h"
 #include "imu_monitor.h"
 #include "imu_pack.h"
 #include "drv_i2c1.h"
@@ -75,6 +76,7 @@ static uint32_t volatile                 g_test_shock     = 0u;
 
 /* Private to the IMU task. */
 static imu_monitor_t        g_monitor;
+static imu_flip_t           g_flip;
 static drv_imu_sample_t g_last_sample;
 static imu_task_state_t     g_state             = IMU_TASK_STATE_PROBE;
 static uint32_t             g_retry_wait        = 0u;
@@ -114,6 +116,7 @@ static void      finish_course (void);
 static void      trace_hump (void);
 #endif
 static void      update_ramp (void);
+static void      update_flip (drv_imu_sample_t const * p_sample);
 static void      publish (void);
 static bool      sample_is_frozen (drv_imu_sample_t const * p_sample);
 static float32_t measure_dt (void);
@@ -142,6 +145,7 @@ imu_task_init (void)
 
     (void)drv_us_timer_init();
     imu_monitor_init(&g_monitor);
+    imu_flip_init(&g_flip);
 
     /* Event buffer read by the Comm task with TMO_POL (never blocks). */
     cmbf.mbfatr = TA_TFIFO;
@@ -319,7 +323,7 @@ imu_task_get_stats (imu_task_stats_t * p_stats)
 #if APP_TEST
 /**
  * @brief   Test hook: add a +3 g shock to the next two samples, so the
- *          whole impact -> ESTOP -> recovery path can be timed on target.
+ *          impact -> IMPACT event -> recovery path can be timed on target.
  */
 void
 imu_task_test_inject_shock (void)
@@ -618,6 +622,8 @@ process_sample (drv_imu_sample_t * p_sample)
      * computes it.
      */
     g_enc_head = (int32_t)(counts.left_count - counts.right_count);
+    /* Upside-down stop first: it is the only output that stops the car. */
+    update_flip(p_sample);
     imu_monitor_step(&g_monitor, p_sample, &counts, measure_dt(), &out);
     handle_outputs(&out);
     update_side_heading();
@@ -686,8 +692,8 @@ process_sample (drv_imu_sample_t * p_sample)
 }
 
 /**
- * @brief   Act on what the statechart step reported.  ESTOP is raised
- *          FIRST, before any logging or event work (Tribunal 1, IR-7).
+ * @brief   Act on what the statechart step reported.  An impact is
+ *          telemetry only; it does not stop the car.
  * @param   p_out  Step output.
  */
 static void
@@ -959,6 +965,50 @@ update_ramp (void)
                 log_line("===== imu: flat again =====\n", 0, 0, 0);
             }
         }
+    }
+}
+
+/**
+ * @brief   Upside-down stop (IF-S4-8).  While the car is upside down, keep
+ *          NAV_FLT_ESTOP raised: Navigation brakes and holds until a remote
+ *          CLEAR, and a CLEAR while still upside down is undone on the next
+ *          sample.  Uses the raw sample, so it works during calibration too.
+ * @param   p_sample  Raw sample.
+ */
+static void
+update_flip (drv_imu_sample_t const * p_sample)
+{
+    /* Casts: int16_t counts to float, exact. */
+    float32_t const ax_g  = (float32_t)p_sample->accel[0] /
+                            DRV_IMU_ACCEL_LSB_PER_G;
+    float32_t const ay_g  = (float32_t)p_sample->accel[1] /
+                            DRV_IMU_ACCEL_LSB_PER_G;
+    float32_t const az_g  = (float32_t)p_sample->accel[2] /
+                            DRV_IMU_ACCEL_LSB_PER_G;
+    float32_t const mag_g = imu_math_sqrt((ax_g * ax_g) + (ay_g * ay_g) +
+                                          (az_g * az_g));
+    float32_t const up_g  = IMU_FLIP_UPRIGHT_SIGN *
+        ((float32_t)p_sample->accel[IMU_MOUNT_UP_AXIS] /
+         DRV_IMU_ACCEL_LSB_PER_G);
+
+    if (imu_flip_update(&g_flip, up_g, mag_g))
+    {
+        if (imu_flip_is_upside_down(&g_flip))
+        {
+            log_line("===== imu: UPSIDE DOWN, motors stopped (fault bit %d) "
+                     "=====\n", 4, 0, 0);
+        }
+        else
+        {
+            log_line("===== imu: upright again, CLEAR then START to drive "
+                     "=====\n", 0, 0, 0);
+        }
+    }
+
+    if (imu_flip_is_upside_down(&g_flip) &&
+        (0u == (nav_get_faults() & NAV_FLT_ESTOP)))
+    {
+        (void)nav_raise_fault(NAV_FLT_ESTOP);
     }
 }
 
