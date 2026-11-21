@@ -1,6 +1,7 @@
 /*
  *	remote_test.c
- *	On-target tests for remote.  Built only with: make NET=lwip TEST=1
+ *	On-target tests for remote.  Built only with: make TEST=1 (with or
+ *	without NET=lwip).
  *	Record results in testing/remote/TEST_LOG.md.
  *
  *	Commands are put straight into mbf_remote, exactly as the network

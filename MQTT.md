@@ -54,8 +54,8 @@ course's MQTT guidance and why it is built with `NET=lwip` rather than
 
 If it does not connect, the console says which layer failed (SSID not found,
 wrong password, no DHCP lease, broker did not answer) and keeps retrying with
-growing waits. `make NET=lwip TEST=1` adds the self-tests (`testing/comms/`,
-`testing/remote/`, `testing/telemetry/`).
+growing waits. `make NET=lwip TEST=1` adds the self-tests (see "Testing"
+below).
 
 ## Topics
 
@@ -196,3 +196,19 @@ comms_log("battery low");              /* robocar/<id>/log, also printed */
 Limits: topics up to 63 bytes, payloads up to 128. A full receive buffer
 drops the new message (the bridge never waits for a task); a full send queue
 returns `E_TMOUT`. Log lines queued while offline are sent after reconnecting.
+
+## Testing
+
+| Log | Tests | What they cover |
+|---|---|---|
+| `testing/comms/TEST_LOG.md` | CO-U01 .. CO-U09 | command parsing, number formatting, the telemetry golden sample, backoff, size limits, topic matching |
+| `testing/remote/TEST_LOG.md` | RE-U01 | the remote task consumes every kind of message and keeps running |
+| `testing/telemetry/TEST_LOG.md` | TL-U01, TL-U02 | telemetry settings |
+| `testing/integration/TEST_LOG.md` | INT-15 .. INT-17 | settings reach telemetry, a sample holds the other subsystems' values, the car and dashboard agree on the bit layout |
+| `testing/system/TEST_LOG.md` | SYS-10 .. SYS-14 | connecting, remote commands, telemetry on the moving car, Wi-Fi loss, broker restart |
+
+The automatic tests need no network and run in any `make TEST=1` image,
+first in the test run, so their results are at the top of the console. The
+system tests need the car, the broker and the dashboard (set-up in
+`testing/system/TEST_LOG.md`). The dashboard has its own tests: `npm test`
+in `mqtt-web-interface`, which checks the same golden sample as CO-U05.
