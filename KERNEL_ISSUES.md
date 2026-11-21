@@ -29,9 +29,9 @@ The guidance describes this architecture, and the project follows it:
 | Subsystems do not call lwIP or MQTT | Subsystems use only `app_program/comms/comms.h` (message buffers). All lwIP, MQTT and radio calls are in `app_program/net/`, which is not a subsystem. |
 | Only code in the Wi-Fi service context calls lwIP/MQTT | `net_bridge.c` runs only as an lwIP timer and lwIP callbacks, both run by the Wi-Fi task's `sys_check_timeouts()` (see B1 for how it gets there). |
 | Subsystem puts publish requests in a TX message buffer; the bridge publishes them | `comms_publish()` / `comms_log()` / `comms_telemetry()` → TX message buffer → `send_queued()` in `net_bridge.c`. |
-| The bridge puts received messages in an RX message buffer; the subsystem takes them | `on_incoming_data()` in `net_bridge.c` → each subscriber's RX message buffer (`mbf_remote`, `mbf_telemetry`) → `tk_rcv_mbf()` in the task. |
+| The bridge puts received messages in an RX message buffer; the subsystem takes them | `on_incoming_data()` in `net_bridge.c` → each subscriber's RX message buffer (remote's and telemetry's) → `tk_rcv_mbf()` in the task. |
 | MQTT processing must not block the Wi-Fi task; poll the buffers | Every message-buffer call in `net_bridge.c` uses `TMO_POL`. |
-| Copy topic and payload into the RX buffer before the callback returns | Both are copied into `rx_msg` as they arrive, and `rx_msg` into the RX buffer inside the last `on_incoming_data()` call. |
+| Copy topic and payload into the RX buffer before the callback returns | Both are copied into `g_rx_msg` as they arrive, and `g_rx_msg` into the RX buffer inside the last `on_incoming_data()` call. |
 | Fixed size limits and a policy for full buffers / oversized messages | `NET_TOPIC_MAX` (63) and `NET_PAYLOAD_MAX` (128) in `net_bridge.h`. Oversized: refused when sending (`E_PAR`), dropped and counted when received. Full RX buffer: message dropped and counted (`rx_dropped`), bridge never waits. Full TX buffer: the sender gets `E_TMOUT` and the message is dropped (`tx_dropped`). Offline: TX messages wait in the buffer; telemetry is not queued. |
 | Restore subscriptions on every reconnect | The `NET_MQTT_SUBSCRIBE` state, entered after every accepted connect, subscribes to the whole table again. |
 | Handle initialisation order: no buffer used before it exists | Buffers are created in the `_init()` phase; `comms_start()` runs after every `_init()` and only then hands the buffers to the bridge. The bridge is not started before that. |
@@ -120,7 +120,7 @@ connecting.
 
 **Workaround.** The bridge retries on `ERR_MEM` (subscriptions and publishes
 carry on next tick), so the defaults work. `app_program/net/lwip_mqtt.c` also
-raises both values before including `mqtt.c`, so retries are rarer. That only
+raises both values (`lwip_mqtt.h`) before including `mqtt.c`, so retries are rarer. That only
 changes the inside of `mqtt_client_t`, which no other file looks into.
 
 **Kernel fix.** Set them in `lib/liblwip/sysdepend/pico_rp2040/lwipopts.h`.
@@ -145,7 +145,7 @@ retry a failed `cyw43_init()` after a delay.
   only runs when built with `make NET=lwip`. A plain `make` still builds and
   runs, and prints that the network is not built in.
 - **`tm_sprintf()` has no 64-bit conversion and no buffer size.** The
-  telemetry word is formatted by `comms_format_u64()`
+  telemetry word is formatted by `comms_payload_format_u64()`
   (`app_program/comms/comms_payload.c`); log lines are kept short by hand.
 - **The Wi-Fi security mode is private to the kernel.** `WIFI_AUTH_MODE` is
   defined in `cyw43_utk.c`; `net_bridge.c` uses the same default and the same

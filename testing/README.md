@@ -85,8 +85,10 @@ build, then runs the tests one module after another in the initial task:
 ```
 [TEST] === test run start ===
 comms, remote, telemetry      quick, never drive the car
-subsystem1 ... subsystem5
-navigation                    3 quick checks, then starts NAV-M01 in its own task
+subsystem1 ... subsystem3
+subsystem4                    telemetry leaves the IMU's events alone meanwhile
+subsystem5
+navigation                    quick checks, then starts NAV-M01 in its own task
 [TEST] === test run end ===
 ```
 
@@ -102,9 +104,11 @@ never appears, the board hung or crashed: rebuild with `CRASH_REPORT=1`
   `=== test run end ===` and drives a scripted mission.
 - A Subsystem 2 manual test runs if `S2_MANUAL_TEST` in `subsystem2_test.c` is
   not `S2_MANUAL_NONE`.
-- Line Following drives the car by itself while `LINE_SELF_DRIVE` is 1 in
-  `subsystem3/line_barcode.h`, and prints its readings while `LINE_DEBUG` is 1.
-  Those prints can bury the `[TEST]` lines; filter the saved log with
+- Line Following drives the car by itself if `LINE_SELF_DRIVE` in
+  `subsystem3/line_barcode.h` is set to 1 (it is 0 now). It prints its
+  readings while `LINE_DEBUG` is 1, and its barcode passes while
+  `BARCODE_DEBUG` is 1 (it is now). Those prints can bury the `[TEST]`
+  lines; filter the saved log with
   `grep '\[TEST\]' logs/<file>.txt`.
 
 ## Retiring a test

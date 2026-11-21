@@ -22,7 +22,7 @@ Define a test here before running it. Test IDs never change.
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
 
-**Set-up for SYS-10 .. SYS-14** (Wi-Fi / MQTT): a computer and the car on
+**Set-up for SYS-10 .. SYS-15** (Wi-Fi / MQTT): a computer and the car on
 the same 2.4 GHz WPA2 network (a phone hotspot works), the broker and
 dashboard running there (`npm start` in `mqtt-web-interface`), and the car
 built with `make NET=lwip` after filling in `config/wifi_secrets.h`. Steps
