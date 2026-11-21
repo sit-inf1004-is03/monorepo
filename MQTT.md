@@ -137,10 +137,10 @@ To add a field, use word 1's spare bits; change `protocol.h` and
 a mismatch fails a test instead of showing wrong numbers. When word 1 is
 full, add a word 2 the same way and bump `TLM_LAYOUT`.
 
-The line state and the obstacle distance come from functions not yet listed
-as interfaces (IF-16, proposed). They are linked weakly: until S3 / S5 are in
-the build, or if they rename the function, telemetry reports "not reported"
-instead of failing to build.
+The line state and the obstacle distance come from `line_get_state()` (S3)
+and `ultrasonic_last_reading()` (S5), IF-16, called through their headers.
+Both subsystems are in the build, so the line field never reads 3 ("not
+reported") from this firmware; the value stays defined for the dashboard.
 
 ### Where the IMU and barcode data come from
 
@@ -170,7 +170,7 @@ changed.
   changes no behaviour: the word is written next to the existing log line
   in `finish_pass()`. To be reviewed by S3's owner.
 - `comms`: `comms_telemetry()` takes an array of words instead of one word,
-  and `comms_format_telemetry()` builds the payload text.
+  and `comms_payload_format_words()` builds the payload text.
 - `telemetry_task` now also wakes every 100 ms to send events, not only at
   each sample. Events are sent even while telemetry is switched off
   (`CFG_TELEMETRY_ENABLE 0`).
@@ -184,20 +184,85 @@ changed.
   CO-U05, CO-U08 and CO-U09 pointed at the retired IF-01 .. IF-05 and now
   name IF-15 and IF-17.
 
+## Coding standard
+
+All C files of this part (`app_program/net/`, `comms/`, `remote/`,
+`telemetry/` and `protocol.h`) follow the Barr Group Embedded C Coding
+Standard, BARR-C:2018 (`barr_c_coding_standard_2018.pdf`). In short:
+4-space indents and no tabs, braces on their own lines, lines of at most
+80 characters, Doxygen comments on every file and function, `stdint.h` and
+`bool` types, `static` for everything private, one header per source file,
+`g_`, `p_` and `b_` name prefixes, constants on the left of `==`, every cast
+commented, and one exit point per function.
+
+How the rules meet the kernel and the libraries:
+
+- **Kernel types.** `ER`, `ID`, `TMO`, `T_CMBF`, `SYSTIM` and `INT` (the
+  task start code, and what `tk_rcv_mbf()` returns) appear only where a
+  kernel call needs them, as in Subsystem 4. Everything else uses
+  `stdint.h` types.
+- **Text casts.** The kernel's `tm_printf()` and `tm_sprintf()` take `UB`
+  (unsigned char) text, so every call casts ASCII `char` text to `UB`, with
+  a comment. `tm_sprintf()` has no `va_list` form, so a wrapper cannot hide
+  this.
+- **Shared test macros.** `TEST_INIT()`, `TEST_CHECK()`, `TEST_SUMMARY()`
+  (`test_report.h`) and `CHECK()` (`app.h`) belong to the template and are
+  used as they are.
+- **Inline assembly.** `memory_barrier()` in `net_bridge.c` is the only
+  `asm`. Rule 1.1.c allows it in a module that drives hardware, as this one
+  drives the radio.
+
+Deviation, per the standard's deviation procedure:
+
+| Rule | Where | Why | Approved by |
+|---|---|---|---|
+| 4.3.f: no source file includes another source file | `net/lwip_mqtt.c` includes lwIP's `mqtt.c` | Third-party code that the kernel's `NET=lwip` build does not compile. Adding it to the shared makefile would also need its buffer sizes passed to that one file; including it keeps the build files and the kernel unchanged | *pending: the project manager* |
+
+`test_report.h` and `app.h` are shared template files and are not covered
+here; nor is the dashboard, which is TypeScript.
+
+### Abbreviations
+
+| Abbreviation | Meaning |
+|---|---|
+| ASCII | the 7-bit character set used for all text |
+| BSSID | the MAC address of one Wi-Fi access point |
+| CFG | a setting sent to the car (`CFG_*`) |
+| CMD | a command sent to the car (`CMD_*`) |
+| DHCP | how the car gets its IP address from the network |
+| EVT | an event sent by the car (`EVT_*`) |
+| IMU | inertial measurement unit (Subsystem 4) |
+| lwIP | the TCP/IP stack in the Pico SDK |
+| mbf | a micro T-Kernel message buffer |
+| MQTT | the publish/subscribe protocol between the car and the dashboard |
+| QoS | MQTT quality of service: 0 at most once, 1 at least once |
+| RSSI | received signal strength, in dBm |
+| RX, TX | receive, transmit |
+| SSID | the name of a Wi-Fi network |
+| TLM | telemetry (`TLM_*` fields) |
+
 ## Using it from a subsystem
 
 ```c
 #include "../comms/comms.h"
 
-/* in your _init(): your own buffer gets robocar/<id>/my-topic */
-comms_subscribe(COMMS_DEVICE_TOPIC("my-topic"), my_mbf);   /* maxmsz = sizeof(COMMS_MSG) */
+/* In your _init(): create a buffer with bufsz = comms_mbf_size(n) and
+   maxmsz = sizeof(comms_msg_t), then subscribe it.  Add the topic to
+   comms.h as a COMMS_TOPIC_* string, like COMMS_TOPIC_CMD. */
+(void) comms_subscribe(COMMS_TOPIC_CMD, my_mbf);
 
-/* in your task */
-COMMS_MSG msg;  COMMS_CMD cmd;
-tk_rcv_mbf(my_mbf, &msg, TMO_FEVR);
-if (comms_parse_cmd(&msg, &cmd) == E_OK) { /* cmd.id, cmd.arg[0..3] */ }
+/* In your task. */
+comms_msg_t         msg;
+comms_payload_cmd_t cmd;
 
-comms_log("battery low");              /* robocar/<id>/log, also printed */
+(void) tk_rcv_mbf(my_mbf, &msg, TMO_FEVR);
+
+if (E_OK == comms_payload_parse_msg(&msg, &cmd))
+{
+    /* cmd.id, cmd.arg_count, cmd.arg[0..3] */
+}
+
+(void) comms_log("battery low");    /* robocar/<id>/log, also printed. */
 ```
 
 Limits: topics up to 63 bytes, payloads up to 128. A full receive buffer
@@ -208,14 +273,15 @@ returns `E_TMOUT`. Log lines queued while offline are sent after reconnecting.
 
 | Log | Tests | What they cover |
 |---|---|---|
-| `testing/comms/TEST_LOG.md` | CO-U01 .. CO-U09 | command parsing, number formatting, the telemetry golden sample, backoff, size limits, topic matching |
+| `testing/comms/TEST_LOG.md` | CO-U01 .. CO-U10 | command parsing, number formatting, the telemetry golden samples (both words), backoff, size limits, topic matching |
 | `testing/remote/TEST_LOG.md` | RE-U01 | the remote task consumes every kind of message and keeps running |
-| `testing/telemetry/TEST_LOG.md` | TL-U01, TL-U02 | telemetry settings |
-| `testing/integration/TEST_LOG.md` | INT-15 .. INT-17 | settings reach telemetry, a sample holds the other subsystems' values, the car and dashboard agree on the bit layout |
-| `testing/system/TEST_LOG.md` | SYS-10 .. SYS-14 | connecting, remote commands, telemetry on the moving car, Wi-Fi loss, broker restart |
+| `testing/telemetry/TEST_LOG.md` | TL-U01 .. TL-U03 | telemetry settings, the hump event message (TL-U04 is retired) |
+| `testing/integration/TEST_LOG.md` | INT-15 .. INT-17, INT-19, INT-20 | settings reach telemetry, both words hold the other subsystems' values (IMU, distance, barcode), the car and dashboard agree on the bit layout (INT-18 is retired) |
+| `testing/system/TEST_LOG.md` | SYS-10 .. SYS-15 | connecting, remote commands, telemetry on the moving car, Wi-Fi loss, broker restart, humps and barcodes on the dashboard |
 
 The automatic tests need no network and run in any `make TEST=1` image,
 first in the test run, so their results are at the top of the console. The
 system tests need the car, the broker and the dashboard (set-up in
 `testing/system/TEST_LOG.md`). The dashboard has its own tests: `npm test`
-in `mqtt-web-interface`, which checks the same golden sample as CO-U05.
+in `mqtt-web-interface`, which checks the same golden samples as CO-U05 and
+CO-U10.

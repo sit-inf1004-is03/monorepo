@@ -1,62 +1,90 @@
-/*
- *	remote_test.c
- *	On-target tests for remote.  Built only with: make TEST=1 (with or
- *	without NET=lwip).
- *	Record results in testing/remote/TEST_LOG.md.
+/**
+ * @file    remote_test.c
+ * @brief   On-target tests of remote.  Built only with make TEST=1 (with or
+ *          without NET=lwip).  Record results in testing/remote/
+ *          TEST_LOG.md.  Coded to BARR-C:2018.
  *
- *	Commands are put straight into mbf_remote, exactly as the network
- *	bridge does for a message on robocar/<id>/cmd.
+ * Commands are put straight into the remote message buffer, exactly as the
+ * network bridge does for a message on robocar/id/cmd.
  *
- *	No START is sent: in a test build that would drive the car.  START /
- *	STOP / CLEAR reaching Navigation is checked on the bench (SYS-02).
+ * No START is sent: in a test build that would drive the car.  START, STOP
+ * and CLEAR reaching Navigation is checked on the car (SYS-11).
  */
 
+#include "remote_test.h"
 #include "remote.h"
+#include "../comms/comms.h"
 #include "../test_report.h"
 
 #if APP_TEST
 
-LOCAL void deliver(const char *topic, const char *text)
-{
-	COMMS_MSG	msg = {0};
-	INT		i;
+#define SETTLE_MS               (100)   /* Time for the task to take all. */
 
-	for (i = 0; topic[i] != '\0' && i < NET_TOPIC_MAX; i++) {
-		msg.topic[i] = topic[i];
-	}
-	for (i = 0; text[i] != '\0' && i < NET_PAYLOAD_MAX; i++) {
-		msg.payload[i] = (UB)text[i];
-	}
-	msg.len = (UH)i;
-	CHECK(tk_snd_mbf(mbf_remote, &msg, NET_MSG_SIZE(msg.len), TMO_FEVR),
-	      "deliver");
+static void deliver (char const * p_topic, char const * p_text);
+static bool all_taken (void);
+
+/**
+ * @brief   RE-U01: anything arriving is handled, nothing is left behind and
+ *          the task keeps going: a ping, text, an unknown number, too many
+ *          arguments, and a broadcast ping.
+ */
+void
+remote_test (void)
+{
+    TEST_INIT();
+
+    deliver(COMMS_TOPIC_CMD, "0 77");
+    deliver(COMMS_TOPIC_CMD, "stop");
+    deliver(COMMS_TOPIC_CMD, "9");
+    deliver(COMMS_TOPIC_CMD, "1 2 3 4 5 6");
+    deliver(COMMS_TOPIC_CMD_ALL, "0 78");
+    (void) tk_dly_tsk(SETTLE_MS);
+    TEST_CHECK("RE-U01", all_taken(),
+               "pings, text and unknown commands are all consumed");
+    TEST_SUMMARY("remote");
 }
 
-/* Nothing waiting in mbf_remote: the task has taken every message */
-LOCAL BOOL all_taken(void)
+/**
+ * @brief   Put a text message into the remote buffer, as the bridge does.
+ * @param   p_topic  The topic it came on.
+ * @param   p_text   The payload, NUL-terminated.
+ */
+static void
+deliver (char const * p_topic, char const * p_text)
 {
-	T_RMBF	r;
+    comms_msg_t msg = {0};
+    uint32_t    idx = 0u;
 
-	return tk_ref_mbf(mbf_remote, &r) == E_OK && r.frbufsz == COMMS_MSG_MBF_SIZE(8);
+    for (idx = 0u; ('\0' != p_topic[idx]) && (idx < NET_TOPIC_MAX); idx++)
+    {
+        msg.topic[idx] = p_topic[idx];
+    }
+
+    for (idx = 0u; ('\0' != p_text[idx]) && (idx < NET_PAYLOAD_MAX); idx++)
+    {
+        /* Cast: ASCII text is stored as the same bytes. */
+        msg.payload[idx] = (uint8_t) p_text[idx];
+    }
+
+    /* Cast: idx is at most NET_PAYLOAD_MAX, which fits 16 bits. */
+    msg.len = (uint16_t) idx;
+    CHECK(tk_snd_mbf(remote_get_mbf(), &msg, net_bridge_msg_size(msg.len),
+                     TMO_FEVR), "deliver");
 }
 
-EXPORT void remote_test(void)
+/**
+ * @brief   Is the remote buffer empty: has the task taken every message?
+ * @return  true if it is.
+ */
+static bool
+all_taken (void)
 {
-	TEST_INIT();
+    T_RMBF state;
 
-	/* RE-U01: anything arriving is handled, nothing is left behind and
-	   the task keeps going: a ping, text, an unknown number, too many
-	   arguments, and a broadcast ping */
-	deliver(COMMS_DEVICE_TOPIC(TOPIC_CMD), "0 77");
-	deliver(COMMS_DEVICE_TOPIC(TOPIC_CMD), "stop");
-	deliver(COMMS_DEVICE_TOPIC(TOPIC_CMD), "9");
-	deliver(COMMS_DEVICE_TOPIC(TOPIC_CMD), "1 2 3 4 5 6");
-	deliver(COMMS_BROADCAST_TOPIC(TOPIC_CMD), "0 78");
-	tk_dly_tsk(100);
-	TEST_CHECK("RE-U01", all_taken(),
-		   "pings, text and unknown commands are all consumed");
-
-	TEST_SUMMARY("remote");
+    return ((E_OK == tk_ref_mbf(remote_get_mbf(), &state)) &&
+            (comms_mbf_size(REMOTE_MBF_MESSAGES) == state.frbufsz));
 }
 
 #endif /* APP_TEST */
+
+/*** end of file ***/

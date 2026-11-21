@@ -39,6 +39,12 @@
 #include "comms/comms.h"		/* Wi-Fi / MQTT: comms, remote, telemetry */
 #include "remote/remote.h"
 #include "telemetry/telemetry.h"
+#if APP_TEST
+#include "comms/comms_test.h"
+#include "remote/remote_test.h"
+#include "telemetry/telemetry_events.h"
+#include "telemetry/telemetry_test.h"
+#endif
 
 /*
  * Create and start one task (declared in app.h for every subsystem).
@@ -135,9 +141,9 @@ EXPORT INT usermain(void)
 	subsystem1_test();
 	subsystem2_test();
 	subsystem3_test();
-	telemetry_hold_imu_events(TRUE);  /* S4-U06 reads them itself */
+	telemetry_events_hold_imu(true);  /* S4-U06 reads them itself */
 	subsystem4_test();
-	telemetry_hold_imu_events(FALSE);
+	telemetry_events_hold_imu(false);
 	subsystem5_test();
 	navigation_test();
 	tm_printf((UB*)"[TEST] === test run end ===\n");

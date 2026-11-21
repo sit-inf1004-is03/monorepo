@@ -32,18 +32,26 @@ have not yet been tested together through that interface.
 | Interface | Tests | Gap |
 |---|---|---|
 | IF-01 .. IF-05 | INT-01, INT-02 (*retired* with the template example) | none: interfaces retired |
-| IF-06 encoder counts and speed | S2-U04, INT-16, SYS-12 | |
+| IF-06 encoder counts and speed | S2-U04, S4-U09, INT-16, INT-19 (distance), SYS-12 | |
 | IF-07 Motion commands and replies | S2-M03, NAV-M01 | |
 | IF-08 turn level | none | no test yet |
-| IF-09 StopTurn, motion activity | S2-M03, NAV-M01, INT-16 (activity) | |
+| IF-09 StopTurn, motion activity | S2-M03, S5-M03, NAV-M01, INT-16 (activity) | |
 | IF-10 Line Following / Barcode → Navigation | NAV-U01, NAV-M01 (simulated) | no test with the real Line Following |
-| IF-11 Obstacle Scan → Navigation | NAV-U01, NAV-U03, NAV-M01 (simulated) | no test with the real Obstacle Scan |
-| IF-12 fault bits | NAV-M01 (e-stop, CLEAR), SYS-13 (Wi-Fi loss) | |
+| IF-11 Obstacle Scan → Navigation | S5-U04 .. S5-U06, NAV-U01, NAV-U03, NAV-M01 (simulated), S5-M02, S5-M03 | |
+| IF-12 fault bits | NAV-M01 (IMU degrade, e-stop, CLEAR), S4-U07, S5-M04 (no echo), SYS-13 (Wi-Fi loss) | |
 | IF-13 remote commands → Navigation | NAV-U01, NAV-M01 (simulated), SYS-11 | |
 | IF-14 Navigation state, faults, reason | NAV-U02, INT-16 | |
-| IF-15 dashboard ↔ car | INT-15, INT-17, CO-U05, CO-U09, RE-U01, SYS-10, SYS-11 | |
-| IF-16 line state, obstacle distance → telemetry | INT-16 (line state), SYS-12 | obstacle distance only by hand, once Obstacle Scan provides it |
+| IF-15 dashboard ↔ car | INT-15, INT-17, CO-U05, CO-U09, CO-U10, RE-U01, SYS-10, SYS-11, SYS-15 | |
+| IF-16 line state, obstacle distance → telemetry | INT-16 (line state), SYS-12 | the obstacle distance is checked only by hand (SYS-12) |
 | IF-17 comms send functions | CO-U08, SYS-10 | |
+| IF-18 last barcode read → telemetry | INT-20, SYS-15 | INT-20 checks that word 1 copies `barcode_get_last()`; only SYS-15 reads a real barcode |
+| IF-S4-1 IMU snapshot word | S4-U04, H-U08 .. H-U12 (host), INT-19, SYS-15 | |
+| IF-S4-2 IMU aux word | H-U08 .. H-U12 (host) | nothing reads it yet; its layout is tested on the host only |
+| IF-S4-3 IMU event stream | S4-U06, H-U08 .. H-U12 (host), TL-U03, SYS-15 | a real HUMP event becoming an EVT_HUMP message is checked only by hand (SYS-15) |
+| IF-S4-4 IMU fault to Navigation | S4-U01, S4-M04, NAV-M01 (IMU degrade and recovery) | |
+| IF-S4-5 encoder counts to the IMU | S4-U09, H-U13 .. H-U15 (host) | |
+| IF-S4-6 course done, restart | S4-M06 | |
+| IF-S4-7 ramp, tilt, IMU OK | H-U35 .. H-U37, H-A13 .. H-A15 (host), INT-19 (`imu_is_ok()`) | no test with the real Line Following |
 
 Add a row here with every new interface, and a test ID to it when the test
 is written.

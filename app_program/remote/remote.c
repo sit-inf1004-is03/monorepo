@@ -1,151 +1,272 @@
-/*
- *	remote.c
- *	Remote -- dashboard commands to Navigation, and the Wi-Fi-loss fault.
+/**
+ * @file    remote.c
+ * @brief   Remote: dashboard commands to Navigation, and the Wi-Fi-loss
+ *          fault.  Coded to BARR-C:2018.
  *
- *	Command flow:  dashboard -> broker -> network bridge -> mbf_remote
- *	               -> here -> nav_post_remote() (IF-13) -> Navigation
+ * Command flow: dashboard, broker, network bridge, the remote message
+ * buffer, remote_task, nav_post_remote() (IF-13), Navigation.
  *
- *	Each message arrives as its topic and payload; the payload is parsed
- *	here (comms_parse_cmd) into a command number and its arguments.
- *	nav_post_remote() never waits, so a command reaches Navigation within
- *	its next step; Navigation itself decides whether it applies (START
- *	only from IDLE or STOPPED, CLEAR only from FAULT).
+ * Each message arrives as its topic and payload; the payload is parsed
+ * here into a command number and its arguments.  nav_post_remote() never
+ * waits, so a command reaches Navigation within its next step; Navigation
+ * itself decides whether it applies (START only from IDLE or STOPPED,
+ * CLEAR only from FAULT).
  *
- *	Between commands the task watches the connection.  When an online car
- *	goes offline it raises NAV_FLT_WIFI_LOSS (IF-12) once.  That bit is
- *	outside Navigation's stop mask: the car carries on, degraded.  It stays
- *	set, like every fault bit, until Navigation clears them all on a
- *	remote CLEAR in the FAULT state.
- *
- *	APIs shown: tk_rcv_mbf (with timeout), comms_subscribe, comms_log,
- *	            nav_post_remote, nav_raise_fault
+ * Between commands the task watches the connection.  When an online car
+ * goes offline it raises NAV_FLT_WIFI_LOSS (IF-12) once.  That bit is
+ * outside Navigation's stop mask: the car carries on, degraded.  It stays
+ * set, like every fault bit, until Navigation clears them all on a remote
+ * CLEAR in the FAULT state.
  */
 
 #include "remote.h"
+#include "../comms/comms.h"
 #include "../navigation/navigation.h"
 
-/* protocol.h keeps Navigation's numbers for the three remote commands */
-_Static_assert(CMD_START == NAV_REMOTE_START &&
-	       CMD_STOP == NAV_REMOTE_STOP &&
-	       CMD_CLEAR == NAV_REMOTE_CLEAR,
-	       "protocol.h CMD_* differ from navigation.h NAV_REMOTE_*");
+/* protocol.h keeps Navigation's numbers for the three remote commands. */
+#if (CMD_START != NAV_REMOTE_START) || (CMD_STOP != NAV_REMOTE_STOP) || \
+    (CMD_CLEAR != NAV_REMOTE_CLEAR)
+# error "protocol.h CMD_* differ from navigation.h NAV_REMOTE_*"
+#endif
 
-#define LINK_CHECK_MS	500	/* how often the connection is looked at */
+#define LINK_CHECK_MS           (500)   /* How often the link is checked. */
 
-EXPORT ID	mbf_remote;
+static ID g_mbf = 0;
 
-LOCAL const char *command_name(UH id)
+static void         remote_task (INT stacd, void * p_exinf);
+static char const * command_name (uint16_t cmd_id);
+static void         execute (comms_payload_cmd_t const * p_cmd,
+                             bool b_broadcast);
+static void         check_link (bool * p_b_was_online);
+static void         handle (comms_msg_t const * p_msg);
+
+/**
+ * @brief   Create the command buffer and subscribe it to this car's and
+ *          every car's command topic.
+ * @return  E_OK, or the first error.
+ */
+ER
+remote_init (void)
 {
-	switch (id) {
-	case CMD_START:	return "START";
-	case CMD_STOP:	return "STOP";
-	case CMD_CLEAR:	return "CLEAR";
-	default:	return "?";
-	}
+    T_CMBF cmbf = {0};
+    ER     result = E_OK;
+
+    cmbf.mbfatr = TA_TFIFO;
+    cmbf.bufsz  = comms_mbf_size(REMOTE_MBF_MESSAGES);
+    cmbf.maxmsz = sizeof(comms_msg_t);
+    g_mbf       = tk_cre_mbf(&cmbf);
+
+    if (g_mbf < E_OK)
+    {
+        result = g_mbf;
+    }
+    else
+    {
+        /* Two topics, one buffer: commands for this car, and for all. */
+        result = comms_subscribe(COMMS_TOPIC_CMD, g_mbf);
+
+        if (E_OK == result)
+        {
+            result = comms_subscribe(COMMS_TOPIC_CMD_ALL, g_mbf);
+        }
+    }
+
+    return (result);
 }
 
-LOCAL void execute(const COMMS_CMD *cmd, BOOL broadcast)
+/**
+ * @brief   Start remote_task.
+ * @return  E_OK, or the error from creating it.
+ */
+ER
+remote_start (void)
 {
-	UB		line[NET_PAYLOAD_MAX];
-	const char	*from = broadcast ? " (broadcast)" : "";
-	ER		er;
+    ER       result = E_OK;
+    ID const tid    = app_start_task(remote_task, REMOTE_PRI, 0u,
+                                     "remote_task");
 
-	switch (cmd->id) {
-	case CMD_PING:
-		tm_sprintf(line, (const UB*)"remote: pong %d%s", cmd->arg[0],
-			   from);
-		break;
+    if (tid < E_OK)
+    {
+        result = tid;
+    }
 
-	case CMD_START:
-	case CMD_STOP:
-	case CMD_CLEAR:
-		er = nav_post_remote(cmd->id);
-		if (er == E_OK) {
-			tm_sprintf(line, (const UB*)"remote: %s to navigation%s",
-				   command_name(cmd->id), from);
-		} else {
-			tm_sprintf(line, (const UB*)"remote: %s refused by"
-				   " navigation (%d)%s", command_name(cmd->id),
-				   er, from);
-		}
-		break;
-
-	default:
-		tm_sprintf(line, (const UB*)"remote: unknown command %d",
-			   cmd->id);
-		break;
-	}
-	comms_log((const char*)line);
+    return (result);
 }
 
-/* Raise the Wi-Fi-loss fault once each time an online car goes offline */
-LOCAL void check_link(BOOL *was_online)
+/**
+ * @brief   The command buffer, for the self-tests to put commands in as
+ *          the network bridge does.
+ * @return  Its ID.
+ */
+ID
+remote_get_mbf (void)
 {
-	NET_INFO	net;
-
-	comms_get_info(&net);
-	if (*was_online && !net.online) {
-		CHECK(nav_raise_fault(NAV_FLT_WIFI_LOSS), "nav_raise_fault");
-		comms_log("remote: connection lost, Wi-Fi-loss fault raised");
-	}
-	*was_online = net.online;
+    return (g_mbf);
 }
 
-LOCAL void remote_task(INT stacd, void *exinf)
+/**
+ * @brief   Wait for commands, and check the connection between them.
+ * @param   stacd    Unused start code.
+ * @param   p_exinf  Unused.
+ */
+static void
+remote_task (INT stacd, void * p_exinf)
 {
-	COMMS_MSG	msg;
-	COMMS_CMD	cmd;
-	UB		line[NET_PAYLOAD_MAX];
-	BOOL		was_online = FALSE;
-	ER		er;
+    comms_msg_t msg;
+    bool        b_was_online = false;
 
-	(void)stacd; (void)exinf;
+    (void) stacd;
+    (void) p_exinf;
 
-	while (1) {
-		er = tk_rcv_mbf(mbf_remote, &msg, LINK_CHECK_MS);
-		check_link(&was_online);
-		if (er == E_TMOUT) {
-			continue;
-		}
-		if (er < E_OK) {
-			CHECK(er, "tk_rcv_mbf");
-			continue;
-		}
+    for (;;)
+    {
+        INT const received = tk_rcv_mbf(g_mbf, &msg, LINK_CHECK_MS);
 
-		if (comms_parse_cmd(&msg, &cmd) != E_OK) {
-			tm_sprintf(line, (const UB*)"remote: ignored a message"
-				   " on %s: not \"<id> [arg ...]\"", msg.topic);
-			comms_log((const char*)line);
-			continue;
-		}
-		execute(&cmd, comms_topic_is(&msg,
-					     COMMS_BROADCAST_TOPIC(TOPIC_CMD)));
-	}
+        check_link(&b_was_online);
+
+        if (received >= E_OK)
+        {
+            handle(&msg);
+        }
+        else if (E_TMOUT != received)
+        {
+            CHECK(received, "tk_rcv_mbf");
+        }
+        else
+        {
+            /* No command: only the connection was checked. */
+        }
+    }
 }
 
-EXPORT ER remote_init(void)
+/**
+ * @brief   Name one of Navigation's remote commands, for the log.
+ * @param   cmd_id  CMD_START, CMD_STOP or CMD_CLEAR.
+ * @return  Its name, or "?".
+ */
+static char const *
+command_name (uint16_t cmd_id)
 {
-	T_CMBF	cmbf = {0};
-	ER	er;
+    char const * p_name = "?";
 
-	cmbf.mbfatr = TA_TFIFO;
-	cmbf.bufsz  = COMMS_MSG_MBF_SIZE(8);
-	cmbf.maxmsz = sizeof(COMMS_MSG);
-	mbf_remote = tk_cre_mbf(&cmbf);
-	if (mbf_remote < E_OK) {
-		return mbf_remote;
-	}
+    switch (cmd_id)
+    {
+        case CMD_START:
+            p_name = "START";
+        break;
 
-	/* Two topics, one buffer: commands for this car, and for all cars */
-	er = comms_subscribe(COMMS_DEVICE_TOPIC(TOPIC_CMD), mbf_remote);
-	if (er < E_OK) {
-		return er;
-	}
-	return comms_subscribe(COMMS_BROADCAST_TOPIC(TOPIC_CMD), mbf_remote);
+        case CMD_STOP:
+            p_name = "STOP";
+        break;
+
+        case CMD_CLEAR:
+            p_name = "CLEAR";
+        break;
+
+        default:
+            /* Keep "?". */
+        break;
+    }
+
+    return (p_name);
 }
 
-EXPORT ER remote_start(void)
+/**
+ * @brief   Carry out one command and log what happened.
+ * @param   p_cmd        The command.
+ * @param   b_broadcast  true if it was sent to every car.
+ */
+static void
+execute (comms_payload_cmd_t const * p_cmd, bool b_broadcast)
 {
-	ID tid = app_start_task(remote_task, REMOTE_PRI, 0, "remote_task");
-	return (tid < E_OK) ? tid : E_OK;
+    char               line[NET_PAYLOAD_MAX];
+    char const * const p_from = b_broadcast ? " (broadcast)" : "";
+
+    switch (p_cmd->msg_id)
+    {
+        case CMD_PING:
+            /* Casts: tm_sprintf() takes UB text; ASCII is the same bytes. */
+            (void) tm_sprintf((UB *) line, (UB const *) "remote: pong %d%s",
+                              p_cmd->arg[0], p_from);
+        break;
+
+        case CMD_START:
+        case CMD_STOP:
+        case CMD_CLEAR:
+        {
+            ER const err = nav_post_remote(p_cmd->msg_id);
+
+            if (E_OK == err)
+            {
+                /* Casts: ASCII text, as above. */
+                (void) tm_sprintf((UB *) line, (UB const *) "remote: %s to"
+                                  " navigation%s", command_name(p_cmd->msg_id),
+                                  p_from);
+            }
+            else
+            {
+                /* Casts: ASCII text, as above. */
+                (void) tm_sprintf((UB *) line, (UB const *) "remote: %s"
+                                  " refused by navigation (%d)%s",
+                                  command_name(p_cmd->msg_id), err, p_from);
+            }
+        }
+        break;
+
+        default:
+            /* Casts: ASCII text, as above. */
+            (void) tm_sprintf((UB *) line, (UB const *) "remote: unknown"
+                              " command %d", p_cmd->msg_id);
+        break;
+    }
+
+    (void) comms_log(line);
 }
+
+/**
+ * @brief   Raise the Wi-Fi-loss fault once each time an online car goes
+ *          offline.
+ * @param   p_b_was_online  In: online at the last check.  Out: online now.
+ */
+static void
+check_link (bool * p_b_was_online)
+{
+    net_bridge_info_t net;
+
+    comms_get_info(&net);
+
+    if ((*p_b_was_online) && (!net.b_online))
+    {
+        CHECK(nav_raise_fault(NAV_FLT_WIFI_LOSS), "nav_raise_fault");
+        (void) comms_log("remote: connection lost, Wi-Fi-loss fault raised");
+    }
+
+    *p_b_was_online = net.b_online;
+}
+
+/**
+ * @brief   Parse a received message and carry it out, or log why not.
+ * @param   p_msg  The message.
+ */
+static void
+handle (comms_msg_t const * p_msg)
+{
+    comms_payload_cmd_t cmd;
+
+    if (E_OK == comms_payload_parse_msg(p_msg, &cmd))
+    {
+        execute(&cmd, comms_topic_is(p_msg, COMMS_TOPIC_CMD_ALL));
+    }
+    else
+    {
+        char line[NET_PAYLOAD_MAX + NET_TOPIC_MAX];
+
+        /* Casts: ASCII text, as in execute(). */
+        (void) tm_sprintf((UB *) line, (UB const *) "remote: ignored a"
+                          " message on %s: not \"<id> [arg ...]\"",
+                          p_msg->topic);
+        (void) comms_log(line);
+    }
+}
+
+/*** end of file ***/

@@ -1,51 +1,36 @@
-/*
- *	telemetry.h
- *	Telemetry -- Wi-Fi / MQTT (Rifa).  Samples the car's state from the
- *	other subsystems, packs it into 64-bit words (protocol.h TLM_*,
- *	TLM_W1_*) and publishes them on robocar/<id>/telemetry.  Humps and
- *	barcodes go out as they happen on robocar/<id>/event (EVT_*).
- *	Settings (CFG_*) arrive on robocar/<id>/config.
+/**
+ * @file    telemetry.h
+ * @brief   Telemetry: Wi-Fi / MQTT (Rifa).  Samples the car's state from
+ *          the other subsystems, packs it into 64-bit words (protocol.h
+ *          TLM_* and TLM_W1_*) and publishes them on robocar/id/telemetry.
+ *          Humps and barcodes go out as they happen on robocar/id/event
+ *          (EVT_*, telemetry_events.h).  Settings (CFG_*) arrive on
+ *          robocar/id/config.  Coded to BARR-C:2018.
  *
- *	Reads only, never commands: every source is a read-only getter or
- *	stream (TEAM.md IF-06, IF-09, IF-14, IF-16, IF-18, IF-S4-1, IF-S4-3,
- *	IF-S4-7).
+ * Reads only, never commands: every source is a read-only getter or
+ * stream (TEAM.md IF-06, IF-09, IF-14, IF-16, IF-18, IF-S4-1, IF-S4-3,
+ * IF-S4-7).
  */
 
 #ifndef TELEMETRY_H
 #define TELEMETRY_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "../app.h"
-#include "../comms/comms.h"
 
-#define TELEMETRY_PRI		23	/* band 22-23 (TEAM.md section 4) */
+#define TELEMETRY_PRI           (23)    /* Band 22-23 (TEAM.md section 4). */
+#define TELEMETRY_MBF_MESSAGES  (4u)    /* Settings its buffer holds. */
 
-/* COMMS_MSG messages in: CFG_* settings from robocar/<id>/config */
-IMPORT ID		mbf_telemetry;
-
-/* Current settings, changed only by the telemetry task */
-IMPORT volatile UW	telemetry_period_ms;
-IMPORT volatile BOOL	telemetry_enabled;
-
-/* One sample of the whole car, packed (protocol.h): word 0, with seq in
-   bits 0-7, and word 1 */
-IMPORT UD	telemetry_sample(UW seq);
-IMPORT UD	telemetry_sample_w1(void);
-
-/* telemetry_events.c: events (EVT_*) and the last barcode read */
-IMPORT void	telemetry_events_poll(void);	/* telemetry task, often */
-IMPORT UW	telemetry_last_barcode(void);	/* barcode_get_last(), IF-18 */
-
-/* Pure helper, exported for the self-tests */
-IMPORT INT	telemetry_event_text(UB *buf, UH imu_event); /* 0 = not sent */
-
-IMPORT ER	telemetry_init(void);
-IMPORT ER	telemetry_start(void);
-#if APP_TEST
-IMPORT void	telemetry_test(void);
-
-/* TRUE: leave the IMU's events alone, so subsystem4_test() can read them
-   (S4-U06 waits for an IMPACT event).  Set in usermain() around it. */
-IMPORT void	telemetry_hold_imu_events(BOOL hold);
-#endif
+ER       telemetry_init (void);
+ER       telemetry_start (void);
+ID       telemetry_get_mbf (void);
+uint32_t telemetry_get_period_ms (void);
+bool     telemetry_is_enabled (void);
+uint64_t telemetry_sample (uint32_t seq);
+uint64_t telemetry_sample_w1 (void);
 
 #endif /* TELEMETRY_H */
+
+/*** end of file ***/

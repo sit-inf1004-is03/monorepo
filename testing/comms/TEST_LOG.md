@@ -12,7 +12,7 @@ Define a test here before running it. Test IDs never change.
 |---|---|---|---|---|---|
 | CO-U01 | a command parses into id and arguments | protocol.h | auto | `comms_test.c` | `[TEST] CO-U01 PASS` |
 | CO-U02 | whitespace, commas and the full 32-bit range are accepted | protocol.h | auto | `comms_test.c` | `[TEST] CO-U02 PASS` |
-| CO-U03 | text, bad ids, overflow and too many arguments are rejected | protocol.h | auto | `comms_test.c` | `[TEST] CO-U03 PASS` |
+| CO-U03 | text, bad ids, overflow (also numbers past 2^32, which used to wrap round to a small value) and too many arguments are rejected | protocol.h | auto | `comms_test.c` | `[TEST] CO-U03 PASS` |
 | CO-U04 | 64-bit numbers format as decimal (0 and 2^64-1) | protocol.h | auto | `comms_test.c` | `[TEST] CO-U04 PASS` |
 | CO-U05 | packed telemetry word 0 equals the dashboard's golden sample | IF-15 | auto | `comms_test.c`; the dashboard checks the same value in `npm test` | `[TEST] CO-U05 PASS` |
 | CO-U06 | backoff doubles to its limit, with jitter in [step/2, step] | recovery | auto | `comms_test.c` | `[TEST] CO-U06 PASS` |
