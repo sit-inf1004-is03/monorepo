@@ -15,8 +15,9 @@ Define a test here before running it. Test IDs never change.
 | INT-15 | a setting from the dashboard's config topic changes the telemetry period | IF-15 | auto | `telemetry_test.c` | `[TEST] INT-15 PASS` |
 | INT-16 | a telemetry sample carries Navigation, Motion and line-sensor values | IF-06, IF-09, IF-14, IF-16 | auto | `telemetry_test.c` | `[TEST] INT-16 PASS` |
 | INT-17 | car and dashboard agree on the telemetry bit layout | IF-15 | auto | CO-U05 and CO-U10 on the car + `npm test` in `mqtt-web-interface` | both pass with the same golden value |
-| INT-18 | a barcode read logged through `comms_log()` shows in telemetry word 1, as a new read | IF-17, IF-18 | auto | `telemetry_test.c` | `[TEST] INT-18 PASS` |
+| INT-18 | *retired:* telemetry now reads `barcode_get_last()` (INT-20) instead of S3's log line. Was: a barcode read logged through `comms_log()` shows in telemetry word 1, as a new read | IF-17, IF-18 | auto | `telemetry_test.c` | `[TEST] INT-18 PASS` |
 | INT-19 | telemetry word 1 holds the IMU's motion class and terrain, whether its data is live, and the distance from the encoders | IF-06, IF-S4-1, IF-S4-7 | auto | `telemetry_test.c` | `[TEST] INT-19 PASS` |
+| INT-20 | telemetry word 1 holds the letter and read count that Line Following's `barcode_get_last()` reports | IF-18 | auto | `telemetry_test.c` | `[TEST] INT-20 PASS` |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).

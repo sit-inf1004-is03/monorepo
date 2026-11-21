@@ -93,13 +93,6 @@ IMPORT ER	comms_publish(const char *topic, const void *data, INT len,
 /* One line on robocar/<id>/log; also printed. Cut at the payload limit. */
 IMPORT ER	comms_log(const char *text);
 
-/* Watch every line given to comms_log(): tap(text) runs on the caller's
-   task before the line is queued, so it must be quick and never wait.
-   One tap; NULL removes it.  Telemetry uses it to notice barcode reads
-   (IF-18) until Line Following has a getter for them. */
-typedef void	(*COMMS_LOG_TAP)(const char *text);
-IMPORT void	comms_set_log_tap(COMMS_LOG_TAP tap);
-
 /* count packed telemetry words (protocol.h) on robocar/<id>/telemetry */
 IMPORT ER	comms_telemetry(const UD *words, INT count);
 

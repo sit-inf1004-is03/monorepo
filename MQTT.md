@@ -86,7 +86,7 @@ the identifier first.
 | Event | Payload | Meaning |
 |---|---|---|
 | HUMP | `0 <mm> <over> <tilt>` | a hump closed: its height in mm (127 with `over` = 1 if higher), and the largest pitch in degrees, or roll if only one rear wheel rode over it. From the IMU's event stream (IF-S4-3) |
-| BARCODE | `1 <letter>` | a barcode was read; the letter as its ASCII code (`65` = A). From Line Following's log line (IF-18) |
+| BARCODE | `1 <letter>` | a barcode was read; the letter as its ASCII code (`65` = A). From `barcode_get_last()` (IF-18) |
 
 Events are queued while offline, like log lines, and are not retained: a
 dashboard sees those sent while it is open. The dashboard keeps the tallest
@@ -126,7 +126,7 @@ Added in layout 2, because word 0 was full.
 | 0–1 | IMU motion | 0 stationary, 1 accelerating, 2 cruising, 3 turning | `imu_task_get_snapshot()`, IF-S4-1 |
 | 2–3 | IMU terrain | 0 level, 1 climbing, 2 descending, 3 hump just closed | `imu_task_get_snapshot()`, IF-S4-1 |
 | 4 | IMU data | 1 = the two fields above are live; 0 = no IMU data, ignore them | `imu_is_ok()`, IF-S4-7 |
-| 5–11 | last barcode | letter as ASCII, 0 = none since power-on | Line Following's log line, IF-18 |
+| 5–11 | last barcode | letter as ASCII, 0 = none since power-on | `barcode_get_last()`, IF-18 |
 | 12–15 | barcodes read | count, wraps at 16: a change is a new read, even of the same letter | as above |
 | 16–35 | distance | cm since power-on, mean of both wheels (pivots count too), 1048575 = that or more | `drv_encoder_get_count()`, IF-06 |
 | 36–63 | spare | 0 | |
@@ -144,8 +144,9 @@ instead of failing to build.
 
 ### Where the IMU and barcode data come from
 
-No subsystem was changed for this; telemetry only reads what they already
-offer.
+Telemetry only reads what the subsystems offer. One getter was added to
+Line Following for it (`barcode_get_last()`); nothing else in a subsystem
+changed.
 
 - **IMU states**: the snapshot word S4 publishes for the comms owner
   (IF-S4-1), unpacked with S4's own `imu_pack_unpack_snapshot()`.
@@ -153,19 +154,23 @@ offer.
   100 ms (the stream holds 32 events), sends each HUMP as an event and drops
   the rest, as motion and terrain are already in the snapshot. Nothing else
   may drain it, or humps go missing.
-- **Barcodes**: Line Following has no getter for the barcode it read. It
-  logs every read through `comms_log()` as `[BC] read *A* -> LEFT`, so a
-  log tap (`comms_set_log_tap()`) spots that line and keeps the letter
-  (IF-18). This breaks if the line's start changes; TL-U04 pins the
-  format. When S3 adds a getter, read it in `telemetry_last_barcode()`
-  instead and remove the tap.
+- **Barcodes**: `barcode_get_last()` (IF-18, `subsystem3/line_barcode.h`)
+  returns one 32-bit word that the barcode task updates with a single store
+  on every successful read: the letter in bits 0–7 and a count of reads in
+  bits 8–15. The telemetry task checks it every 100 ms and sends an event
+  when the count changes, so a second read of the same letter is still a
+  new event. Barcode passes end after 1 s without an edge, so two reads
+  never fall within one 100 ms poll.
 - **Distance**: the cumulative encoder counts (IF-06), which never reset.
 
 ### Changes outside the telemetry code
 
+- Line Following (S3): `barcode.c` keeps the last read and its count in one
+  word and offers `barcode_get_last()` (IF-18). It reads nothing new and
+  changes no behaviour: the word is written next to the existing log line
+  in `finish_pass()`. To be reviewed by S3's owner.
 - `comms`: `comms_telemetry()` takes an array of words instead of one word,
-  `comms_format_telemetry()` builds the payload text, and
-  `comms_set_log_tap()` lets one module watch the log lines (IF-18).
+  and `comms_format_telemetry()` builds the payload text.
 - `telemetry_task` now also wakes every 100 ms to send events, not only at
   each sample. Events are sent even while telemetry is switched off
   (`CFG_TELEMETRY_ENABLE 0`).
@@ -173,7 +178,9 @@ offer.
   events while `subsystem4_test()` runs, because S4-U06 waits for an IMPACT
   event on the same stream.
 - `TEAM.md`: IF-15 and IF-17 updated, IF-18 added. Test logs: CO-U10,
-  TL-U03, TL-U04, INT-18, INT-19, SYS-15 added. The interface references of
+  TL-U03, INT-19, INT-20, SYS-15 added. TL-U04 and INT-18 tested an
+  earlier stopgap that read the barcode from S3's log line; they are
+  retired. The interface references of
   CO-U05, CO-U08 and CO-U09 pointed at the retired IF-01 .. IF-05 and now
   name IF-15 and IF-17.
 

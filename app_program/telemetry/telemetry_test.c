@@ -13,6 +13,7 @@
 #include "../navigation/navigation.h"
 #include "../subsystem2/motion.h"
 #include "../subsystem2/drv_encoder.h"
+#include "../subsystem3/line_barcode.h"
 #include "../subsystem4/subsystem4.h"
 #include "../subsystem4/imu_ramp.h"
 #include "../subsystem3/line_barcode.h"	/* LOCAL: barcode map */
@@ -75,7 +76,7 @@ EXPORT void telemetry_test(void)
 {
 	UW	before = telemetry_period_ms;
 	UW	accepted, rejected;
-	UW	reads, cm_lo, cm_hi;
+	UW	bc_lo, bc_hi, cm_lo, cm_hi;
 	UD	w;
 	UB	text[32];
 	imu_pack_snapshot_t	snap_lo, snap_hi;
@@ -150,26 +151,20 @@ EXPORT void telemetry_test(void)
 				imu_pack_impact_payload(3.0f))), ""),
 		   "an IMU HUMP event becomes an EVT_HUMP message");
 
-	/* TL-U04: Line Following's read line gives the letter, nothing else
-	   does (the format of barcode.c finish_pass()) */
-	TEST_CHECK("TL-U04",
-		   telemetry_barcode_in_log("[BC] read *A* -> LEFT") == 'A' &&
-		   telemetry_barcode_in_log("[BC] read *7* (reversed) -> NONE")
-		   == '7' &&
-		   telemetry_barcode_in_log("[BC] no read: 12 bars/gaps, 0"
-					    " glitches") == 0 &&
-		   telemetry_barcode_in_log("[BC] read **") == 0 &&
-		   telemetry_barcode_in_log("remote: pong 1") == 0,
-		   "the barcode letter is found only in a read line");
-
-	/* INT-18 (IF-18, IF-17): a read logged through comms_log() reaches
-	   word 1, and counts as a new read */
-	reads = tlm_get(telemetry_sample_w1(), TLM_W1_BARCODE_COUNT);
-	comms_log("[BC] read *C* -> STRAIGHT (telemetry self-test)");
+	/* INT-20 (IF-18): word 1 holds Line Following's last read, letter
+	   and count.  A barcode may be read meanwhile, so it must match the
+	   reading just before or just after. */
+	bc_lo = barcode_get_last();
 	w = telemetry_sample_w1();
-	TEST_CHECK("INT-18", tlm_get(w, TLM_W1_BARCODE) == 'C' &&
-		   tlm_get(w, TLM_W1_BARCODE_COUNT) == ((reads + 1) & 0xf),
-		   "a barcode read in the log shows in telemetry word 1");
+	bc_hi = barcode_get_last();
+	TEST_CHECK("INT-20",
+		   (tlm_get(w, TLM_W1_BARCODE) == (bc_lo & BC_LAST_LETTER_MASK) &&
+		    tlm_get(w, TLM_W1_BARCODE_COUNT) ==
+		    ((bc_lo >> BC_LAST_READS_SHIFT) & 0xf)) ||
+		   (tlm_get(w, TLM_W1_BARCODE) == (bc_hi & BC_LAST_LETTER_MASK) &&
+		    tlm_get(w, TLM_W1_BARCODE_COUNT) ==
+		    ((bc_hi >> BC_LAST_READS_SHIFT) & 0xf)),
+		   "word 1 holds the last barcode letter and read count");
 
 	/* INT-19 (IF-06, IF-S4-1, IF-S4-7): word 1 holds what the IMU and
 	   the encoders report.  Both may change while it is built, so it
