@@ -21,6 +21,32 @@ Define a test here before running it. Test IDs never change.
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
 
+## Interface coverage
+
+Every interface in TEAM.md section 5 and the tests that exercise it,
+including unit, manual and system tests from the other logs. "Simulated"
+means the test plays the other side itself, so the two real subsystems
+have not yet been tested together through that interface.
+
+| Interface | Tests | Gap |
+|---|---|---|
+| IF-01 .. IF-05 | INT-01, INT-02 (*retired* with the template example) | none: interfaces retired |
+| IF-06 encoder counts and speed | S2-U04, INT-16, SYS-12 | |
+| IF-07 Motion commands and replies | S2-M03, NAV-M01 | |
+| IF-08 turn level | none | no test yet |
+| IF-09 StopTurn, motion activity | S2-M03, NAV-M01, INT-16 (activity) | |
+| IF-10 Line Following / Barcode → Navigation | NAV-U01, NAV-M01 (simulated) | no test with the real Line Following |
+| IF-11 Obstacle Scan → Navigation | NAV-U01, NAV-U03, NAV-M01 (simulated) | no test with the real Obstacle Scan |
+| IF-12 fault bits | NAV-M01 (e-stop, CLEAR), SYS-13 (Wi-Fi loss) | |
+| IF-13 remote commands → Navigation | NAV-U01, NAV-M01 (simulated), SYS-11 | |
+| IF-14 Navigation state, faults, reason | NAV-U02, INT-16 | |
+| IF-15 dashboard ↔ car | INT-15, INT-17, CO-U05, CO-U09, RE-U01, SYS-10, SYS-11 | |
+| IF-16 line state, obstacle distance → telemetry | INT-16 (line state), SYS-12 | obstacle distance only by hand, once Obstacle Scan provides it |
+| IF-17 comms send functions | CO-U08, SYS-10 | |
+
+Add a row here with every new interface, and a test ID to it when the test
+is written.
+
 ## Results
 
 Add a new row for every run. Never edit or delete old rows.

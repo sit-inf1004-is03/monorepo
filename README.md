@@ -249,7 +249,9 @@ Each option goes through the same steps:
 
 The makefile also has `NET=lwip` and `MQTT=1` (TCP/IP and MQTT over WiFi).
 They need the SDK's `lib/lwip` submodule and a `config/wifi_secrets.h`
-(copy `config/wifi_secrets.example.h`). This guide does not cover them.
+(copy `config/wifi_secrets.example.h`). This project's car uses `NET=lwip`
+only, never `MQTT=1`: see **`MQTT.md`** for building, connecting to the
+dashboard and the MQTT topics, and `KERNEL_ISSUES.md` for why.
 
 ---
 

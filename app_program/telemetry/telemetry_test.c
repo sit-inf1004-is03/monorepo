@@ -1,6 +1,7 @@
 /*
  *	telemetry_test.c
- *	On-target tests for telemetry.  Built only with: make NET=lwip TEST=1
+ *	On-target tests for telemetry.  Built only with: make TEST=1 (with or
+ *	without NET=lwip).
  *	Record unit results in testing/telemetry/TEST_LOG.md and the INT-
  *	results in testing/integration/TEST_LOG.md.
  *

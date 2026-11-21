@@ -1,6 +1,6 @@
 # Telemetry (Wi-Fi / MQTT) — test log
 
-Unit tests of `app_program/telemetry/`.
+Unit tests of `app_program/telemetry/`. Its tests across interfaces are in `integration/TEST_LOG.md`: INT-15 (a setting arrives through `mbf_telemetry`), INT-16 (a sample holds the other subsystems' values) and INT-17 (the bit layout agrees with the dashboard). That telemetry follows the moving car is SYS-12.
 
 See `testing/README.md` for how to run tests and record results.
 

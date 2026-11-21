@@ -1,7 +1,7 @@
 /*
  *	comms_test.c
  *	On-target tests for comms and the network bridge's pure helpers.
- *	Built only with: make NET=lwip TEST=1
+ *	Built only with: make TEST=1 (with or without NET=lwip)
  *	Record results in testing/comms/TEST_LOG.md.  IDs: CO-U01, ...
  *
  *	These check the parts that need no network.  Connecting, recovering

@@ -11,9 +11,22 @@ testing/
 │   └── logs/              saved console output, photos, scope captures
 ├── ...
 ├── subsystem5/
+├── navigation/            Navigation / Vehicle Controller
+├── comms/                 Wi-Fi / MQTT: comms and the network bridge
+├── remote/                Wi-Fi / MQTT: dashboard commands to Navigation
+├── telemetry/             Wi-Fi / MQTT: telemetry to the dashboard
 ├── integration/           tests across two or more subsystems (shared)
 └── system/                tests of the whole product against its requirements (shared)
 ```
+
+| Folder | Code under test | Kept by |
+|---|---|---|
+| `subsystem1/` … `subsystem5/` | `app_program/subsystemN/` | the subsystem's owner |
+| `navigation/` | `app_program/navigation/` | Navigation's owner |
+| `comms/` | `app_program/comms/`, the pure helpers of `app_program/net/` | Wi-Fi / MQTT (Rifa) |
+| `remote/` | `app_program/remote/` | Wi-Fi / MQTT (Rifa) |
+| `telemetry/` | `app_program/telemetry/` | Wi-Fi / MQTT (Rifa) |
+| `integration/`, `system/` | several modules at once | the whole team |
 
 ## Three levels of test
 
@@ -22,6 +35,11 @@ testing/
 | Unit | `S1-U01`, `S2-U01`, … | one subsystem on its own | the subsystem owner | `subsystemN/TEST_LOG.md` |
 | Integration | `INT-01`, … | an interface between subsystems (TEAM.md section 5) | the owners on both sides | `integration/TEST_LOG.md` |
 | System | `SYS-01`, … | the finished product against a requirement | whole team | `system/TEST_LOG.md` |
+
+Modules that are not numbered subsystems use their own prefix: `NAV-`
+(Navigation), `CO-` (comms), `RE-` (remote) and `TL-` (telemetry), e.g.
+`CO-U05`. The letter after the prefix is `U` for a unit test and `M` for a
+longer manual or scripted test, e.g. `S2-M01` or `NAV-M01`.
 
 Test IDs never change and are never reused, even if a test is dropped.
 
@@ -36,10 +54,14 @@ Test IDs never change and are never reused, even if a test is dropped.
 3. **Build the test image and flash it.**
    ```sh
    cd build_make
-   make TEST=1 -j8        # -> mtk3pico_smp1_usb_cdc_wifi_test.uf2
+   make TEST=1 -j8            # -> mtk3pico_smp1_usb_cdc_wifi_test.uf2
+   make NET=lwip TEST=1 -j8   # with Wi-Fi / MQTT -> mtk3pico_smp1_usb_cdc_wifi_lwip_test.uf2
    ```
    The test image runs every subsystem's tests at power-up and prints one
    `[TEST] <ID> PASS|FAIL` line per check. (A normal `make` leaves the tests out.)
+   Both images run the same automatic tests; the comms, remote and telemetry
+   tests need no network. Use the `NET=lwip` one when the car should also
+   connect to the broker during the run (`MQTT.md`).
 4. **Save the console output** to `logs/`, named `YYYY-MM-DD_<what>.txt`:
    ```sh
    # macOS (find the port name with: ls /dev/cu.usbmodem*)
@@ -54,6 +76,43 @@ Test IDs never change and are never reused, even if a test is dropped.
 5. **Record the result.** Add a row to the *Results* table: date, test ID,
    the commit you tested (`git rev-parse --short HEAD`), who ran it,
    PASS/FAIL, and the log file. Commit the log and the table together.
+
+## What a test run does
+
+`usermain()` in `app_program/app_main.c` starts every task as in a normal
+build, then runs the tests one module after another in the initial task:
+
+```
+[TEST] === test run start ===
+comms, remote, telemetry      quick, never drive the car
+subsystem1 ... subsystem5
+navigation                    3 quick checks, then starts NAV-M01 in its own task
+[TEST] === test run end ===
+```
+
+Each module prints its own `[TEST] <ID> PASS|FAIL` lines and a summary. A
+failing check only prints `FAIL`; the run carries on, so one module's failures
+never stop another module's tests from running. If `=== test run end ===`
+never appears, the board hung or crashed: rebuild with `CRASH_REPORT=1`
+(`README.md` section 3) to see why.
+
+**The motors may turn during a test run. Keep the car on a stand.**
+
+- NAV-M01 (`navigation_test.c`, `NAV_MANUAL_M01` = 1) starts 10 s after
+  `=== test run end ===` and drives a scripted mission.
+- A Subsystem 2 manual test runs if `S2_MANUAL_TEST` in `subsystem2_test.c` is
+  not `S2_MANUAL_NONE`.
+- Line Following drives the car by itself while `LINE_SELF_DRIVE` is 1 in
+  `subsystem3/line_barcode.h`, and prints its readings while `LINE_DEBUG` is 1.
+  Those prints can bury the `[TEST]` lines; filter the saved log with
+  `grep '\[TEST\]' logs/<file>.txt`.
+
+## Retiring a test
+
+When the code a test checks is removed, keep the row and start its *What is
+tested* cell with `*retired:*` and the reason. Remove the `TEST_CHECK` from
+the code. Old results stay as they are, and the ID is never given to a new
+test.
 
 ## Videos of tests and demos
 
