@@ -71,6 +71,7 @@ Same C sources as the firmware, compiled with a PC compiler and fed simulated se
 | H-U45 | Sensor lost on a side hump | one-wheel test, 5 Nov | reported once, cut short, no second hump |
 | H-U46..47 | Long sideways slope; car lifted past the tilt limit | one-wheel test, 5 Nov | closed once at the distance limit; no hump |
 | H-A18 | Replay of the logged right-wheel run of 5 Nov | one-wheel test, 5 Nov | one side hump, height within 20 % |
+| H-U48 | Ramp on and off counts need samples in a row; a sample between 4° and 6° starts both again | PR #3 review (CodeRabbit), `imu_ramp.c` | as described |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
@@ -120,3 +121,4 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-11-05 | build | feature/s4-side-hump | Andrew (with AI assistance) | PASS | none | Normal and TEST=1 images build and link with no warnings at gain 0.73. On-target `make TEST=1` tests not re-run |
 | 2026-11-05 | car, 10 mm ramp, one wheel, 6 runs, gain 0.83 | feature/s4-side-hump | Andrew (with AI assistance) | PARTIAL (one run over 20 %) | console logs pasted in session | Right wheel 10.8, 10.6, 11.3 mm; left 12.1, 11.6, 12.0 mm. Correct side every run, no FAULT. Gain lowered to 0.73 |
 | 2026-11-05 | car, 10 mm ramp, 3 runs, gain 0.73 | feature/s4-side-hump | Andrew (with AI assistance) | PASS | console logs pasted in session | Middle `HUMP` 9.2 mm, no side hump; right wheel 10.0 mm; left wheel 11.3 mm. No FAULT. One run each. Left reads about 1 mm above right. Gain from one ramp: a second known height is not checked |
+| 2026-11-21 | H-* (75 checks, adds H-U48) | fix/s4-ramp-consecutive | Andrew (with AI assistance) | PASS (75/75) | `logs/2026-11-21_host_tests_ramp_consecutive.txt` | `imu_ramp.c`: a sample between 4° and 6° now restarts the on and off counts, so each needs its samples in a row (inherited from the original logic, flagged in the PR #3 review). H-U48 failed before the change. Simulated slope still on a ramp for 4300 ms, same as before. Not yet run on the car |

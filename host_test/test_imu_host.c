@@ -1132,6 +1132,38 @@ static void test_ramp (void)
                    (0u == imu_get_tilt_x10()),
           "sensor lost: not on a ramp, not ok, tilt 0");
 
+    /* The 6 on and 10 off samples must be in a row: a sample between 4
+     * and 6 deg starts both counts again.
+     */
+    imu_ramp_stop();
+    for (uint32_t i = 0u; i < 5u; i++)
+    {
+        (void)imu_ramp_update(8.0f, 0.0f);
+    }
+    (void)imu_ramp_update(5.0f, 0.0f);
+    (void)imu_ramp_update(8.0f, 0.0f);
+    int const b_on_broken = !imu_on_ramp();
+    for (uint32_t i = 0u; i < 5u; i++)
+    {
+        (void)imu_ramp_update(8.0f, 0.0f);
+    }
+    int const b_on_in_row = imu_on_ramp();
+    for (uint32_t i = 0u; i < 9u; i++)
+    {
+        (void)imu_ramp_update(1.0f, 0.0f);
+    }
+    (void)imu_ramp_update(5.0f, 0.0f);
+    (void)imu_ramp_update(1.0f, 0.0f);
+    int const b_off_broken = imu_on_ramp();
+    for (uint32_t i = 0u; i < 9u; i++)
+    {
+        (void)imu_ramp_update(1.0f, 0.0f);
+    }
+    check("H-U48", b_on_broken && b_on_in_row && b_off_broken &&
+                   !imu_on_ramp(),
+          "on and off counts need samples in a row; 4-6 deg restarts them");
+    imu_ramp_stop();
+
     /* Whole pipeline, no gyro: a 100 mm hump over 1 m has a 17 deg slope.
      * Flat driving before it must not read as a ramp.
      */
