@@ -37,6 +37,9 @@
  *   D = U-TURN -> nav_post_barcode() (Navigation acts on it only while
  *   following the line).
  *
+ * Last read (IF-18): every successful read also updates one word, the
+ *   letter and a count of reads, for barcode_get_last() (telemetry).
+ *
  * Beep (BC_BEEP 1): the Robo Pico buzzer on GP22 (PWM slice 3, 2 kHz)
  *   beeps once per letter number, A = 1 ... D = 4; a read with no
  *   command gives three short chirps.  Line Following gives one long
@@ -155,6 +158,10 @@ static volatile uint32_t g_bc_map[BC_MAP_WORDS] =
 {
     BC_MAP_ALL_NONE, BC_MAP_W1_DEFAULT, BC_MAP_ALL_NONE, BC_MAP_ALL_NONE
 };
+
+/* Last read, layout in line_barcode.h.  Written only by barcode_task,
+ * with one store; read by any task through barcode_get_last(). */
+static volatile uint32_t g_last_read = 0U;
 
 /* Beep pattern: halves left (on, off, on ...) and ms left in this half. */
 static uint8_t  g_beep_halves  = 0U;
@@ -628,6 +635,12 @@ static void finish_pass(void)
 
     if (b_ok)
     {
+        uint32_t const reads = ((g_last_read >> BC_LAST_READS_SHIFT) + 1U) &
+                               BC_LAST_READS_MASK;
+
+        g_last_read = (reads << BC_LAST_READS_SHIFT) |
+                      ((uint32_t)(uint8_t)letter & BC_LAST_LETTER_MASK);
+
         cmd = letter_to_cmd(letter);
         (void)tm_sprintf(g_log, (UB *)"[BC] read *%c*%s -> %s",
                          (INT)letter, b_reversed ? " (reversed)" : "",
@@ -840,6 +853,13 @@ void barcode_task(INT stacd, void * exinf)
 
         (void)tk_dly_tsk(BC_SAMPLE_MS);
     }
+}
+
+/* The last barcode read and the number of reads (IF-18, layout in
+ * line_barcode.h).  Any task, any time; never waits. */
+uint32_t barcode_get_last(void)
+{
+    return (g_last_read);
 }
 
 const char * barcode_cmd_name(barcode_cmd_t cmd)

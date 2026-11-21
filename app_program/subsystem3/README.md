@@ -28,5 +28,8 @@ Don’t touch
 Depends on
 - Glenn’s motion (subsystem2): motion_set_turn_level, motion_send. Must work + both encoders counting (GP5 left, GP7 right) or Motion stall-faults.
 
+Provides (for telemetry, IF-18 in TEAM.md)
+- barcode_get_last(): last letter read (bits 0-7, 0 = none) and number of reads (bits 8-15), one 32-bit word, updated in finish_pass() on every good read. Read-only, any task, never waits.
+
 Pins
 - GP26 = centre line (ADC0), GP27 = right line (ADC1), GP28/GP4 = barcode.

@@ -8,66 +8,27 @@
  *	           drained with TMO_POL by telemetry_events_poll().  Only
  *	           HUMP events are sent; the others are read and dropped,
  *	           as the snapshot word already carries motion and terrain.
- *	  barcode  Line Following has no getter for the barcode it read, but
- *	           it logs every read through comms_log() as
- *	               "[BC] read *A* -> LEFT"
- *	           A log tap (comms_set_log_tap) spots that line on the
- *	           barcode task and keeps the letter; the telemetry task
- *	           sends the event.  When S3 offers a getter (IF-18,
- *	           proposed), read it in telemetry_last_barcode() instead.
+ *	  barcode  Line Following's last read (barcode_get_last, IF-18): a
+ *	           letter and a count of reads in one word.  A new count
+ *	           means a new read, even of the same letter.
  *
  *	The last barcode and a count of reads also go into telemetry word 1,
  *	so the dashboard shows the latest one even if it missed the event.
  *
  *	APIs shown: tk_rcv_mbf (TMO_POL, inside imu_task_read_event),
- *	            comms_set_log_tap, comms_publish
+ *	            comms_publish
  */
 
 #include "telemetry.h"
+#include "../subsystem3/line_barcode.h"
 #include "../subsystem4/subsystem4.h"
 
-#define BARCODE_PREFIX	"[BC] read *"	/* barcode.c finish_pass() */
-
-/* letter in bits 0-7, reads in bits 8-15; written only by the log tap
-   (on the barcode task), with one store, so the telemetry task always
-   reads a matching pair */
-LOCAL volatile UW	last_barcode;
-LOCAL UW		sent_barcode;	/* telemetry task's copy */
+LOCAL UW		sent_barcode;	/* last one sent; 0 = none, as S3 starts */
 LOCAL volatile BOOL	imu_held;
-
-/* "[BC] read *A* -> LEFT" -> 'A'; any other line -> 0 */
-EXPORT UB telemetry_barcode_in_log(const char *line)
-{
-	const char	*p = BARCODE_PREFIX;
-	UB		letter;
-
-	while (*p != '\0') {
-		if (*line++ != *p++) {
-			return 0;
-		}
-	}
-	letter = (UB)line[0];
-	if (letter <= ' ' || letter > '~' || letter == '*' || line[1] != '*') {
-		return 0;
-	}
-	return letter;
-}
-
-/* Runs on whichever task called comms_log(): quick, never waits */
-LOCAL void on_log_line(const char *line)
-{
-	UB	letter = telemetry_barcode_in_log(line);
-	UW	reads;
-
-	if (letter != 0) {
-		reads = ((last_barcode >> 8) + 1) & 0xff;
-		last_barcode = (reads << 8) | letter;
-	}
-}
 
 EXPORT UW telemetry_last_barcode(void)
 {
-	return last_barcode;
+	return barcode_get_last();
 }
 
 /* An IMU event -> the text of its EVT_* message; 0 if it is not sent */
@@ -97,13 +58,13 @@ EXPORT void telemetry_events_poll(void)
 {
 	UB	text[32];
 	UH	event;
-	UW	barcode = last_barcode;
+	UW	barcode = telemetry_last_barcode();
 	INT	len;
 
 	if (barcode != sent_barcode) {
 		sent_barcode = barcode;
-		send_event(text, tm_sprintf(text, (const UB*)"%d %d",
-					    EVT_BARCODE, (INT)(barcode & 0xff)));
+		send_event(text, tm_sprintf(text, (const UB*)"%d %d", EVT_BARCODE,
+			   (INT)(barcode & BC_LAST_LETTER_MASK)));
 	}
 
 	while (!imu_held && imu_task_read_event(&event) == E_OK) {
@@ -112,11 +73,6 @@ EXPORT void telemetry_events_poll(void)
 			send_event(text, len);
 		}
 	}
-}
-
-EXPORT void telemetry_events_init(void)
-{
-	comms_set_log_tap(on_log_line);
 }
 
 #if APP_TEST

@@ -32,12 +32,10 @@ IMPORT UD	telemetry_sample(UW seq);
 IMPORT UD	telemetry_sample_w1(void);
 
 /* telemetry_events.c: events (EVT_*) and the last barcode read */
-IMPORT void	telemetry_events_init(void);
 IMPORT void	telemetry_events_poll(void);	/* telemetry task, often */
-IMPORT UW	telemetry_last_barcode(void);	/* letter | (count << 8) */
+IMPORT UW	telemetry_last_barcode(void);	/* barcode_get_last(), IF-18 */
 
-/* Pure helpers, exported for the self-tests */
-IMPORT UB	telemetry_barcode_in_log(const char *line);  /* letter, or 0 */
+/* Pure helper, exported for the self-tests */
 IMPORT INT	telemetry_event_text(UB *buf, UH imu_event); /* 0 = not sent */
 
 IMPORT ER	telemetry_init(void);

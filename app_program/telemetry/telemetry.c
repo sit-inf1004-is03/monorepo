@@ -22,8 +22,8 @@
  *	  imu_task_get_snapshot()           IF-S4-1 subsystem4/imu_task.h
  *	  imu_task_read_event()             IF-S4-3 subsystem4/imu_task.h
  *	  imu_is_ok()                       IF-S4-7 subsystem4/imu_ramp.h
- *	Barcode reads come from Line Following's log lines (IF-18, see
- *	telemetry_events.c).
+ *	  barcode_get_last()                IF-18  subsystem3/line_barcode.h
+ *	                                    (in telemetry_events.c)
  *	Not yet in TEAM.md, so referenced weakly (IF-16, proposed): the field
  *	reads "not reported" until the subsystem that defines the function is
  *	in the build, and nothing here breaks if it is renamed meanwhile:
@@ -139,6 +139,7 @@ EXPORT UD telemetry_sample_w1(void)
 	w = tlm_put(w, TLM_W1_IMU_MOTION,    imu.motion_class);
 	w = tlm_put(w, TLM_W1_IMU_TERRAIN,   imu.terrain_state);
 	w = tlm_put(w, TLM_W1_IMU_OK,        imu_is_ok() ? 1 : 0);
+	/* barcode: letter in bits 0-7, reads in 8-15 (line_barcode.h) */
 	w = tlm_put(w, TLM_W1_BARCODE,       barcode & 0xff);
 	w = tlm_put(w, TLM_W1_BARCODE_COUNT, (barcode >> 8) & 0xf);
 	w = tlm_put(w, TLM_W1_DISTANCE,      distance_cm());
@@ -307,7 +308,6 @@ EXPORT ER telemetry_init(void)
 	if (mbf_telemetry < E_OK) {
 		return mbf_telemetry;
 	}
-	telemetry_events_init();
 	return comms_subscribe(COMMS_DEVICE_TOPIC(TOPIC_CONFIG), mbf_telemetry);
 }
 

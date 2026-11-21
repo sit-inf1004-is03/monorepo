@@ -71,6 +71,19 @@ typedef enum
 #define FAULT_BIT_LINE_LOST  (1U << 2U)
 #define INVALID_PATTERN      ('#')
 
+/* ===== last barcode read (IF-18) ======================================
+ * barcode_get_last() returns one 32-bit word, written by barcode_task
+ * with a single store on every successful read, so a reader on either
+ * core always sees a matching letter and count:
+ *   bits  0-7   letter read, ASCII ('A'...); 0 = none since power-on
+ *   bits  8-15  reads since power-on, wraps at 256: a change means a new
+ *               read, even of the same letter
+ *   bits 16-31  0
+ * Any task may call it at any time; it never waits.                     */
+#define BC_LAST_LETTER_MASK  (0xFFU)
+#define BC_LAST_READS_SHIFT  (8U)
+#define BC_LAST_READS_MASK   (0xFFU)
+
 /* ===== prototypes ===================================================== */
 /* Line following. */
 ER           line_init(void);
@@ -81,6 +94,7 @@ line_state_t line_get_state(void);
 ER           barcode_init(void);
 void         barcode_task(INT stacd, void * exinf);
 const char * barcode_cmd_name(barcode_cmd_t cmd);
+uint32_t     barcode_get_last(void);                        /* IF-18 */
 void         barcode_beep(uint8_t count, uint16_t on_ms);   /* LOCAL */
 
 /* LOCAL: barcode map, set from the dashboard (protocol.h CFG_BARCODE_*):
