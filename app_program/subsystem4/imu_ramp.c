@@ -2,8 +2,9 @@
  * @file    imu_ramp.c
  * @brief   Ramp detection from imu_task's pitch and roll (see imu_ramp.h).
  *
- * Ramp on at IMU_RAMP_ON_DEG for IMU_ON_SAMPLES samples, off at
- * IMU_RAMP_OFF_DEG for IMU_OFF_SAMPLES; between the two the state is kept.
+ * Ramp on at IMU_RAMP_ON_DEG for IMU_ON_SAMPLES samples in a row, off at
+ * IMU_RAMP_OFF_DEG for IMU_OFF_SAMPLES in a row; between the two the state
+ * is kept and both counts start again.
  * Pitch and roll already come through imu_filter's low-pass (50 ms, about
  * the same as the 0.3 smoothing at 20 ms this module used to apply).
  *
@@ -68,7 +69,11 @@ imu_ramp_update (float32_t pitch_deg, float32_t roll_deg)
     }
     else
     {
-        // Between the thresholds: keep the state.
+        // Between the thresholds: keep the state, but start both counts
+        // again, so on and off each need their samples in a row.
+        //
+        g_on_cnt  = 0u;
+        g_off_cnt = 0u;
     }
 
     return (b_was_ramp != g_b_ramp);
