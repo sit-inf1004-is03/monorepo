@@ -34,6 +34,7 @@ Needs the IMU on GP2/GP3 (GY-511 / LSM303D as fitted, or an MPU-9250) and the ca
 | S4-M04 | I2C fault and recovery (G5) | Week 6 6.3.3 read failure, fault bit 3 | manual | Pull SDA mid-run, wait 3 s, plug it back. | fault bit 3 within 30 ms, `imu: FAULT reason 4`, READY_IMU cleared; after re-plug `IMU_OK`, re-calibration, bit 3 cleared |
 | S4-M05 | Classification with motors running | Figure 5 motion region | manual | Run the car: stand, straight, pivot, stop. | STATIONARY → ACCELERATING → CRUISING → TURNING → STATIONARY events |
 | S4-M06 | Course completed | Figure 5 final state, FR6 | manual | Call `imu_task_signal_course_done()` after a run. | `COURSE_DONE` event with run peak and hump count; task idles |
+| S4-M07 | Upside-down stop | IF-S4-8, new requirement (lifted and turned upside down: motors stop) | manual | (a) Car driving: lift it, turn it upside down, hold 3 s, turn it back, put it down, wait 5 s. (b) Same with the car idle. (c) Tip it on its side (90°) and back. (d) While upside down press CLEAR on the dashboard. (e) Upright again: CLEAR, then START. | (a) `imu: UPSIDE DOWN` and `[NAV] STOP: fault bit` within about 0.3 s, wheels stop and stay stopped after it is put down. (b) Same message, Navigation goes to FAULT. (c) No stop. (d) Car stays stopped (bit 4 back at once). (e) Car drives again |
 
 ### PC (host) tests, `host_test/run_host_tests.sh`
 
@@ -72,6 +73,8 @@ Same C sources as the firmware, compiled with a PC compiler and fed simulated se
 | H-U46..47 | Long sideways slope; car lifted past the tilt limit | one-wheel test, 5 Nov | closed once at the distance limit; no hump |
 | H-A18 | Replay of the logged right-wheel run of 5 Nov | one-wheel test, 5 Nov | one side hump, height within 20 % |
 | H-U48 | Ramp on and off counts need samples in a row; a sample between 4° and 6° starts both again | PR #3 review (CodeRabbit), `imu_ramp.c` | as described |
+| H-U49..50 | Upside-down detection (`imu_flip.c`): upright never trips; past 120° for 200 ms trips, 90° and 115° do not; clears below 110° after 200 ms | IF-S4-8 | as described |
+| H-U51..52 | A gap, a knock (3 g), free fall (0.1 g) or NaN restarts the count; a car that starts upside down is caught; short upright moments do not clear it | IF-S4-8 | as described |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
@@ -122,3 +125,6 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-11-05 | car, 10 mm ramp, one wheel, 6 runs, gain 0.83 | feature/s4-side-hump | Andrew (with AI assistance) | PARTIAL (one run over 20 %) | console logs pasted in session | Right wheel 10.8, 10.6, 11.3 mm; left 12.1, 11.6, 12.0 mm. Correct side every run, no FAULT. Gain lowered to 0.73 |
 | 2026-11-05 | car, 10 mm ramp, 3 runs, gain 0.73 | feature/s4-side-hump | Andrew (with AI assistance) | PASS | console logs pasted in session | Middle `HUMP` 9.2 mm, no side hump; right wheel 10.0 mm; left wheel 11.3 mm. No FAULT. One run each. Left reads about 1 mm above right. Gain from one ramp: a second known height is not checked |
 | 2026-11-21 | H-* (75 checks, adds H-U48) | fix/s4-ramp-consecutive | Andrew (with AI assistance) | PASS (75/75) | `logs/2026-11-21_host_tests_ramp_consecutive.txt` | `imu_ramp.c`: a sample between 4° and 6° now restarts the on and off counts, so each needs its samples in a row (inherited from the original logic, flagged in the PR #3 review). H-U48 failed before the change. Simulated slope still on a ramp for 4300 ms, same as before. Not yet run on the car |
+| 2026-11-21 | H-* (79 checks, adds H-U49..52) | feature/s4-upside-down | Andrew (with AI assistance) | PASS (79/79) | `logs/2026-11-21_host_tests_upside_down.txt` | New `imu_flip.c`: upside down = more than 120° from upright for 200 ms, from the raw gravity direction and the fixed face-down mounting, not the calibrated level. `imu_task.c` keeps `NAV_FLT_ESTOP` raised while upside down (not host tested) |
+| 2026-11-21 | build | feature/s4-upside-down | Andrew (with AI assistance) | PASS | none | Normal image (`NET=none`) builds and links with no warnings. In this build there is no dashboard, so after an upside-down stop only a reset restarts the car. TEST=1 image not rebuilt |
+| 2026-11-21 | S4-M07 (a) upside-down stop on the car | feature/s4-upside-down | Andrew (with AI assistance) | PASS (part a) | observed, no log kept | Normal image (`NET=none`): car turned upside down, motors stopped. Steps (b)–(e) not run: CLEAR and START need the `NET=lwip` build and the dashboard. Ramp fix (H-U48) not yet driven over the ramp |

@@ -15,6 +15,9 @@
  *   IF-S4-4  IMU fault, READY_IMU bits in common/faults.h  S4 only so far
  *   IF-S4-7  ramp            imu_on_ramp(), imu_get_tilt_x10() (imu_ramp.h)
  *                                                      Line Following
+ *   IF-S4-8  upside down     nav_raise_fault(NAV_FLT_ESTOP), a stop fault,
+ *                            kept raised while upside down (imu_flip.h)
+ *                                                      Navigation
  * Inputs:
  *   IF-06    encoder counts  drv_encoder_get_count()        from Buddy 2
  *   IF-S4-6  course done     imu_task_signal_course_done()  from Navigation

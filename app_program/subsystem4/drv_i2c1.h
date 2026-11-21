@@ -11,7 +11,8 @@
  *     I2C1 by default; GP7 is now a wheel-encoder pin (Tribunal 1, G7).
  *   - Every transfer here has a hard timeout and the bus can be recovered
  *     (nine SCL pulses + STOP) when a slave holds SDA low (gap G5), so an
- *     I2C fault can never hang the IMU task and silently disable ESTOP.
+ *     I2C fault can never hang the IMU task and silently disable the
+ *     upside-down stop.
  *
  * Timing: 400 kHz fast mode.  A 14-byte sensor read takes about 0.4 ms of
  * polling (Tribunal 1, 2.2.4).  Worst case per call is bounded by

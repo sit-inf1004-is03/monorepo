@@ -24,6 +24,7 @@
 #include "../app_program/subsystem4/imu_monitor.h"
 #include "../app_program/subsystem4/imu_sim.h"
 #include "../app_program/subsystem4/imu_ramp.h"
+#include "../app_program/subsystem4/imu_flip.h"
 
 #define DT_S                (0.01f)
 #define CALIB_STEPS         (130u)
@@ -1628,6 +1629,89 @@ static void test_side_hump (void)
           "logged right-wheel run: one side hump, height within 20 %");
 }
 
+/* Feed n samples at angle_deg from upright with |a| = mag_g; returns the
+ * 1-based sample on which imu_flip_is_upside_down() changed, or 0.
+ */
+static uint32_t flip_feed (imu_flip_t * p_flip, uint32_t n, float angle_deg,
+                           float mag_g)
+{
+    float const up_g     = mag_g * cosf(angle_deg * 3.14159265f / 180.0f);
+    uint32_t    changed  = 0u;
+
+    for (uint32_t i = 1u; i <= n; i++)
+    {
+        if (imu_flip_update(p_flip, up_g, mag_g) && (0u == changed))
+        {
+            changed = i;
+        }
+    }
+    return changed;
+}
+
+static void test_flip (void)
+{
+    /* The GY-511 reads about 0.87 g at rest. */
+    float const    g = 0.87f;
+    imu_flip_t     flip;
+
+    /* Upright never trips; upside down trips on the 20th sample (200 ms). */
+    imu_flip_init(&flip);
+    uint32_t const upright_change = flip_feed(&flip, 500u, 0.0f, g);
+    uint32_t const flip_at        = flip_feed(&flip, 100u, 180.0f, g);
+    check("H-U49", (0u == upright_change) && (20u == flip_at) &&
+                   imu_flip_is_upside_down(&flip),
+          "upright never stops; upside down stops after 200 ms");
+
+    /* Angles: on its side (90) and 115 do not trip, 125 does; once
+     * upside down, 115 keeps it and 105 clears it after 200 ms.
+     */
+    imu_flip_init(&flip);
+    uint32_t const side_change = flip_feed(&flip, 500u, 90.0f, g);
+    uint32_t const at_115      = flip_feed(&flip, 500u, 115.0f, g);
+    uint32_t const at_125      = flip_feed(&flip, 100u, 125.0f, g);
+    uint32_t const held_115    = flip_feed(&flip, 500u, 115.0f, g);
+    uint32_t const off_105     = flip_feed(&flip, 100u, 105.0f, g);
+    check("H-U50", (0u == side_change) && (0u == at_115) &&
+                   (20u == at_125) && (0u == held_115) && (20u == off_105) &&
+                   !imu_flip_is_upside_down(&flip),
+          "trips past 120 deg only; clears below 110 deg");
+
+    /* Short or doubtful samples: 19 upside down then one upright, a knock
+     * (3 g) or free fall (0.1 g), or NaN, each restart the count.
+     */
+    imu_flip_init(&flip);
+    uint32_t broken = 0u;
+    broken += flip_feed(&flip, 19u, 180.0f, g);
+    broken += flip_feed(&flip, 1u, 0.0f, g);
+    broken += flip_feed(&flip, 19u, 180.0f, g);
+    broken += flip_feed(&flip, 1u, 180.0f, 3.0f);
+    broken += flip_feed(&flip, 19u, 180.0f, g);
+    broken += flip_feed(&flip, 1u, 180.0f, 0.1f);
+    broken += flip_feed(&flip, 19u, 180.0f, g);
+    broken += imu_flip_update(&flip, NAN, g) ? 1u : 0u;
+    broken += flip_feed(&flip, 19u, 180.0f, g);
+    uint32_t knocks = flip_feed(&flip, 200u, 180.0f, 3.0f);
+    knocks += flip_feed(&flip, 200u, 180.0f, 0.1f);
+    check("H-U51", (0u == broken) && (0u == knocks) &&
+                   !imu_flip_is_upside_down(&flip),
+          "a gap, a knock, free fall or NaN restarts the 200 ms count");
+
+    /* Once stopped, short upright moments do not clear it, and a car that
+     * starts upside down (no upright sample first) is still caught.
+     */
+    imu_flip_init(&flip);
+    uint32_t const boot_flip = flip_feed(&flip, 20u, 180.0f, g);
+    uint32_t       short_up  = flip_feed(&flip, 19u, 0.0f, g);
+    short_up += flip_feed(&flip, 1u, 180.0f, g);
+    short_up += flip_feed(&flip, 19u, 0.0f, g);
+    int const      b_still   = imu_flip_is_upside_down(&flip);
+    /* The last 19 upright samples count: one more makes 20 in a row. */
+    uint32_t const up_again  = flip_feed(&flip, 1u, 0.0f, g);
+    check("H-U52", (20u == boot_flip) && (0u == short_up) && b_still &&
+                   (1u == up_again) && !imu_flip_is_upside_down(&flip),
+          "starts upside down: caught; clears only after 200 ms upright");
+}
+
 int main (void)
 {
     printf("[TEST] === host test run start ===\n");
@@ -1645,6 +1729,7 @@ int main (void)
     test_ramp();
     test_rear_flat();
     test_side_hump();
+    test_flip();
     printf("[TEST] host SUMMARY %d passed, %d failed\n", g_pass, g_fail);
 
     return (0 == g_fail) ? 0 : 1;
