@@ -25,6 +25,7 @@
 
 #include "../test_report.h"
 #include "../subsystem2/motion.h"
+#include "../subsystem3/line_barcode.h"     // barcode_beep(): T beep
 
 #define NAV_MANUAL_M01      (1)     // 1: run NAV-M01 after the auto tests.
 
@@ -151,6 +152,32 @@ m01_task (INT start_code, void * p_ext_info)
     (void) nav_post_junction();
     m01_stop_turn_after("B: pivot right", M01_TURN_MSEC);
     m01_expect_state("B: back to LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
+    (void) tk_dly_tsk(2000u);
+
+    // 2b. Barcode A, junction, then STOP in the middle of the turn: the
+    //     turn is braked, the barcode dropped, and the buzzer goes quiet
+    //     (listen: the long T beep is cut short).  START then follows
+    //     the line with no turn left over.
+    //
+    (void) nav_post_barcode(NAV_BARCODE_LEFT);
+    m01_expect_state("barcode A -> JUNCTION", NAV_STATE_JUNCTION);
+    (void) tk_dly_tsk(500u);
+    (void) nav_post_junction();
+    m01_check("A: turn starts",
+              m01_wait_activity(MOTION_ACTIVITY_PIVOT, M01_PIVOT_WAIT_MSEC));
+    barcode_beep(1U, BC_BEEP_T_MS);     // As Line Following does at a T.
+    (void) tk_dly_tsk(100u);
+    (void) nav_post_remote(NAV_REMOTE_STOP);
+    m01_expect_state("STOP in the turn -> STOPPED", NAV_STATE_STOPPED);
+    m01_check("STOP in the turn: braked",
+              m01_wait_activity(MOTION_ACTIVITY_IDLE, M01_STATE_MSEC));
+    (void) tk_dly_tsk(1000u);
+    (void) nav_post_remote(NAV_REMOTE_START);
+    m01_expect_state("START after the stopped turn -> LINE_FOLLOW",
+                     NAV_STATE_LINE_FOLLOW);
+    (void) tk_dly_tsk(M01_STATE_MSEC);
+    m01_check("START: driving straight, no turn left over",
+              (MOTION_ACTIVITY_STRAIGHT == motion_get_activity()));
     (void) tk_dly_tsk(2000u);
 
     // 3. Barcode D, junction: LOCAL, for now straight on like C.

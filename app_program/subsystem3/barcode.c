@@ -44,7 +44,9 @@
  *   beeps once per letter number, A = 1 ... D = 4; a read with no
  *   command gives three short chirps.  Line Following gives one long
  *   beep (barcode_beep()) at a T with a command.  Driven from the
- *   sampling loop, so sampling never stops.
+ *   sampling loop, so sampling never stops.  When Navigation stops (a
+ *   remote STOP or a stop fault), any beep still playing is cut off: the
+ *   barcode's action is over.
  *
  * This file deliberately does NOT include <string.h> (the kernel's
  * syslib.h size_t typedef conflicts with newlib's).
@@ -168,6 +170,9 @@ static uint8_t  g_beep_halves  = 0U;
 static uint16_t g_beep_ms      = 0U;
 static uint16_t g_beep_on_ms   = 0U;
 
+/* Navigation's state at the last sample: barcode_task only. */
+static uint32_t g_nav_seen     = NAV_STATE_IDLE;
+
 static uint16_t      read_ao(void);
 static void          learn_floor(void);
 static void          sample(void);
@@ -187,6 +192,8 @@ static void          log_line(void);
 static void          buzzer_init(void);
 static void          beep_start(uint8_t count, uint16_t on_ms);
 static void          beep_tick(void);
+static void          beep_silence(void);
+static void          quiet_on_stop(void);
 
 /* ===================================================================== *
  *  Sampling
@@ -769,6 +776,32 @@ static void beep_tick(void)
 #endif
 }
 
+/* Stop any beep at once. */
+static void beep_silence(void)
+{
+#if (1 == BC_BEEP)
+    g_beep_halves = 0U;
+    (void)pwm_set_cc(BC_BUZZER_PIN, 0U);
+#endif
+}
+
+/* Called every sample: when Navigation has just stopped (STOPPED or
+ * FAULT), cut off the beep of the barcode or T it was acting on.  Only
+ * on the change, so a beep started while stopped (IMU ready) still
+ * plays. */
+static void quiet_on_stop(void)
+{
+    uint32_t const nav = nav_get_state();
+
+    if ((nav != g_nav_seen) &&
+        ((NAV_STATE_STOPPED == nav) || (NAV_STATE_FAULT == nav)))
+    {
+        beep_silence();
+    }
+
+    g_nav_seen = nav;
+}
+
 /* ===================================================================== *
  *  Public
  * ===================================================================== */
@@ -809,6 +842,7 @@ void barcode_task(INT stacd, void * exinf)
     {
         sample();
         beep_tick();
+        quiet_on_stop();
 
         if (g_b_in_pass &&
             ((gpio_irq_get_time_usec() - g_last_edge_us) >
