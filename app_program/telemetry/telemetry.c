@@ -14,6 +14,12 @@
  * One blocking call does both jobs: the task waits for a setting, but only
  * until the next sample or event poll is due.
  *
+ * Timing: a sample every PERIOD_DEFAULT_MS (500 ms) until the dashboard
+ * sets another period.  Each time the car comes online, at start-up or
+ * after a dropped connection, the first sample is sent FIRST_SAMPLE_MS
+ * (300 ms) later instead of whenever the period comes round, so the
+ * dashboard has fresh values soon after every reconnect.
+ *
  * Sources, the team's interfaces, used through their headers:
  *   nav_get_state(), _reason(), _faults()  IF-14  navigation/navigation.h
  *   motion_get_activity()                  IF-09  subsystem2/motion.h
@@ -38,7 +44,8 @@
 
 #define PERIOD_MIN_MS           (100)
 #define PERIOD_MAX_MS           (60000)
-#define PERIOD_DEFAULT_MS       (1000u)
+#define PERIOD_DEFAULT_MS       (500u)
+#define FIRST_SAMPLE_MS         (300u)  /* After coming online. */
 #define EVENT_POLL_MS           (100)   /* The IMU holds 32 events: room
                                            for 320 ms of its fastest
                                            changes. */
@@ -213,16 +220,29 @@ telemetry_sample_w1 (void)
 static void
 telemetry_task (INT stacd, void * p_exinf)
 {
-    comms_msg_t msg;
-    uint64_t    words[TLM_WORDS];
-    uint32_t    next = now_ms();
-    uint32_t    seq  = 0u;
+    comms_msg_t       msg;
+    net_bridge_info_t net;
+    uint64_t          words[TLM_WORDS];
+    uint32_t          next         = now_ms();
+    uint32_t          seq          = 0u;
+    bool              b_was_online = false;
 
     (void) stacd;
     (void) p_exinf;
 
     for (;;)
     {
+        /* Just came online: the first sample soon, not a period later.
+           Seen within EVENT_POLL_MS, the longest wait below. */
+        comms_get_info(&net);
+
+        if ((net.b_online) && (!b_was_online))
+        {
+            next = now_ms() + FIRST_SAMPLE_MS;
+        }
+
+        b_was_online = net.b_online;
+
         /* Cast: the difference of two wrapping 32-bit times, read as
            signed, is the time left; it is clamped to 0..EVENT_POLL_MS. */
         TMO wait = (TMO)(next - now_ms());

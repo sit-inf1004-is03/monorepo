@@ -62,7 +62,7 @@ below).
 | Topic | Direction | Payload |
 |---|---|---|
 | `robocar/<id>/status` | car → | `online` / `offline` (retained; `offline` is the last will) |
-| `robocar/<id>/telemetry` | car → | two unsigned 64-bit integers in decimal, one space apart (layout below), every 1 s by default |
+| `robocar/<id>/telemetry` | car → | two unsigned 64-bit integers in decimal, one space apart (layout below), every 500 ms by default; the first one about 300 ms after each (re)connection |
 | `robocar/<id>/event` | car → | a hump or a barcode, once, when it happens (below) |
 | `robocar/<id>/log` | car → | one line of text |
 | `robocar/<id>/cmd`, `robocar/all/cmd` | → car | a command, below |
@@ -80,7 +80,7 @@ the identifier first.
 
 | Setting | Payload | Effect |
 |---|---|---|
-| Telemetry period | `1 <ms>` | 100 to 60000 ms between samples |
+| Telemetry period | `1 <ms>` | 100 to 60000 ms between samples; 500 ms until set. Kept until the car restarts |
 | Telemetry on/off | `2 <0 or 1>` | stop or resume telemetry |
 | Barcode meaning | `3 <letter> <dir>` | what a barcode character means at the next T: the character's ASCII code (`0`-`9`, `A`-`Z`), then 0 left, 1 right, 2 straight, 3 U-turn or 4 ignore. Defaults: A left, B right, C straight, D U-turn, every other one ignored |
 | Clear barcodes | `4` | ignore every barcode character |
