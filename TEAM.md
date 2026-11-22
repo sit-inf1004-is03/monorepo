@@ -191,6 +191,7 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-16 | S3 (Line Following), S5 (Obstacle Scan) → telemetry | shared data, read only | `line_get_state()` (S3), `ultrasonic_last_reading()` (S5) | line state (2 bits); nearest obstacle in cm (9 bits) or no echo. Called through `line_barcode.h` and `drv_ultrasonic.h` | *proposed* |
 | IF-17 | any → Wi-Fi / MQTT | message buffer (owned by comms) | `comms_log()`, `comms_telemetry()`, `comms_publish()` | one line of text / the packed telemetry words / any payload ≤ 128 bytes; never blocks, dropped when the queue is full | *proposed* |
 | IF-18 | S3 (Barcode) → telemetry | shared data, read only, one 32-bit word written with one store (owned by S3) | `barcode_get_last()` in `subsystem3/line_barcode.h` | last barcode read: letter (ASCII, 0 = none) in bits 0–7, reads since power-on (wraps) in bits 8–15. A new count is a new read, even of the same letter | *proposed*, to agree with S3's owner |
+| IF-19 | Wi-Fi / MQTT (telemetry) → S3 (Barcode) | shared data, one writer (the telemetry task), one 32-bit store per change (owned by S3) | `barcode_set_cmd()`, `barcode_clear_cmds()`, `barcode_get_cmd()` in `subsystem3/line_barcode.h` | what each barcode character `0`-`9`, `A`-`Z` means at the next T (`barcode_cmd_t`, 3 bits), set from the dashboard (`CFG_BARCODE_*` in `protocol.h`); kept until a restart | *proposed* |
 
 Each interface is tested by at least one integration test
 (`testing/integration/TEST_LOG.md`).

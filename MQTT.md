@@ -82,6 +82,13 @@ the identifier first.
 |---|---|---|
 | Telemetry period | `1 <ms>` | 100 to 60000 ms between samples |
 | Telemetry on/off | `2 <0 or 1>` | stop or resume telemetry |
+| Barcode meaning | `3 <letter> <dir>` | what a barcode character means at the next T: the character's ASCII code (`0`-`9`, `A`-`Z`), then 0 left, 1 right, 2 straight, 3 U-turn or 4 ignore. Defaults: A left, B right, C straight, D U-turn, every other one ignored |
+| Clear barcodes | `4` | ignore every barcode character |
+| Show barcodes | `5` | only report the map |
+
+Each barcode setting answers on the log with the whole map, e.g.
+`barcodes: A=L B=R Z=U`. The map is lost when the car restarts; the
+dashboard sends it again.
 
 | Event | Payload | Meaning |
 |---|---|---|
@@ -275,7 +282,7 @@ returns `E_TMOUT`. Log lines queued while offline are sent after reconnecting.
 |---|---|---|
 | `testing/comms/TEST_LOG.md` | CO-U01 .. CO-U10 | command parsing, number formatting, the telemetry golden samples (both words), backoff, size limits, topic matching |
 | `testing/remote/TEST_LOG.md` | RE-U01 | the remote task consumes every kind of message and keeps running |
-| `testing/telemetry/TEST_LOG.md` | TL-U01 .. TL-U03 | telemetry settings, the hump event message (TL-U04 is retired) |
+| `testing/telemetry/TEST_LOG.md` | TL-U01 .. TL-U03, TL-U05 | telemetry settings, the hump event message, the barcode map (TL-U04 is retired) |
 | `testing/integration/TEST_LOG.md` | INT-15 .. INT-17, INT-19, INT-20 | settings reach telemetry, both words hold the other subsystems' values (IMU, distance, barcode), the car and dashboard agree on the bit layout (INT-18 is retired) |
 | `testing/system/TEST_LOG.md` | SYS-10 .. SYS-15 | connecting, remote commands, telemetry on the moving car, Wi-Fi loss, broker restart, humps and barcodes on the dashboard |
 

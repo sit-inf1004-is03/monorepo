@@ -45,6 +45,7 @@ have not yet been tested together through that interface.
 | IF-16 line state, obstacle distance → telemetry | INT-16 (line state), SYS-12 | the obstacle distance is checked only by hand (SYS-12) |
 | IF-17 comms send functions | CO-U08, SYS-10 | |
 | IF-18 last barcode read → telemetry | INT-20, SYS-15 | INT-20 checks that word 1 copies `barcode_get_last()`; only SYS-15 reads a real barcode |
+| IF-19 barcode map, telemetry → Line Following | TL-U05 | a turn taken from a map set by the dashboard is checked only on the car |
 | IF-S4-1 IMU snapshot word | S4-U04, H-U08 .. H-U12 (host), INT-19, SYS-15 | |
 | IF-S4-2 IMU aux word | H-U08 .. H-U12 (host) | nothing reads it yet; its layout is tested on the host only |
 | IF-S4-3 IMU event stream | S4-U06, H-U08 .. H-U12 (host), TL-U03, SYS-15 | a real HUMP event becoming an EVT_HUMP message is checked only by hand (SYS-15) |
