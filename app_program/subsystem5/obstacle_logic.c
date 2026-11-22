@@ -46,6 +46,24 @@ static uint16_t const g_cos_x100[OBS_FINE_COUNT + 1u] =
     100u, 97u, 87u, 71u, 50u
 };
 
+// Width sweep: cos(k x 5 deg) x 1000, and tan(k x 5 + 2.5 deg) x 1000
+// (half a step past the last hit: the edge lies between the last hit
+// and the first miss), k = 0..12.
+//
+#define WIDTH_SCALE             (1000u)
+
+static uint16_t const g_wtan_mid_x1000[OBS_WIDTH_STEPS + 1u] =
+{
+    44u, 132u, 222u, 315u, 414u, 521u, 637u, 767u, 916u, 1091u, 1303u,
+    1570u, 1921u
+};
+
+static uint16_t const g_wcos_x1000[OBS_WIDTH_STEPS + 1u] =
+{
+    1000u, 996u, 985u, 966u, 940u, 906u, 866u, 819u, 766u, 707u, 643u,
+    574u, 500u
+};
+
 #define MRAD_PER_STEP           (262u)      // 15 deg = 0.2618 rad.
 #define URAD_PER_DEG            (17453u)    // 1 deg = 0.017453 rad.
 #define UM_PER_MM_X_URAD        (1000000u)  // urad x mm -> mm.
@@ -412,6 +430,77 @@ obs_search_target_deg(uint16_t step, uint16_t start_deg, uint16_t step_deg)
     }
 
     return (target);
+}
+
+/*!
+ * @brief  Width sweep: does a reading at this step still come from the
+ *         obstacle's front face?  Its forward part (dist x cos) must be
+ *         within OBS_WIDTH_FACE_CM of the reading straight ahead; open
+ *         space or something farther back ends the face.
+ * @param  dist_cm   Reading at this step (OBS_FAR_CM = no echo).
+ * @param  step      Width step, 0..OBS_WIDTH_STEPS (x OBS_WIDTH_STEP_DEG).
+ * @param  front_cm  Reading straight ahead.
+ */
+bool
+obs_is_on_face(uint16_t dist_cm, uint16_t step, uint16_t front_cm)
+{
+    bool b_on_face = false;
+
+    if ((dist_cm < OBS_FAR_CM) && (step <= OBS_WIDTH_STEPS))
+    {
+        uint32_t const fwd_x1000 = (uint32_t)dist_cm *
+                                   g_wcos_x1000[step];
+
+        b_on_face = (fwd_x1000 <= ((uint32_t)(front_cm + OBS_WIDTH_FACE_CM)
+                                   * WIDTH_SCALE));
+    }
+
+    return (b_on_face);
+}
+
+/*!
+ * @brief  Half-width from the last hit on the face: its forward
+ *         distance (dist x cos) x tan(step angle + half a step), i.e. the
+ *         edge is taken midway to the first miss.
+ * @param  dist_cm  Last reading on the face (step 0: the centre reading).
+ * @param  step     Width step of that reading, 0..OBS_WIDTH_STEPS.
+ * @return Distance in mm, rounded.
+ */
+uint16_t
+obs_side_mm(uint16_t dist_cm, uint16_t step)
+{
+    uint32_t side = 0u;
+    uint32_t fwd_mm;
+
+    if ((dist_cm < OBS_FAR_CM) && (step <= OBS_WIDTH_STEPS))
+    {
+        // 510 cm x 10 x 1000 = 5.1e6, then 5100 mm x 1921: fit 32 bits.
+        fwd_mm = (((uint32_t)dist_cm * 10u * g_wcos_x1000[step]) +
+                  (WIDTH_SCALE / 2u)) / WIDTH_SCALE;
+        side   = ((fwd_mm * g_wtan_mid_x1000[step]) + (WIDTH_SCALE / 2u)) /
+                 WIDTH_SCALE;
+    }
+
+    return ((uint16_t)side);
+}
+
+/*!
+ * @brief  Obstacle width from its two half-widths plus the calibration
+ *         trim on each side; never below 0.
+ * @return Width in mm.
+ */
+uint16_t
+obs_width_mm(uint16_t left_mm, uint16_t right_mm)
+{
+    int32_t width = (int32_t)left_mm + (int32_t)right_mm +
+                    (2 * (int32_t)OBS_WIDTH_TRIM_MM);
+
+    if (width < 0)
+    {
+        width = 0;
+    }
+
+    return ((uint16_t)width);
 }
 
 /*!
