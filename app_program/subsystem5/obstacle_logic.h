@@ -12,6 +12,7 @@
 #ifndef OBSTACLE_LOGIC_H
 #define OBSTACLE_LOGIC_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 // "No echo / out of range" is stored as the largest 9-bit value and
@@ -111,6 +112,19 @@
 #define OBS_REJOIN_STEP         (2u)    // 30 deg.
 #define OBS_REJOIN_SLACK_CM     (15u)
 
+// Obstacle width (demo rubric: "measure obstacle width").  With the car
+// stopped, the servo sweeps out from straight ahead in OBS_WIDTH_STEP_DEG
+// steps on each side while the echo still comes from the obstacle's front
+// face (forward distance within OBS_WIDTH_FACE_CM of the centre reading).
+// Each side's half-width = distance x sin(angle) of its last hit; width =
+// both halves + 2 x OBS_WIDTH_TRIM_MM.  Calibrate the trim on the day with
+// a box of known width: reads 2 cm too wide -> trim -10 (mm per side).
+//
+#define OBS_WIDTH_STEP_DEG      (5u)
+#define OBS_WIDTH_STEPS         (12u)   // 12 x 5 = 60 deg each side.
+#define OBS_WIDTH_FACE_CM       (8u)    // Farther back = something else.
+#define OBS_WIDTH_TRIM_MM       (0)     // Signed, per side.
+
 uint16_t obs_median3(uint16_t first, uint16_t second, uint16_t third);
 uint16_t obs_prof_get(uint64_t profile, uint16_t slot);
 uint64_t obs_prof_set(uint64_t profile, uint16_t slot, uint16_t dist_cm);
@@ -126,6 +140,9 @@ uint16_t obs_back_cm(uint16_t out_cm, uint16_t pivot_step);
 uint16_t obs_deg_arc_mm(uint16_t angle_deg);
 int16_t  obs_search_target_deg(uint16_t step, uint16_t start_deg,
                                uint16_t step_deg);
+bool     obs_is_on_face(uint16_t dist_cm, uint16_t step, uint16_t front_cm);
+uint16_t obs_side_mm(uint16_t dist_cm, uint16_t step);
+uint16_t obs_width_mm(uint16_t left_mm, uint16_t right_mm);
 
 #endif /* OBSTACLE_LOGIC_H */
 

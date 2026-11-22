@@ -88,9 +88,14 @@
  *                pitch, or roll when only one rear wheel rode over it.
  *   EVT_BARCODE  letter: a barcode was read, the letter as its ASCII
  *                code (barcode_get_last, IF-18).
+ *   EVT_OBSTACLE width_mm front_cm whole: Obstacle Scan (S5) measured an
+ *                obstacle with the car stopped; whole is 1 when both
+ *                edges were seen, 0 when one was past the sweep ("at
+ *                least").  Sent by S5 itself.
  */
 #define EVT_HUMP                (0u)
 #define EVT_BARCODE             (1u)
+#define EVT_OBSTACLE            (2u)
 
 /*
  * Telemetry: 64-bit words, fields packed from bit 0 upwards, sent as

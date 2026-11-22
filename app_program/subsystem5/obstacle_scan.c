@@ -102,6 +102,7 @@
 #define TRIGGER_CM              (15u)   // Obstacle closer than this...
 #define CONFIRM_PINGS           (2u)    // ...on this many pings in a row.
 #define CLEAR_CM                (50u)   // A direction is open beyond this.
+#define WIDTH_SETTLE_MS         (80)    // Servo settle for a 5 deg step.
 #define SILENT_LIMIT            (10u)   // ~1 s of silence -> NO_ECHO fault.
 #define SCAN_RETRY_LIMIT        (3u)
 #define PRINT_EVERY             (5u)    // WATCH: print every 5th ping.
@@ -245,6 +246,9 @@ static uint16_t ping_cm(void);
 static uint16_t ping_median_cm(void);
 static uint64_t coarse_scan(void);
 static uint64_t fine_scan(uint16_t side);
+static uint16_t width_side_mm(uint16_t side, uint16_t front_cm,
+                              bool * p_b_edge);
+static void     measure_width(void);
 static uint8_t  coarse_angle(uint16_t idx);
 static uint8_t  fine_angle(uint16_t side, uint16_t step);
 static uint16_t fld_get(uint16_t word, uint16_t shift, uint16_t mask);
@@ -451,6 +455,7 @@ on_coarse(scan_ctx_t * p_ctx)
     uint16_t side;
 
     p_ctx->coarse = coarse_scan();
+    measure_width();
     side          = obs_pick_side(p_ctx->coarse, CLEAR_CM);
 
     if (OBS_SIDE_NONE == side)
@@ -1218,6 +1223,105 @@ fine_scan(uint16_t side)
     log_text(line);
 
     return (profile);
+}
+
+/*!
+ * @brief  Width sweep on one side: step out from the centre in
+ *         OBS_WIDTH_STEP_DEG steps while the echo still comes from the
+ *         obstacle's front face.
+ * @param  side      OBS_SIDE_LEFT or OBS_SIDE_RIGHT.
+ * @param  front_cm  Reading straight ahead.
+ * @param  p_b_edge  Out: true if the face ended within OBS_WIDTH_STEPS.
+ * @return Half-width on that side in mm (sideways part of the last hit).
+ */
+static uint16_t
+width_side_mm(uint16_t side, uint16_t front_cm, bool * p_b_edge)
+{
+    bool const b_is_high = ((OBS_SIDE_LEFT == side) ==
+                            (1 == OBS_LEFT_IS_HIGH_ANGLE));
+    uint16_t   half_mm   = obs_side_mm(front_cm, 0u);  // Miss at step 1.
+    uint16_t   step;
+    uint16_t   offset;
+    uint16_t   dist;
+
+    *p_b_edge = false;
+
+    for (step = 1u; step <= OBS_WIDTH_STEPS; step++)
+    {
+        offset = (uint16_t)(step * OBS_WIDTH_STEP_DEG);
+        servo_set_angle_deg((uint8_t)(b_is_high ? (CENTRE_DEG + offset)
+                                                : (CENTRE_DEG - offset)));
+        (void)tk_dly_tsk(WIDTH_SETTLE_MS);
+        dist = ping_median_cm();
+
+        if (!obs_is_on_face(dist, step, front_cm))
+        {
+            *p_b_edge = true;   // Past the edge: the last hit stands.
+            break;
+        }
+
+        half_mm = obs_side_mm(dist, step);
+    }
+
+    return (half_mm);
+}
+
+/*!
+ * @brief  Measure the obstacle's width (demo rubric) with the car
+ *         stopped: sweep both sides from straight ahead, log it and send
+ *         EVT_OBSTACLE to the dashboard.  Does not change the bypass plan.
+ */
+static void
+measure_width(void)
+{
+    uint16_t front_cm;
+    uint16_t left_mm;
+    uint16_t right_mm;
+    uint16_t width_mm;
+    bool     b_left_edge;
+    bool     b_right_edge;
+    bool     b_whole;
+
+    servo_set_angle_deg((uint8_t)CENTRE_DEG);
+    (void)tk_dly_tsk(SERVO_SETTLE_MS);
+    front_cm = ping_median_cm();
+
+    if (front_cm > CLEAR_CM)
+    {
+        (void)tm_sprintf(g_log, (UB *)"[S5] WIDTH: nothing straight ahead,"
+                         " not measured");
+        log_text(g_log);
+    }
+    else
+    {
+        left_mm  = width_side_mm(OBS_SIDE_LEFT, front_cm, &b_left_edge);
+        right_mm = width_side_mm(OBS_SIDE_RIGHT, front_cm, &b_right_edge);
+        servo_set_angle_deg((uint8_t)CENTRE_DEG);
+        width_mm = obs_width_mm(left_mm, right_mm);
+        b_whole  = (b_left_edge && b_right_edge);
+
+        (void)tm_sprintf(g_log, (UB *)"[S5] WIDTH: %s%u.%u cm (left %u.%u,"
+                         " right %u.%u, front %u cm)",
+                         b_whole ? "" : "at least ",
+                         (UINT)(width_mm / 10u), (UINT)(width_mm % 10u),
+                         (UINT)(left_mm / 10u), (UINT)(left_mm % 10u),
+                         (UINT)(right_mm / 10u), (UINT)(right_mm % 10u),
+                         (UINT)front_cm);
+        log_text(g_log);
+
+#if (1 == S5_HAS_COMMS)
+        {
+            UB        text[32];
+            INT const len = tm_sprintf(text, (UB *)"%u %u %u %u",
+                                       (UINT)EVT_OBSTACLE, (UINT)width_mm,
+                                       (UINT)front_cm, b_whole ? 1u : 0u);
+
+            // Queue full: the event is lost; the log line above remains.
+            (void)comms_publish(COMMS_TOPIC_EVENT, text, (uint32_t)len,
+                                false);
+        }
+#endif
+    }
 }
 
 static uint8_t
