@@ -38,7 +38,7 @@ have not yet been tested together through that interface.
 | IF-09 StopTurn, motion activity | S2-M03, S5-M03, NAV-M01, INT-16 (activity) | |
 | IF-10 Line Following / Barcode → Navigation | NAV-U01, NAV-M01 (simulated) | no test with the real Line Following |
 | IF-11 Obstacle Scan → Navigation | S5-U04 .. S5-U06, NAV-U01, NAV-U03, NAV-M01 (simulated), S5-M02, S5-M03 | |
-| IF-12 fault bits | NAV-M01 (IMU degrade, e-stop, CLEAR), S4-U07, S5-M04 (no echo), SYS-13 (Wi-Fi loss) | |
+| IF-12 fault bits | NAV-M01 (IMU degrade, e-stop, CLEAR), S4-U07, S4-M07 (upside down), S5-M04 (no echo), SYS-13 (Wi-Fi loss) | |
 | IF-13 remote commands → Navigation | NAV-U01, NAV-M01 (simulated), SYS-11 | |
 | IF-14 Navigation state, faults, reason | NAV-U02, INT-16 | |
 | IF-15 dashboard ↔ car | INT-15, INT-17, CO-U05, CO-U09, CO-U10, RE-U01, SYS-10, SYS-11, SYS-15 | |
@@ -52,7 +52,8 @@ have not yet been tested together through that interface.
 | IF-S4-4 IMU fault to Navigation | S4-U01, S4-M04, NAV-M01 (IMU degrade and recovery) | |
 | IF-S4-5 encoder counts to the IMU | S4-U09, H-U13 .. H-U15 (host) | |
 | IF-S4-6 course done, restart | S4-M06 | |
-| IF-S4-7 ramp, tilt, IMU OK | H-U35 .. H-U37, H-A13 .. H-A15 (host), INT-19 (`imu_is_ok()`) | no test with the real Line Following |
+| IF-S4-7 ramp, tilt, IMU OK | H-U35 .. H-U37, H-U48, H-A13 .. H-A15 (host), INT-19 (`imu_is_ok()`) | no test with the real Line Following |
+| IF-S4-8 upside-down stop to Navigation | H-U49 .. H-U52 (host), S4-M07 | |
 
 Add a row here with every new interface, and a test ID to it when the test
 is written.
