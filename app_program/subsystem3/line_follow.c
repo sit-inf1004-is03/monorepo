@@ -96,6 +96,10 @@
                                    * ~5 more = ~90).  Still too much ->
                                    * lower; too little -> raise. */
 #define LINE_HALF_TRACK_MM (70U)  /* LOCAL: wheel centre to car centre */
+#define LINE_BC_HOLD_MM (300U)    /* LOCAL: while a barcode passes under its
+                                   * sensor, hold the heading (no steering)
+                                   * for at most this far: longer than the
+                                   * longest barcode (5 characters) */
 #define LINE_JUNC_SEEN  (0.35f)   /* LOCAL debug: both sensors above this
                                    * = something across the line; its
                                    * darkest point is printed after */
@@ -126,6 +130,8 @@ static uint32_t     g_hist_idx   = 0U;       /* next slot to write */
 static uint32_t     g_hist_count = 0U;       /* slots filled */
 static uint32_t     g_hist_next  = 0U;       /* L+R at the next slot */
 static int32_t      g_ramp_head  = 0;        /* L-R to hold on the ramp */
+static bool         g_b_bc_hold  = false;    /* LOCAL: barcode: heading held */
+static uint32_t     g_bc_hold_sum = 0U;      /* LOCAL: L+R count at its start */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -567,6 +573,50 @@ EXPORT void line_task(INT stacd, void * exinf)
             else
             {
                 g_b_in_pivot = false;
+            }
+        }
+
+        /* LOCAL: a barcode passing under its sensor: hold the heading
+         * (level 0: Motion keeps the wheels' count difference), so the car
+         * crosses the bars straight instead of swinging over them, and the
+         * bars under the line sensors (both white in a gap = "lost") do
+         * not make it steer.  At most LINE_BC_HOLD_MM, once per barcode. */
+        {
+            uint32_t const nav = nav_get_state();
+            bool const b_steer = (((NAV_STATE_LINE_FOLLOW == nav) ||
+                                   (NAV_STATE_JUNCTION == nav)) &&
+                                  (MOTION_ACTIVITY_STRAIGHT ==
+                                   motion_get_activity()));
+            uint32_t const sum = drv_encoder_get_count(DRV_ENCODER_LEFT) +
+                                 drv_encoder_get_count(DRV_ENCODER_RIGHT);
+
+            if (b_steer && barcode_is_scanning())
+            {
+                if (!g_b_bc_hold)
+                {
+                    g_b_bc_hold   = true;
+                    g_bc_hold_sum = sum;
+                    tm_printf((UB*)"[LINE] barcode: heading held\n");
+                }
+
+                if ((drv_encoder_pulses_to_mm(sum - g_bc_hold_sum) / 2U) <
+                    LINE_BC_HOLD_MM)
+                {
+                    g_last_level = 0;
+                    g_b_resync   = true;    /* no D kick afterwards */
+                    line_output(0);
+                    tk_dly_tsk(LINE_LOOP_MS);
+                    continue;
+                }
+            }
+            else if (g_b_bc_hold && !barcode_is_scanning())
+            {
+                g_b_bc_hold = false;
+                tm_printf((UB*)"[LINE] barcode passed: steering\n");
+            }
+            else
+            {
+                /* Not over a barcode. */
             }
         }
 

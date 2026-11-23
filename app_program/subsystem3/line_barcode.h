@@ -55,6 +55,11 @@
 #define BC_MIN_PASS_COUNTS  (60U)     /* LOCAL: a pass with less travel
                                        * (L+R counts, ~10 mm) was swiped by
                                        * hand: use its time widths */
+#define BC_HOLD_MIN_ELEMENTS (3U)     /* LOCAL: barcode_is_scanning(): a
+                                       * pass with this many bars / gaps */
+#define BC_HOLD_EDGE_MS     (400U)    /* LOCAL: ...and an edge this recent
+                                       * (bars come every few mm; 400 ms =
+                                       * 16 mm at 40 mm/s) */
 #define BC_BEEP             (1)       /* 1 = beep on a read (GP22) */
 #define BC_BUZZER_PIN       (22U)     /* Robo Pico buzzer, PWM slice 3 */
 #define BC_BEEP_MS          (80U)     /* each beep; A = 1 ... D = 4 */
@@ -104,6 +109,7 @@ void         barcode_task(INT stacd, void * exinf);
 const char * barcode_cmd_name(barcode_cmd_t cmd);
 uint32_t     barcode_get_last(void);                        /* IF-18 */
 void         barcode_beep(uint8_t count, uint16_t on_ms);   /* LOCAL */
+bool         barcode_is_scanning(void);                     /* LOCAL */
 
 /* LOCAL: barcode map, set from the dashboard (protocol.h CFG_BARCODE_*):
  * what each character '0'-'9', 'A'-'Z' means at the next T.  Defaults
