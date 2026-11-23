@@ -23,6 +23,11 @@
  * Pass: starts on the first black edge, collects the widths bar, gap,
  *   bar, ... (in 100 us units, 16 bits), and ends when no edge has come
  *   for BC_END_GAP_MS.  Pulses shorter than BC_GLITCH_MS are noise.
+ *   LOCAL (BC_WIDTH_BY_DISTANCE): each width is also kept as wheel
+ *   travel (left + right encoder counts, ~0.17 mm each) and those are
+ *   decoded instead, so speed changes, jerks and stops on a bar do not
+ *   change the widths.  A pass with under BC_MIN_PASS_COUNTS of travel
+ *   (a barcode swiped by hand) is decoded from its time widths.
  *
  * Decode: Code 39 = 9 elements per character (5 bars, 4 gaps, 3 thick),
  *   one thin gap between characters, so a pass is 10 x chars - 1 long
@@ -55,6 +60,7 @@
 #include "../gpio_irq.h"            /* gpio_irq_get_time_usec() */
 #include "../navigation/navigation.h"
 #include "../comms/comms.h"         /* comms_log(): dashboard log */
+#include "../subsystem2/drv_encoder.h"  /* LOCAL: widths by wheel travel */
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -80,6 +86,7 @@
 #define LEARN_SAMPLES       (64U)   /* floor readings at start-up */
 #define LEVELS_EVERY        (1000U) /* debug: levels every ~1 s */
 #define LOG_LEN             (96U)
+#define LOG_WIDTHS_PER_LINE (12U)   /* 12 x " 65535" + prefix < LOG_LEN */
 
 /* Buzzer: 1 PWM tick = 1 us (125 MHz / 125), wrap 500 = 2 kHz, 50 %. */
 #define BUZZER_SYS_CLK_HZ   (125000000U)
@@ -139,6 +146,8 @@ static uint16_t g_glitches     = 0U;
 static uint16_t g_tried        = 0U;    /* count at the last early try */
 static uint16_t g_extreme      = 0U;    /* peak (bar) / valley (gap) */
 static uint16_t g_levels[BC_MAX_ELEMENTS];  /* each element's extreme */
+static uint16_t g_dists[BC_MAX_ELEMENTS];   /* LOCAL: widths, L+R counts */
+static uint32_t g_last_edge_pos = 0U;       /* LOCAL: L+R count at edge */
 
 static UB       g_log[LOG_LEN];
 
@@ -176,6 +185,8 @@ static uint32_t g_nav_seen     = NAV_STATE_IDLE;
 static uint16_t      read_ao(void);
 static void          learn_floor(void);
 static void          sample(void);
+static uint32_t      wheel_pos(void);
+static uint16_t const * pass_widths(bool * p_b_by_distance);
 static void          on_edge(bool b_black, uint32_t now_us,
                              uint16_t level);
 static void          finish_pass(void);
@@ -184,6 +195,9 @@ static bool          mark_widest(uint16_t const * p_w, uint16_t first,
                                  uint16_t count, bool * p_thick);
 static char          lookup(bool const * p_thick);
 static char          decode_char(uint16_t const * p_w);
+static bool          decode_pass(uint16_t const * p_w, uint16_t n,
+                                 char * p_letter, bool * p_b_reversed);
+static void          log_widths(uint16_t const * p_w);
 static bool          decode(uint16_t const * p_w, uint16_t n,
                             char * p_letter, bool b_reverse);
 static barcode_cmd_t letter_to_cmd(char letter);
@@ -347,10 +361,36 @@ static void sample(void)
     }
 }
 
+/* LOCAL: wheel travel so far, left + right encoder counts (wraps). */
+static uint32_t wheel_pos(void)
+{
+    return (drv_encoder_get_count(DRV_ENCODER_LEFT) +
+            drv_encoder_get_count(DRV_ENCODER_RIGHT));
+}
+
+/* LOCAL: the widths to decode: wheel travel if the car moved far enough
+ * during the pass, else time (barcode swiped by hand). */
+static uint16_t const * pass_widths(bool * p_b_by_distance)
+{
+    uint32_t travel = 0U;
+
+    for (uint16_t i = 0U; i < g_count; i++)
+    {
+        travel += g_dists[i];
+    }
+
+    *p_b_by_distance = ((1 == BC_WIDTH_BY_DISTANCE) &&
+                        (travel >= BC_MIN_PASS_COUNTS));
+
+    return (*p_b_by_distance ? g_dists : g_widths);
+}
+
 /* One black <-> white edge: start a pass, or store the width just ended. */
 static void on_edge(bool b_black, uint32_t now_us, uint16_t level)
 {
-    uint32_t dt;
+    uint32_t       dt;
+    uint32_t const pos = wheel_pos();
+    uint32_t       dpos;
 
     if (!g_b_in_pass)
     {
@@ -363,11 +403,13 @@ static void on_edge(bool b_black, uint32_t now_us, uint16_t level)
             g_b_too_long   = false;
             g_b_last_black = true;
             g_last_edge_us = now_us;
+            g_last_edge_pos = pos;
         }
     }
     else if (b_black != g_b_last_black)
     {
-        dt = (now_us - g_last_edge_us) / WIDTH_UNIT_US;
+        dt   = (now_us - g_last_edge_us) / WIDTH_UNIT_US;
+        dpos = pos - g_last_edge_pos;
 
         if ((dt * WIDTH_UNIT_US) < (BC_GLITCH_MS * 1000U))
         {
@@ -379,6 +421,7 @@ static void on_edge(bool b_black, uint32_t now_us, uint16_t level)
                 g_count--;
                 g_last_edge_us -= (uint32_t)g_widths[g_count] *
                                   WIDTH_UNIT_US;
+                g_last_edge_pos -= g_dists[g_count];
                 g_b_last_black  = b_black;
             }
             else
@@ -392,6 +435,8 @@ static void on_edge(bool b_black, uint32_t now_us, uint16_t level)
             {
                 g_widths[g_count] = (dt > WIDTH_MAX) ? (uint16_t)WIDTH_MAX
                                                      : (uint16_t)dt;
+                g_dists[g_count]  = (dpos > WIDTH_MAX) ? (uint16_t)WIDTH_MAX
+                                                       : (uint16_t)dpos;
                 g_levels[g_count] = level;
                 g_count++;
             }
@@ -400,8 +445,9 @@ static void on_edge(bool b_black, uint32_t now_us, uint16_t level)
                 g_b_too_long = true;
             }
 
-            g_last_edge_us = now_us;
-            g_b_last_black = b_black;
+            g_last_edge_us  = now_us;
+            g_last_edge_pos = pos;
+            g_b_last_black  = b_black;
         }
     }
     else
@@ -577,6 +623,63 @@ static bool decode(uint16_t const * p_w, uint16_t n, char * p_letter,
     return (b_ok);
 }
 
+/* LOCAL: decode a pass forwards, then reversed; if the whole pass is not
+ * a barcode (stray bars before / after it: the line, a smudge, the T),
+ * try every 29 / 39 / 49-element stretch that starts on a bar.  The '*'
+ * framing keeps a wrong stretch from reading as a letter. */
+static bool decode_pass(uint16_t const * p_w, uint16_t n, char * p_letter,
+                        bool * p_b_reversed)
+{
+    bool     b_ok = false;
+    uint16_t len;
+    uint16_t off;
+
+    *p_b_reversed = false;
+
+    for (len = n; (len >= ((3U * CHAR_STRIDE) - 1U)) && (!b_ok); len--)
+    {
+        if (0U == ((len + 1U) % CHAR_STRIDE))
+        {
+            for (off = 0U; ((off + len) <= n) && (!b_ok); off += 2U)
+            {
+                b_ok = decode(&p_w[off], len, p_letter, false);
+
+                if (!b_ok)
+                {
+                    b_ok          = decode(&p_w[off], len, p_letter, true);
+                    *p_b_reversed = b_ok;
+                }
+            }
+        }
+    }
+
+    return (b_ok);
+}
+
+/* LOCAL: a pass that did not decode: its widths on the dashboard log,
+ * up to LOG_WIDTHS_PER_LINE per line. */
+static void log_widths(uint16_t const * p_w)
+{
+    uint16_t i = 0U;
+    INT      len;
+
+    while (i < g_count)
+    {
+        len = tm_sprintf(g_log, (UB *)"[BC] widths %u-%u:", (UINT)(i + 1U),
+                         (UINT)(((i + LOG_WIDTHS_PER_LINE) < g_count) ?
+                                (i + LOG_WIDTHS_PER_LINE) : g_count));
+
+        for (uint16_t k = 0U; (k < LOG_WIDTHS_PER_LINE) && (i < g_count);
+             k++)
+        {
+            len += tm_sprintf(&g_log[len], (UB *)" %u", (UINT)p_w[i]);
+            i++;
+        }
+
+        log_line();
+    }
+}
+
 /* LOCAL: the character's meaning from the dashboard map (g_bc_map). */
 static barcode_cmd_t letter_to_cmd(char letter)
 {
@@ -624,20 +727,16 @@ static int16_t map_index(char letter)
 /* A pass has ended: decode it, log it, tell Navigation. */
 static void finish_pass(void)
 {
-    char          letter     = INVALID_PATTERN;
-    bool          b_reversed = false;
-    bool          b_ok       = false;
-    barcode_cmd_t cmd        = CMD_NONE;
+    char            letter     = INVALID_PATTERN;
+    bool            b_reversed = false;
+    bool            b_ok       = false;
+    bool            b_by_dist  = false;
+    barcode_cmd_t   cmd        = CMD_NONE;
+    uint16_t const *p_widths   = pass_widths(&b_by_dist);
 
     if (!g_b_too_long)
     {
-        b_ok = decode(g_widths, g_count, &letter, false);
-
-        if (!b_ok)
-        {
-            b_ok       = decode(g_widths, g_count, &letter, true);
-            b_reversed = b_ok;
-        }
+        b_ok = decode_pass(p_widths, g_count, &letter, &b_reversed);
     }
 
     if (b_ok)
@@ -668,10 +767,11 @@ static void finish_pass(void)
     {
         /* Worth a look: a barcode-sized pass that did not decode. */
         (void)tm_sprintf(g_log, (UB *)"[BC] no read: %u bars/gaps%s,"
-                         " %u glitches", (UINT)g_count,
+                         " %u glitches, widths by %s", (UINT)g_count,
                          g_b_too_long ? " (too many)" : "",
-                         (UINT)g_glitches);
+                         (UINT)g_glitches, b_by_dist ? "distance" : "time");
         log_line();
+        log_widths(p_widths);
     }
     else
     {
@@ -686,6 +786,13 @@ static void finish_pass(void)
         for (uint16_t i = 0U; i < g_count; i++)
         {
             tm_printf((UB *)" %u", (UINT)g_widths[i]);
+        }
+
+        tm_printf((UB *)"\n[BC] widths L+R counts:");
+
+        for (uint16_t i = 0U; i < g_count; i++)
+        {
+            tm_printf((UB *)" %u", (UINT)g_dists[i]);
         }
 
         tm_printf((UB *)"\n");
@@ -857,12 +964,14 @@ void barcode_task(INT stacd, void * exinf)
             /* LOCAL: a bar just ended with a whole number of characters:
              * if it is already a valid "*X*", decode now instead of
              * waiting BC_END_GAP_MS (the T's crossbar may come first). */
-            char letter = INVALID_PATTERN;
+            char            letter = INVALID_PATTERN;
+            bool            b_by_dist;
+            uint16_t const *p_widths = pass_widths(&b_by_dist);
 
             g_tried = g_count;
 
-            if (decode(g_widths, g_count, &letter, false) ||
-                decode(g_widths, g_count, &letter, true))
+            if (decode(p_widths, g_count, &letter, false) ||
+                decode(p_widths, g_count, &letter, true))
             {
                 finish_pass();
             }

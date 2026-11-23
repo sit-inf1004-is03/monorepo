@@ -47,6 +47,14 @@
 #define BC_GLITCH_MS        (3U)      /* shorter pulses are noise */
 #define BC_END_GAP_MS       (1000U)   /* no edge this long = pass over */
 #define BC_MAX_ELEMENTS     (49U)     /* up to *XYZ* (5 characters) */
+#define BC_WIDTH_BY_DISTANCE (1)      /* LOCAL: 1 = bar widths from wheel
+                                       * travel (L+R encoder counts), so
+                                       * the car's jerks, slow-downs and
+                                       * stops on a bar do not stretch it;
+                                       * 0 = widths from time only */
+#define BC_MIN_PASS_COUNTS  (60U)     /* LOCAL: a pass with less travel
+                                       * (L+R counts, ~10 mm) was swiped by
+                                       * hand: use its time widths */
 #define BC_BEEP             (1)       /* 1 = beep on a read (GP22) */
 #define BC_BUZZER_PIN       (22U)     /* Robo Pico buzzer, PWM slice 3 */
 #define BC_BEEP_MS          (80U)     /* each beep; A = 1 ... D = 4 */
