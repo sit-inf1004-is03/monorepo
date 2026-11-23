@@ -161,7 +161,7 @@ After editing, run `make -j8` again in `build_make` and copy the new `.uf2`.
 
 ---
 
-## 3. Build options: `SMP`, `CONSOLE`, `WIFI`, `TEST`, `CRASH_REPORT`
+## 3. Build options: `SMP`, `CONSOLE`, `WIFI`, `TEST`, `TEST_ONLY`, `CRASH_REPORT`
 
 `make` on its own uses the defaults. To build differently, put options
 after `make`. They can be combined in any order:
@@ -171,6 +171,7 @@ make -j8                          # defaults: SMP=1 CONSOLE=usb_cdc WIFI=cyw43 T
 make SMP=0 -j8                    # single-core build
 make CONSOLE=uart WIFI=none -j8   # no USB console, radio off (no Pico SDK needed)
 make TEST=1 -j8                   # firmware with the subsystem self-tests
+make TEST=1 TEST_ONLY=s1 -j8      # ...but only subsystem 1's tests
 make CRASH_REPORT=1 -j8           # also see crash reports, on GP0/GP1 (uses those pins)
 ```
 
@@ -192,6 +193,7 @@ the next plain `make` goes back to the defaults.
 | `CONSOLE` | **`usb_cdc`**, `uart` | where `tm_printf` output goes. `usb_cdc` = USB cable; `uart` = UART0 only (GP0 TX / GP1 RX, needs a USB-serial adapter) | `_usb_cdc` / `_uart` | `TM_CONSOLE_USB_CDC` |
 | `WIFI` | **`cyw43`**, `none` | `cyw43` powers up the Pico W radio and its driver task; `none` leaves the radio off | `_wifi` / *(nothing)* | `TM_WIFI_CYW43` |
 | `TEST` | **`0`**, `1` | `1` compiles every `subsystemN_test.c` and runs the tests at power-up | `_test` / *(nothing)* | `APP_TEST` (1 or 0) |
+| `TEST_ONLY` | **empty**, any of `s1` `s2` `s3` `s4` `s5` `nav` (quote a list: `"s1 nav"`) | with `TEST=1`, runs only those modules' tests (`s1` = comms, remote and telemetry); every task still starts. Empty runs them all, as a hand-in run must | `_test_only_s1` / `_test` | `APP_TEST_ONLY`, `APP_TEST_ONLY_S1` … `_NAV` (1 or 0) |
 | `CRASH_REPORT` | **`0`**, `1` | `1` also copies the console to UART0 on **GP0 (TX) / GP1 (RX)**, 115200 baud, so you can see the last messages and the kernel's crash report (see below). **Uses GP0/GP1.** `CONSOLE=uart` always does this. | `_crash` / *(nothing)* | `TM_CONSOLE_UART` (1 or 0) |
 
 **Why `CRASH_REPORT` exists.** USB output is not sent the moment you call

@@ -46,6 +46,31 @@
 #include "subsystem1/remote/remote_test.h"
 #include "subsystem1/telemetry/telemetry_events.h"
 #include "subsystem1/telemetry/telemetry_test.h"
+
+/* make TEST_ONLY=<modules> runs only those modules' tests (the makefile
+ * defines APP_TEST_ONLY and one APP_TEST_ONLY_<module> per module). */
+#ifndef APP_TEST_ONLY
+#define APP_TEST_ONLY		0
+#endif
+#ifndef APP_TEST_ONLY_S1
+#define APP_TEST_ONLY_S1	0
+#endif
+#ifndef APP_TEST_ONLY_S2
+#define APP_TEST_ONLY_S2	0
+#endif
+#ifndef APP_TEST_ONLY_S3
+#define APP_TEST_ONLY_S3	0
+#endif
+#ifndef APP_TEST_ONLY_S4
+#define APP_TEST_ONLY_S4	0
+#endif
+#ifndef APP_TEST_ONLY_S5
+#define APP_TEST_ONLY_S5	0
+#endif
+#ifndef APP_TEST_ONLY_NAV
+#define APP_TEST_ONLY_NAV	0
+#endif
+#define APP_TEST_RUNS(only)	((0 == APP_TEST_ONLY) || (0 != (only)))
 #endif
 
 /*
@@ -134,17 +159,30 @@ EXPORT INT usermain(void)
 	/* Test build (make TEST=1): run every subsystem's tests in turn,
 	   here in the initial task, while the system is running.  Tests may
 	   call tk_dly_tsk() to let the other tasks work for a while. */
-	tm_printf((UB*)"[TEST] === test run start ===\n");
-	comms_test();		/* Wi-Fi / MQTT first: quick, never drive */
-	remote_test();		/* the car, and done before NAV-M01 starts */
-	telemetry_test();
-	subsystem2_test();
-	subsystem3_test();
-	telemetry_events_hold_imu(true);  /* S4-U06 reads them itself */
-	subsystem4_test();
-	telemetry_events_hold_imu(false);
-	subsystem5_test();
-	navigation_test();
+	tm_printf((UB*)"[TEST] === test run start ===%s\n",
+		  APP_TEST_ONLY ? " (TEST_ONLY: some modules only)" : "");
+	if (APP_TEST_RUNS(APP_TEST_ONLY_S1)) {
+		comms_test();	/* Wi-Fi / MQTT first: quick, never drive */
+		remote_test();	/* the car, and done before NAV-M01 starts */
+		telemetry_test();
+	}
+	if (APP_TEST_RUNS(APP_TEST_ONLY_S2)) {
+		subsystem2_test();
+	}
+	if (APP_TEST_RUNS(APP_TEST_ONLY_S3)) {
+		subsystem3_test();
+	}
+	if (APP_TEST_RUNS(APP_TEST_ONLY_S4)) {
+		telemetry_events_hold_imu(true);  /* S4-U06 reads them itself */
+		subsystem4_test();
+		telemetry_events_hold_imu(false);
+	}
+	if (APP_TEST_RUNS(APP_TEST_ONLY_S5)) {
+		subsystem5_test();
+	}
+	if (APP_TEST_RUNS(APP_TEST_ONLY_NAV)) {
+		navigation_test();
+	}
 	tm_printf((UB*)"[TEST] === test run end ===\n");
 #endif
 

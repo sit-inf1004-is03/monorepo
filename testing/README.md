@@ -59,6 +59,15 @@ Test IDs never change and are never reused, even if a test is dropped.
    ```
    The test image runs every subsystem's tests at power-up and prints one
    `[TEST] <ID> PASS|FAIL` line per check. (A normal `make` leaves the tests out.)
+   To run only your own module's tests while you work on them, add
+   `TEST_ONLY` (one or more of `s1` `s2` `s3` `s4` `s5` `nav`):
+   ```sh
+   make NET=lwip TEST=1 TEST_ONLY=s1 -j8     # -> ..._lwip_test_only_s1.uf2
+   make TEST=1 TEST_ONLY="s2 nav" -j8        # two modules
+   ```
+   Every task still starts; only the other modules' tests are left out, and
+   the image name says so. Results recorded from such a run count for those
+   modules only; before a demo or hand-in, run the full set (no `TEST_ONLY`).
    Both images run the same automatic tests; the comms, remote and telemetry
    tests need no network. Use the `NET=lwip` one when the car should also
    connect to the broker during the run (`MQTT.md`).
