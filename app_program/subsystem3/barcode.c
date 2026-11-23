@@ -78,6 +78,11 @@
 #define THICK_GAPS          (1U)
 #define THICK_PER_CHAR      (3U)
 #define MIN_RATIO_X10       (12U)   /* thick >= 1.2 x thin (blur) */
+#ifndef BC_SPLIT_PCT
+#define BC_SPLIT_PCT        (50U)   /* LOCAL: widest thin at most this %
+                                     * of the way from the mean thin to
+                                     * the mean thick (mark_widest) */
+#endif
 #define WIDTH_UNIT_US       (100U)  /* widths stored in 100 us units */
 #define WIDTH_MAX           (0xFFFFU)
 #define WHITE_SHIFT         (8U)    /* floor average ~256 samples */
@@ -461,7 +466,15 @@ static void on_edge(bool b_black, uint32_t now_us, uint16_t level)
  * ===================================================================== */
 
 /* Mark the count widest of p_w[first], p_w[first + step], ... (n of
- * them) thick.  False if thick and thin are not clearly different. */
+ * them) thick.  False if thick and thin are not clearly different:
+ *   - the thinnest thick must be MIN_RATIO_X10 / 10 of the widest thin;
+ *   - LOCAL: and the widest thin must lie at most BC_SPLIT_PCT of the
+ *     way from the mean thin width to the mean thick width.  A pattern
+ *     with a thick element too many (no Code 39 character) leaves a thick
+ *     one among the "thin", and is refused here instead of reading as
+ *     some letter.  Means, not extremes, so a smooth wobble across the
+ *     character is still accepted (host test: genuine reads unchanged,
+ *     invalid "*?*" cards read as a letter 2.8 % of the time, was 14.5). */
 static bool mark_widest(uint16_t const * p_w, uint16_t first,
                         uint16_t step, uint16_t n, uint16_t count,
                         bool * p_thick)
@@ -469,6 +482,10 @@ static bool mark_widest(uint16_t const * p_w, uint16_t first,
     uint16_t const end            = (uint16_t)(first + (n * step));
     uint16_t       thinnest_thick = WIDTH_MAX;
     uint16_t       widest_thin    = 0U;
+    uint32_t       sum_thick      = 0U;
+    uint32_t       sum_thin       = 0U;
+    uint32_t       n_thick        = 0U;
+    uint32_t       n_thin         = 0U;
 
     for (uint16_t k = 0U; k < count; k++)
     {
@@ -493,23 +510,33 @@ static bool mark_widest(uint16_t const * p_w, uint16_t first,
     {
         if (p_thick[i])
         {
+            sum_thick += p_w[i];
+            n_thick++;
+
             if (p_w[i] < thinnest_thick)
             {
                 thinnest_thick = p_w[i];
             }
         }
-        else if (p_w[i] > widest_thin)
-        {
-            widest_thin = p_w[i];
-        }
         else
         {
-            /* Narrower thin element. */
+            sum_thin += p_w[i];
+            n_thin++;
+
+            if (p_w[i] > widest_thin)
+            {
+                widest_thin = p_w[i];
+            }
         }
     }
 
-    return (((uint32_t)thinnest_thick * 10U) >=
-            ((uint32_t)widest_thin * MIN_RATIO_X10));
+    /* Split test, multiplied out (widest_thin <= mean_thin + PCT % of
+     * (mean_thick - mean_thin)).  At most 9 widths of 16 bits: < 2^31. */
+    return ((((uint32_t)thinnest_thick * 10U) >=
+             ((uint32_t)widest_thin * MIN_RATIO_X10)) &&
+            (((uint32_t)widest_thin * 100U * n_thick * n_thin) <=
+             ((sum_thin * n_thick * (100U - BC_SPLIT_PCT)) +
+              (sum_thick * n_thin * BC_SPLIT_PCT))));
 }
 
 static char lookup(bool const * p_thick)
