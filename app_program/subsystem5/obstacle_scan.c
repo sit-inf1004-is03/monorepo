@@ -27,19 +27,29 @@
  *     |                           |             way until a line sensor
  *     |                           |             sees white then black (the
  *     |                           |             line's own heading, straight
- *     |                           |             or curved), at most
- *     |                           |             ALIGN_MAX_DEG
+ *     |                           |             or curved), at most back to
+ *     |                           |             the heading at the obstacle
+ *     |                           |             (LOCAL, see below)
  *     |                           |    SEARCH   Navigation waits after the
  *     |                           |             align (or when the back limit
  *     |                           |             ran out): line on -> FOUND;
  *     |                           |             else zig-zag pivots to +15,
- *     |                           |             -30, +45 ... deg (encoders),
+ *     |                           |             -30, +45 ... deg from the
+ *     |                           |             heading at the obstacle,
  *     |                           |             StopTurn at once on the line;
  *     |                           v             past SEARCH_MAX_DEG -> FAILED
  *     +<------- Navigation leaves BYPASS
  *
  *   Pivot angles are measured with the wheel encoders (IF-06): each wheel
  *   travels angle x OBS_HALF_TRACK_MM.
+ *
+ *   LOCAL: the recovery keeps to the heading the car had when it saw the
+ *   obstacle (the line's direction), from Navigation's count of every
+ *   pivot since then, coast included (nav_get_turned_pulses()).  The align
+ *   stops there at the latest, and the search targets are measured from
+ *   it, not from wherever the align or the last search pivot left the
+ *   car, so the sweep stays centred on the line's direction and is less
+ *   likely to pick up a line at an angle to it.
  *
  *   3 failed scans: nav_raise_fault(NAV_FLT_SCAN_ERROR), ERROR state.
  *   ~1 s of a SILENT sensor: nav_raise_fault(NAV_FLT_NO_ECHO).
@@ -126,9 +136,10 @@
 #define SEARCH_MAX_POLLS        (600u)  // 6 s bound on one slow sweep.
 
 
-// Align pivot: stops on the line (white, then black) or at this angle.
-// A straight line is met at the rejoin angle (30 deg); a line curving
-// away later, one curving back earlier.
+// Align pivot: stops on the line (white, then black) or, LOCAL, back at
+// the heading the car had at the obstacle, and never more than this.  A
+// straight line is met at that heading; a line curving back earlier, and
+// one curving away is left to the search.
 //
 #define ALIGN_MAX_DEG           (75u)
 
@@ -218,6 +229,9 @@ typedef struct
     bool     b_turning;         // Phase flag: tracked pivot started.
     bool     b_requested;       // Search: pivot asked of Navigation.
     bool     b_armed;           // Line stop armed: white seen in pivot.
+    uint32_t align_pulses;      // LOCAL: align limit, taken at its start.
+    uint16_t sweep_deg;         // LOCAL: search pivot running: its angle
+    bool     b_sweep_left;      // and direction (for its log line).
 } scan_ctx_t;
 
 static void     on_watch(scan_ctx_t * p_ctx);
@@ -240,7 +254,9 @@ static uint16_t track_pivot(scan_ctx_t * p_ctx, uint32_t target_pulses,
 static void     on_search(scan_ctx_t * p_ctx);
 static uint32_t encoder_sum(void);
 static uint32_t rejoin_pulses(void);
-static uint32_t align_pulses(void);
+static uint32_t align_target(scan_ctx_t * p_ctx);
+static uint32_t deg_pulses(uint16_t angle_deg);
+static int16_t  heading_deg(bool b_plus_is_left);
 static void     log_text(UB const * p_text);
 static uint16_t ping_cm(void);
 static uint16_t ping_median_cm(void);
@@ -273,6 +289,9 @@ obstacle_scan_task(INT stacd, void * p_exinf)
     ctx.b_turning    = false;
     ctx.b_requested  = false;
     ctx.b_armed      = false;
+    ctx.align_pulses = 0u;
+    ctx.sweep_deg    = 0u;
+    ctx.b_sweep_left = false;
 
     servo_set_angle_deg((uint8_t)CENTRE_DEG);
     (void)tm_sprintf(g_log,
@@ -571,7 +590,7 @@ on_bypass(scan_ctx_t * p_ctx)
         (LEG_PARALLEL == leg) ? ((uint32_t)p_ctx->pivot_pulses +
                                  drv_encoder_mm_to_pulses(
                                      obs_deg_arc_mm(PARALLEL_IN_DEG))) :
-        (LEG_IN == leg)       ? rejoin_pulses() : align_pulses();
+        (LEG_IN == leg)       ? rejoin_pulses() : align_target(p_ctx);
 
     if (is_bypass_over())
     {
@@ -860,9 +879,7 @@ on_search(scan_ctx_t * p_ctx)
     uint16_t       step = fld_get(p_ctx->state_word, F_SEARCH_SHIFT,
                                   F_SEARCH_MASK);
     int16_t        target;
-    int16_t        from;
-    uint16_t       sweep;
-    bool           b_left;
+    int16_t        turn;
     uint16_t       result;
 
     // "+" direction: towards the original line = the turn-in pivot, which
@@ -871,11 +888,6 @@ on_search(scan_ctx_t * p_ctx)
                                      (1 == SEARCH_FIRST_TOWARD_LINE));
 
     target = obs_search_target_deg(step, SEARCH_START_DEG, SEARCH_STEP_DEG);
-    from   = obs_search_target_deg((uint16_t)((0u == step) ? 0u :
-                                              (step - 1u)),
-                                   SEARCH_START_DEG, SEARCH_STEP_DEG);
-    sweep  = (uint16_t)((target > from) ? (target - from) : (from - target));
-    b_left = ((target > from) == b_plus_is_left);
 
     if (p_ctx->b_requested)
     {
@@ -892,8 +904,9 @@ on_search(scan_ctx_t * p_ctx)
             p_ctx->b_turning   = false;
             p_ctx->polls       = 0u;
             (void)tm_sprintf(g_log, (UB *)"[S5] search: pivot %s %u deg"
-                             " (to %d), %s", b_left ? "left" : "right",
-                             (UINT)sweep, (INT)target,
+                             " (to %d), %s",
+                             p_ctx->b_sweep_left ? "left" : "right",
+                             (UINT)p_ctx->sweep_deg, (INT)target,
                              (TRACK_LINE == result) ? "line found"
                                                     : "no line");
             log_text(g_log);
@@ -928,21 +941,21 @@ on_search(scan_ctx_t * p_ctx)
     }
     else
     {
-        // Next zig-zag target: ask Navigation for the pivot.
+        // Next zig-zag target, LOCAL: from the heading at the obstacle,
+        // so the pivot also takes back how far the align and the last
+        // pivot (with its coast) really turned.  Ask Navigation for it.
         step++;
         target = obs_search_target_deg(step, SEARCH_START_DEG,
                                        SEARCH_STEP_DEG);
-        from   = obs_search_target_deg((uint16_t)(step - 1u),
-                                       SEARCH_START_DEG, SEARCH_STEP_DEG);
-        sweep  = (uint16_t)((target > from) ? (target - from)
-                                            : (from - target));
-        b_left = ((target > from) == b_plus_is_left);
-        p_ctx->pivot_pulses = (uint16_t)drv_encoder_mm_to_pulses(
-                                  obs_deg_arc_mm(sweep));
+        turn   = (int16_t)(target - heading_deg(b_plus_is_left));
+        p_ctx->sweep_deg    = (uint16_t)((turn < 0) ? -turn : turn);
+        p_ctx->b_sweep_left = ((turn > 0) == b_plus_is_left);
+        p_ctx->pivot_pulses = (uint16_t)deg_pulses(p_ctx->sweep_deg);
         p_ctx->b_requested  = true;
         p_ctx->b_turning    = false;
         p_ctx->polls        = 0u;
-        (void)nav_post_search(b_left ? NAV_SEARCH_LEFT : NAV_SEARCH_RIGHT);
+        (void)nav_post_search(p_ctx->b_sweep_left ? NAV_SEARCH_LEFT
+                                                  : NAV_SEARCH_RIGHT);
     }
 
     p_ctx->state_word = fld_set(p_ctx->state_word, F_SEARCH_SHIFT,
@@ -974,12 +987,56 @@ rejoin_pulses(void)
 }
 
 /*!
- * @brief  Pulses per wheel for the align pivot's limit (ALIGN_MAX_DEG).
+ * @brief  LOCAL: pulses per wheel for the align pivot's limit: back to the
+ *         heading the car had at the obstacle, at most ALIGN_MAX_DEG
+ *         (0 if the car already points there or further).  Taken before
+ *         the pivot starts and kept while it runs, as the heading changes.
  */
 static uint32_t
-align_pulses(void)
+align_target(scan_ctx_t * p_ctx)
 {
-    return (drv_encoder_mm_to_pulses(obs_deg_arc_mm(ALIGN_MAX_DEG)));
+    // "+" towards the line (the turn-in way), which the align undoes:
+    // LEFT after a RIGHT bypass.
+    bool const    b_in_is_left = (OBS_SIDE_RIGHT ==
+                                  fld_get(p_ctx->state_word, F_SIDE_SHIFT,
+                                          F_SIDE_MASK));
+    int16_t const back         = heading_deg(b_in_is_left);
+
+    if (!p_ctx->b_turning)
+    {
+        p_ctx->align_pulses =
+            (back <= 0) ? 0u :
+            deg_pulses(((uint16_t)back > ALIGN_MAX_DEG) ?
+                       (uint16_t)ALIGN_MAX_DEG : (uint16_t)back);
+    }
+
+    return (p_ctx->align_pulses);
+}
+
+/*!
+ * @brief  LOCAL: pulses per wheel for a pivot of angle_deg.
+ */
+static uint32_t
+deg_pulses(uint16_t angle_deg)
+{
+    return (drv_encoder_mm_to_pulses(obs_deg_arc_mm(angle_deg)));
+}
+
+/*!
+ * @brief  LOCAL: the car's heading from the one it had at the obstacle
+ *         (or when a T turn's search began), in whole degrees, "+" =
+ *         left if b_plus_is_left, else right (Navigation's count).
+ */
+static int16_t
+heading_deg(bool b_plus_is_left)
+{
+    int32_t const per_90 = (int32_t)deg_pulses(90u);
+    int32_t const turned = nav_get_turned_pulses();
+    int32_t const plus   = b_plus_is_left ? turned : -turned;
+    int32_t const half   = (plus < 0) ? -(per_90 / 2) : (per_90 / 2);
+
+    // Rounded to the nearest degree; a pivot count is far below 2^24.
+    return ((int16_t)(((plus * 90) + half) / per_90));
 }
 
 /*!
