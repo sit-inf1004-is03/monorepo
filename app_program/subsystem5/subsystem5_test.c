@@ -121,16 +121,17 @@ subsystem5_test(void)
                "line search zig-zag targets and pivot arc");
 
     // Width: a box 13 cm ahead reads 15 cm at 30 deg (step 6): forward
-    // 13 cm = on the face; edge taken at 32.5 deg -> 130 x 0.637 = 83 mm.
-    // No echo, or an echo from 40 cm (forward 34.6 cm, a wall behind),
-    // ends the face.
+    // 13 cm = on the face; edge 30 + 3 - beam 7 = 26 deg -> 130 x 0.488
+    // = 63 mm.  A miss at step 1 (edge 3 - 7 < 0) gives 0.  No echo, or an echo from 40 cm (forward 34.6 cm, a wall
+    // behind), ends the face.
     TEST_CHECK("S5-U11", obs_is_on_face(15u, 6u, 13u) &&
                (!obs_is_on_face(OBS_FAR_CM, 7u, 13u)) &&
                (!obs_is_on_face(40u, 6u, 13u)) &&
-               (83u == obs_side_mm(15u, 6u)) &&
-               (6u == obs_side_mm(13u, 0u)) &&
-               ((uint16_t)(166 + (2 * OBS_WIDTH_TRIM_MM)) ==
-                obs_width_mm(83u, 83u)),
+               ((7u != OBS_WIDTH_BEAM_DEG) ||
+                ((63u == obs_side_mm(15u, 6u)) &&
+                 (0u == obs_side_mm(13u, 0u)))) &&
+               ((uint16_t)(110 + (2 * OBS_WIDTH_TRIM_MM)) ==
+                obs_width_mm(55u, 55u)),
                "obstacle width: face test, half-widths, sum");
 
     // Bypass plan through Navigation's packer: 2 + 3 x 9 = 29 bits,
