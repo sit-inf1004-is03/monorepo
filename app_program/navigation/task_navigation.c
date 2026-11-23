@@ -11,8 +11,9 @@
  *   - Line following: one long straight; Line Following steers it through
  *     Motion's turn level.
  *   - Barcode read: cap the speed (slow down) and wait for the junction.
- *     At the junction: C drives on at full speed; A, B and D brake, then
- *     pivot until StopTurn (D pivots NAV_UTURN_PIVOTS times).
+ *     At the junction: C drives on at full speed; A and B creep onto the
+ *     crossbar, brake and turn until StopTurn; D brakes and pivots on the
+ *     spot NAV_UTURN_PIVOTS times, NAV_UTURN_GAP_MSEC apart (LOCAL).
  *   - Obstacle: brake and wait for Obstacle Scan's bypass plan, then run
  *     three legs (every pivot ended by Obstacle Scan's StopTurn):
  *     pivot out, drive "out" cm (sideways clear of the obstacle); pivot
@@ -80,9 +81,16 @@
                                         // on the line, not just the line
                                         // sensor.  = line sensor to axle;
                                         // TODO measure the real car.
-#define NAV_UTURN_PIVOTS    (2u)        // StopTurns in a U-turn; check on
-                                        // the track's junctions.
+#define NAV_UTURN_PIVOTS    (2u)        // StopTurns in a U-turn: each is
+                                        // Line Following's ~90 deg
+                                        // junction turn.  Check on the
+                                        // track's junctions.
 #define NAV_UTURN_DIR       (MOTION_DIR_LEFT)
+#define NAV_UTURN_GAP_MSEC  (200u)      // LOCAL: pause between the U-turn
+                                        // pivots, so Line Following (a
+                                        // 20 ms loop) sees the first end
+                                        // and times the second from its
+                                        // own start.
 #define MM_PER_CM           (10u)
 
 // Event bits.  Bits 0-7 are the fault bits (navigation.h); bit 8 is kept
@@ -142,6 +150,8 @@
 #define P_HALTED            (17u)
 #define P_JUNC_CREEP        (18u)   // LOCAL: at the T, creep NAV_CROSS_MM
                                     // (axle onto the crossbar), then turn.
+#define P_UTURN_GAP         (19u)   // LOCAL: stopped between the U-turn
+                                    // pivots (NAV_UTURN_GAP_MSEC).
 
 typedef struct
 {
@@ -164,6 +174,7 @@ typedef struct
     bool     b_search;
     uint32_t search_cmd;        // NAV_SEARCH_ being run.
     uint32_t search_loops;      // Loops waited in P_SEARCH_WAIT.
+    uint32_t gap_start_ms;      // When P_UTURN_GAP began.
 } nav_ctx_t;
 
 static ID                g_flg_id   = 0;
@@ -212,6 +223,7 @@ static void nav_send_straight(uint32_t speed_mm_s, uint32_t distance_mm);
 static void nav_send_pivot(uint32_t direction, uint32_t speed_mm_s);
 static void nav_send(motion_cmd_t const * p_cmd);
 static ER   nav_post(uint32_t event);
+static uint32_t nav_now_ms(void);
 
 
 /*!
@@ -709,8 +721,9 @@ nav_on_move_done (void)
         case P_TURNING:
             if (g_ctx.turns_left > 1u)
             {
+                // LOCAL: U-turn: pause, then the next pivot.
                 g_ctx.turns_left--;
-                nav_send_pivot(g_ctx.turn_dir, 0u);
+                nav_enter(P_UTURN_GAP);
             }
             else if (NAV_LINE_ON != g_line_state)
             {
@@ -907,6 +920,11 @@ nav_process (void)
     {
         nav_brake_then(P_ALIGN, NAV_STATE_BYPASS);
     }
+    else if ((P_UTURN_GAP == g_ctx.phase) &&
+             ((nav_now_ms() - g_ctx.gap_start_ms) >= NAV_UTURN_GAP_MSEC))
+    {
+        nav_enter(P_TURNING);   // LOCAL: the next U-turn pivot.
+    }
     else if ((P_JUNC_CREEP == g_ctx.phase) &&
              nav_driven_mm(NAV_JUNC_CREEP_MM))
     {
@@ -995,8 +1013,12 @@ nav_on_remote (uint32_t command)
 
 /*!
  * @brief At the junction (LOCAL): A turns left and B right, after a creep
- *        of NAV_CROSS_MM so the axle is on the crossbar.  C, and for now
- *        D, drive straight on (as with no barcode at all).
+ *        of NAV_CROSS_MM so the axle is on the crossbar.  D brakes at once
+ *        and pivots on the spot NAV_UTURN_PIVOTS times: the axle is still
+ *        on the line the car came along (the line sensor, NAV_CROSS_MM
+ *        ahead of it, has just reached the crossbar), so after the half
+ *        turn the sensor is back over that line.  C drives straight on
+ *        (as with no barcode at all).
  */
 static void
 nav_at_junction (void)
@@ -1013,6 +1035,15 @@ nav_at_junction (void)
                   (UINT) NAV_JUNC_CREEP_MM,
                   (1 == NAV_JUNC_SWING) ? "one-wheel turn" : "pivot");
         nav_enter(P_JUNC_CREEP);
+    }
+    else if (NAV_BARCODE_UTURN == g_ctx.barcode)
+    {
+        g_ctx.turns_left = NAV_UTURN_PIVOTS;
+        g_ctx.turn_dir   = NAV_UTURN_DIR;
+        tm_printf((UB *) "[NAV] T: U-turn, brake, then %u pivots %s\n",
+                  (UINT) NAV_UTURN_PIVOTS,
+                  (MOTION_DIR_LEFT == NAV_UTURN_DIR) ? "left" : "right");
+        nav_brake_then(P_TURNING, NAV_STATE_JUNCTION);
     }
     else
     {
@@ -1097,18 +1128,32 @@ nav_enter (uint32_t phase)
         case P_TURNING:
             nav_set_state(NAV_STATE_JUNCTION);
             motion_set_speed_cap(0u);
-#if (1 == NAV_JUNC_SWING)
+
+            if (NAV_BARCODE_UTURN == g_ctx.barcode)
             {
+                // LOCAL: a U-turn pivots on the spot, so the car stays
+                // on its line (a swing would move it sideways).  Ended
+                // by Line Following's StopTurn, like the other turns.
+                nav_send_pivot(g_ctx.turn_dir, 0u);
+            }
+            else
+            {
+#if (1 == NAV_JUNC_SWING)
                 // LOCAL: one-wheel turn, ended by Line Following's
                 // StopTurn when a sensor finds the crossbar line.
                 motion_cmd_t const cmd = { MOTION_CMD_SWING, g_ctx.turn_dir,
                                            0u, 0u };
 
                 nav_send(&cmd);
-            }
 #else
-            nav_send_pivot(g_ctx.turn_dir, 0u);
+                nav_send_pivot(g_ctx.turn_dir, 0u);
 #endif
+            }
+            break;
+
+        case P_UTURN_GAP:
+            // LOCAL: stopped; nav_process() starts the next pivot.
+            g_ctx.gap_start_ms = nav_now_ms();
             break;
 
         case P_WAIT_PLAN:
@@ -1298,6 +1343,20 @@ nav_send_pivot (uint32_t direction, uint32_t speed_mm_s)
                                0u };
 
     nav_send(&cmd);
+}
+
+/*!
+ * @brief The kernel's clock in ms (LOCAL: for P_UTURN_GAP); wraps every
+ *        49 days, so compare differences only.
+ */
+static uint32_t
+nav_now_ms (void)
+{
+    SYSTIM time;
+
+    (void) tk_get_otm(&time);
+
+    return ((uint32_t) time.lo);
 }
 
 /*!

@@ -36,6 +36,10 @@
 #define M01_STATE_MSEC      (500u)  // Time allowed for a state change.
 #define M01_PIVOT_WAIT_MSEC (5000u) // Time allowed for a pivot to start.
 #define M01_TURN_MSEC       (1000u) // Pivot time before StopTurn.
+#define M01_UTURN_MSEC      (400u)  // LOCAL: each U-turn pivot: under
+                                    // the ~1 s Line Following's own
+                                    // angle stop takes at 80 mm/s, so
+                                    // the test's StopTurn ends it.
 #define M01_FORGET_MSEC     (40000u) // LOCAL: 1 m at 40 mm/s + margin.
 #define M01_BYPASS_CM       (20u)    // Each leg: < 5 s at 60 mm/s.
 
@@ -180,13 +184,19 @@ m01_task (INT start_code, void * p_ext_info)
               (MOTION_ACTIVITY_STRAIGHT == motion_get_activity()));
     (void) tk_dly_tsk(2000u);
 
-    // 3. Barcode D, junction: LOCAL, for now straight on like C.
+    // 3. Barcode D, junction: U-turn.  Brake at once (no creep), then two
+    //    pivots left on the spot, each until StopTurn, with a pause
+    //    between them (LOCAL).
     //
     (void) nav_post_barcode(NAV_BARCODE_UTURN);
     m01_expect_state("barcode D -> JUNCTION", NAV_STATE_JUNCTION);
     (void) tk_dly_tsk(500u);
     (void) nav_post_junction();
-    m01_expect_state("D: straight on, LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
+    m01_stop_turn_after("D: U-turn, first pivot", M01_UTURN_MSEC);
+    m01_check("D: stopped between the pivots",
+              m01_wait_activity(MOTION_ACTIVITY_IDLE, M01_STATE_MSEC));
+    m01_stop_turn_after("D: U-turn, second pivot", M01_UTURN_MSEC);
+    m01_expect_state("D: back to LINE_FOLLOW", NAV_STATE_LINE_FOLLOW);
     (void) tk_dly_tsk(2000u);
 
     // 4. Barcode C, junction: drive on without stopping.
