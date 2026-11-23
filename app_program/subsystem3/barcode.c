@@ -142,11 +142,11 @@ static uint16_t g_raw          = 0U;
 static bool     g_b_black      = false;
 
 static uint16_t g_widths[BC_MAX_ELEMENTS];
-static uint16_t g_count        = 0U;
-static bool     g_b_in_pass    = false;
+static uint16_t volatile g_count     = 0U;   /* LOCAL: volatile, read */
+static bool     volatile g_b_in_pass = false; /* by barcode_is_scanning() */
 static bool     g_b_last_black = false;
 static bool     g_b_too_long   = false;
-static uint32_t g_last_edge_us = 0U;
+static uint32_t volatile g_last_edge_us = 0U;
 static uint16_t g_glitches     = 0U;
 static uint16_t g_tried        = 0U;    /* count at the last early try */
 static uint16_t g_extreme      = 0U;    /* peak (bar) / valley (gap) */
@@ -939,6 +939,20 @@ static void quiet_on_stop(void)
 /* ===================================================================== *
  *  Public
  * ===================================================================== */
+
+/* LOCAL: is a barcode passing under the sensor right now?  True once a
+ * pass has BC_HOLD_MIN_ELEMENTS bars / gaps and its last edge is under
+ * BC_HOLD_EDGE_MS old, so the line or a T's crossbar (one long black, few
+ * edges) does not count.  For Line Following, which holds the heading
+ * meanwhile so the car crosses the bars straight.  Any task; never
+ * waits. */
+bool barcode_is_scanning(void)
+{
+    uint32_t const age_us = gpio_irq_get_time_usec() - g_last_edge_us;
+
+    return (g_b_in_pass && (g_count >= BC_HOLD_MIN_ELEMENTS) &&
+            (age_us < (BC_HOLD_EDGE_MS * 1000U)));
+}
 
 /* LOCAL: beep from another module (Line Following at the T). */
 void barcode_beep(uint8_t count, uint16_t on_ms)
