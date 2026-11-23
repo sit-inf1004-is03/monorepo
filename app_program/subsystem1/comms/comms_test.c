@@ -2,7 +2,8 @@
  * @file    comms_test.c
  * @brief   On-target tests of comms and the network bridge's pure helpers.
  *          Built only with make TEST=1 (with or without NET=lwip).
- *          Record results in testing/comms/TEST_LOG.md.  IDs: CO-U01, ...
+ *          Record results in testing/subsystem1/comms/TEST_LOG.md.
+ *          IDs: CO-U01, ...
  *          Coded to BARR-C:2018.
  *
  * These check the parts that need no network.  Connecting, recovering and
@@ -13,7 +14,7 @@
 #include "comms.h"
 #include "../net/net_backoff.h"
 #include "../net/net_topic.h"
-#include "../test_report.h"
+#include "../../test_report.h"
 
 #if APP_TEST
 

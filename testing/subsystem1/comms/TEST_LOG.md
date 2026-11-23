@@ -1,6 +1,6 @@
 # Comms and network bridge — test log
 
-Unit tests of `app_program/comms/` and the pure helpers of `app_program/net/`: the parts that need no network, so they run in `make TEST=1` as well as `make NET=lwip TEST=1`. Connecting, recovering and the round trip to the dashboard are system tests (`system/TEST_LOG.md`: SYS-10 connect, SYS-13 Wi-Fi loss, SYS-14 broker restart). CO-U05 is one half of INT-17; the dashboard's `npm test` is the other.
+Unit tests of `app_program/subsystem1/comms/` and the pure helpers of `app_program/subsystem1/net/`: the parts that need no network, so they run in `make TEST=1` as well as `make NET=lwip TEST=1`. Connecting, recovering and the round trip to the dashboard are system tests (`system/TEST_LOG.md`: SYS-10 connect, SYS-13 Wi-Fi loss, SYS-14 broker restart). CO-U05 is one half of INT-17; the dashboard's `npm test` is the other.
 
 See `testing/README.md` for how to run tests and record results.
 

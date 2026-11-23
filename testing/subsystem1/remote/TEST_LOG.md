@@ -1,6 +1,6 @@
 # Remote (Wi-Fi / MQTT) — test log
 
-Unit tests of `app_program/remote/`. START / STOP / CLEAR reaching Navigation is a system test (SYS-11), and the Wi-Fi-loss fault is SYS-13: a test build must not drive the car on its own, so RE-U01 never sends START.
+Unit tests of `app_program/subsystem1/remote/`. START / STOP / CLEAR reaching Navigation is a system test (SYS-11), and the Wi-Fi-loss fault is SYS-13: a test build must not drive the car on its own, so RE-U01 never sends START.
 
 See `testing/README.md` for how to run tests and record results.
 

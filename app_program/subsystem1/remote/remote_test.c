@@ -1,7 +1,7 @@
 /**
  * @file    remote_test.c
  * @brief   On-target tests of remote.  Built only with make TEST=1 (with or
- *          without NET=lwip).  Record results in testing/remote/
+ *          without NET=lwip).  Record results in testing/subsystem1/remote/
  *          TEST_LOG.md.  Coded to BARR-C:2018.
  *
  * Commands are put straight into the remote message buffer, exactly as the
@@ -14,7 +14,7 @@
 #include "remote_test.h"
 #include "remote.h"
 #include "../comms/comms.h"
-#include "../test_report.h"
+#include "../../test_report.h"
 
 #if APP_TEST
 

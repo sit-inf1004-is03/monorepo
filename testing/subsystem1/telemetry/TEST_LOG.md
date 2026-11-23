@@ -1,6 +1,6 @@
 # Telemetry (Wi-Fi / MQTT) — test log
 
-Unit tests of `app_program/telemetry/`. Its tests across interfaces are in `integration/TEST_LOG.md`: INT-15 (a setting arrives through the telemetry buffer), INT-16 (word 0 holds the other subsystems' values), INT-17 (the bit layout agrees with the dashboard), INT-19 (word 1 holds the IMU's states and the distance) and INT-20 (word 1 holds the last barcode). That telemetry follows the moving car is SYS-12, and that humps and barcodes reach the dashboard is SYS-15.
+Unit tests of `app_program/subsystem1/telemetry/`. Its tests across interfaces are in `integration/TEST_LOG.md`: INT-15 (a setting arrives through the telemetry buffer), INT-16 (word 0 holds the other subsystems' values), INT-17 (the bit layout agrees with the dashboard), INT-19 (word 1 holds the IMU's states and the distance) and INT-20 (word 1 holds the last barcode). That telemetry follows the moving car is SYS-12, and that humps and barcodes reach the dashboard is SYS-15.
 
 See `testing/README.md` for how to run tests and record results.
 

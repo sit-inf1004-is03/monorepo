@@ -81,8 +81,8 @@
 // team's comms module is in the build; otherwise they are only printed.
 //
 #if defined(__has_include)
-#if __has_include("../comms/comms.h")
-#include "../comms/comms.h"
+#if __has_include("../subsystem1/comms/comms.h")
+#include "../subsystem1/comms/comms.h"
 #define S5_HAS_COMMS            (1)
 #endif
 #endif

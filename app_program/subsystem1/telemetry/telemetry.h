@@ -18,7 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../app.h"
+#include "../../app.h"
 
 #define TELEMETRY_PRI           (23)    /* Band 22-23 (TEAM.md section 4). */
 #define TELEMETRY_MBF_MESSAGES  (4u)    /* Settings its buffer holds. */

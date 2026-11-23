@@ -21,7 +21,7 @@
 
 #include "remote.h"
 #include "../comms/comms.h"
-#include "../navigation/navigation.h"
+#include "../../navigation/navigation.h"
 
 /* protocol.h keeps Navigation's numbers for the three remote commands. */
 #if (CMD_START != NAV_REMOTE_START) || (CMD_STOP != NAV_REMOTE_STOP) || \

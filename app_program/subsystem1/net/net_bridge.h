@@ -4,10 +4,11 @@
  *          message buffers towards the application.  Coded to
  *          BARR-C:2018.
  *
- * NOT A SUBSYSTEM.  No subsystem task calls anything in app_program/net/
- * except through comms/ (comms.h).  Everything that touches lwIP, MQTT or
- * the radio runs on the kernel's Wi-Fi service task (cyw43_utk_task); the
- * rest of the application exchanges messages with it like this:
+ * NOT A SUBSYSTEM.  No subsystem task calls anything in
+ * app_program/subsystem1/net/ except through comms/ (comms.h).
+ * Everything that touches lwIP, MQTT or the radio runs on the kernel's
+ * Wi-Fi service task (cyw43_utk_task); the rest of the application
+ * exchanges messages with it like this:
  *
  *     task, net_bridge_msg_t, TX message buffer, bridge, broker
  *     broker, bridge, net_bridge_msg_t, RX message buffer, task

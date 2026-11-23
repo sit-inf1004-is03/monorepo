@@ -34,13 +34,13 @@
 #include "telemetry.h"
 #include "telemetry_events.h"
 #include "../comms/comms.h"
-#include "../navigation/navigation.h"
-#include "../subsystem2/motion.h"
-#include "../subsystem2/drv_encoder.h"
-#include "../subsystem3/line_barcode.h"
-#include "../subsystem4/subsystem4.h"
-#include "../subsystem4/imu_ramp.h"
-#include "../subsystem5/drv_ultrasonic.h"
+#include "../../navigation/navigation.h"
+#include "../../subsystem2/motion.h"
+#include "../../subsystem2/drv_encoder.h"
+#include "../../subsystem3/line_barcode.h"
+#include "../../subsystem4/subsystem4.h"
+#include "../../subsystem4/imu_ramp.h"
+#include "../../subsystem5/drv_ultrasonic.h"
 
 #define PERIOD_MIN_MS           (100)
 #define PERIOD_MAX_MS           (60000)

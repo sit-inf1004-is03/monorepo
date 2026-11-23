@@ -17,7 +17,7 @@ subsystem, ask its owner or open a pull request for them to review.
 
 | # | Subsystem (what it does) | Student ID | GitHub username | Code | Tests |
 |---|---|---|---|---|---|
-| 1 | *example:* LED heartbeat on GP19 | | | `app_program/subsystem1/` | `testing/subsystem1/` |
+| 1 | Wi-Fi / MQTT: network bridge, comms, dashboard commands and telemetry (`net/`, `comms/`, `remote/`, `telemetry/`, `protocol.h`); the template's *example* LED heartbeat on GP19 is still here too | | achrinza | `app_program/subsystem1/` | `testing/subsystem1/` (`comms/`, `remote/`, `telemetry/`) |
 | 2 | *example:* Producer: makes a sample every 300 ms | | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
 | 4 | IMU-based motion and terrain monitoring (GY-511 / LSM303D on I2C1) | 2501298 | | `app_program/subsystem4/`, `app_program/common/` | `testing/subsystem4/` |
@@ -132,11 +132,11 @@ What students *can* do:
   cyw43_utk_get_status(&st);   /* st.ready, st.link_status, st.ip_addr, ... */
   ```
 - **Send or receive data over the network** through the Wi-Fi / MQTT
-  bridge (`app_program/net/`, owner: Rifa), which runs inside the service
+  bridge (`app_program/subsystem1/net/`, owner: Rifa), which runs inside the service
   task without changing any kernel file. Tasks only touch message buffers:
   `comms_publish()` / `comms_log()` queue a message for the broker, and
   `comms_subscribe(topic, my_mbf)` in your `_init()` delivers a topic's
-  messages to your own message buffer (`app_program/comms/comms.h`).
+  messages to your own message buffer (`app_program/subsystem1/comms/comms.h`).
   Record each new topic as an interface in section 5. It needs the
   `NET=lwip` build, **not** `MQTT=1` (`MQTT.md`, `KERNEL_ISSUES.md`).
 
@@ -187,7 +187,7 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-S4-6 | Nav → S4 | function call | `imu_task_signal_course_done()` / `imu_task_restart()` | end / start of a run | proposed by S4 |
 | IF-S4-7 | S4 → S3 | shared data, read only | `imu_on_ramp()`, `imu_get_tilt_x10()`, `imu_is_ok()` (`imu_ramp.h`) | ramp on at 6° for 60 ms and off at 4° for 100 ms, each in a row, from `imu_task`'s pitch and roll | proposed by S4 |
 | IF-S4-8 | S4 → Nav | IF-12 | `nav_raise_fault(NAV_FLT_ESTOP)` | upside-down stop (bit 4, a stop bit): car more than 120° from upright for 200 ms (`imu_flip.h`). Navigation brakes and holds until a remote CLEAR, then START. While the car stays upside down S4 raises the bit again, so a CLEAR does not restart it. No collision stop: impact is telemetry only | new requirement; tell Glenn (bit name), Rifa (dashboard label for bit 4) |
-| IF-15 | dashboard ↔ car (Wi-Fi / MQTT) | MQTT topics `robocar/<id>/…`, via the bridge's message buffers | `comms_subscribe()`, `comms_publish()` in `comms/comms.h`; the remote and telemetry buffers (`remote_get_mbf()`, `telemetry_get_mbf()`) | topics, commands (PING, START, STOP, CLEAR), events (hump, barcode) and the telemetry layout (2 × 64-bit words, layout 2) in `app_program/protocol.h`; the dashboard's copy is `mqtt-web-interface/src/shared/protocol.ts`. Telemetry reads IF-S4-1 (motion, terrain), IF-S4-3 (HUMP events, drained every 100 ms) and `imu_is_ok()` of IF-S4-7 | *proposed* |
+| IF-15 | dashboard ↔ car (Wi-Fi / MQTT) | MQTT topics `robocar/<id>/…`, via the bridge's message buffers | `comms_subscribe()`, `comms_publish()` in `comms/comms.h`; the remote and telemetry buffers (`remote_get_mbf()`, `telemetry_get_mbf()`) | topics, commands (PING, START, STOP, CLEAR), events (hump, barcode) and the telemetry layout (2 × 64-bit words, layout 2) in `app_program/subsystem1/protocol.h`; the dashboard's copy is `mqtt-web-interface/src/shared/protocol.ts`. Telemetry reads IF-S4-1 (motion, terrain), IF-S4-3 (HUMP events, drained every 100 ms) and `imu_is_ok()` of IF-S4-7 | *proposed* |
 | IF-16 | S3 (Line Following), S5 (Obstacle Scan) → telemetry | shared data, read only | `line_get_state()` (S3), `ultrasonic_last_reading()` (S5) | line state (2 bits); nearest obstacle in cm (9 bits) or no echo. Called through `line_barcode.h` and `drv_ultrasonic.h` | *proposed* |
 | IF-17 | any → Wi-Fi / MQTT | message buffer (owned by comms) | `comms_log()`, `comms_telemetry()`, `comms_publish()` | one line of text / the packed telemetry words / any payload ≤ 128 bytes; never blocks, dropped when the queue is full | *proposed* |
 | IF-18 | S3 (Barcode) → telemetry | shared data, read only, one 32-bit word written with one store (owned by S3) | `barcode_get_last()` in `subsystem3/line_barcode.h` | last barcode read: letter (ASCII, 0 = none) in bits 0–7, reads since power-on (wraps) in bits 8–15. A new count is a new read, even of the same letter | *proposed*, to agree with S3's owner |

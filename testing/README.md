@@ -8,13 +8,13 @@ testing/
 ├── README.md              this guide
 ├── subsystem1/            one folder per subsystem, kept by its owner
 │   ├── TEST_LOG.md        test cases + results
-│   └── logs/              saved console output, photos, scope captures
+│   ├── logs/              saved console output, photos, scope captures
+│   ├── comms/             Wi-Fi / MQTT: comms and the network bridge
+│   ├── remote/            Wi-Fi / MQTT: dashboard commands to Navigation
+│   └── telemetry/         Wi-Fi / MQTT: telemetry to the dashboard
 ├── ...
 ├── subsystem5/
 ├── navigation/            Navigation / Vehicle Controller
-├── comms/                 Wi-Fi / MQTT: comms and the network bridge
-├── remote/                Wi-Fi / MQTT: dashboard commands to Navigation
-├── telemetry/             Wi-Fi / MQTT: telemetry to the dashboard
 ├── integration/           tests across two or more subsystems (shared)
 └── system/                tests of the whole product against its requirements (shared)
 ```
@@ -23,9 +23,9 @@ testing/
 |---|---|---|
 | `subsystem1/` … `subsystem5/` | `app_program/subsystemN/` | the subsystem's owner |
 | `navigation/` | `app_program/navigation/` | Navigation's owner |
-| `comms/` | `app_program/comms/`, the pure helpers of `app_program/net/` | Wi-Fi / MQTT (Rifa) |
-| `remote/` | `app_program/remote/` | Wi-Fi / MQTT (Rifa) |
-| `telemetry/` | `app_program/telemetry/` | Wi-Fi / MQTT (Rifa) |
+| `subsystem1/comms/` | `app_program/subsystem1/comms/`, the pure helpers of `app_program/subsystem1/net/` | Wi-Fi / MQTT (Rifa) |
+| `subsystem1/remote/` | `app_program/subsystem1/remote/` | Wi-Fi / MQTT (Rifa) |
+| `subsystem1/telemetry/` | `app_program/subsystem1/telemetry/` | Wi-Fi / MQTT (Rifa) |
 | `integration/`, `system/` | several modules at once | the whole team |
 
 ## Three levels of test
