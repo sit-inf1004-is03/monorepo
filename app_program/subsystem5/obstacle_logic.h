@@ -116,13 +116,21 @@
 // stopped, the servo sweeps out from straight ahead in OBS_WIDTH_STEP_DEG
 // steps on each side while the echo still comes from the obstacle's front
 // face (forward distance within OBS_WIDTH_FACE_CM of the centre reading).
-// Each side's half-width = distance x sin(angle) of its last hit; width =
-// both halves + 2 x OBS_WIDTH_TRIM_MM.  Calibrate the trim on the day with
-// a box of known width: reads 2 cm too wide -> trim -10 (mm per side).
+// The edge is taken half a step past the last hit, less the beam spread
+// OBS_WIDTH_BEAM_DEG (the wide sonar beam still sees the corner after the
+// axis has passed it); half-width = forward distance x tan(edge angle);
+// width = both halves + 2 x OBS_WIDTH_TRIM_MM.
+// Calibrate with a box of known width square to the car, nothing else
+// within ~40 cm: each side too wide -> raise BEAM_DEG; small leftover
+// offset -> TRIM (reads 1 cm too wide -> -5 mm per side).
+// 2026-11-23: 12.9 cm box 14 cm ahead, clear around it, read 10.9 at
+// beam 10 -> BEAM_DEG 7 (12.7).  A 10.5 cm box (one side cluttered) fits
+// beam 9-10, so expect about +/-1 cm.
 //
 #define OBS_WIDTH_STEP_DEG      (5u)
 #define OBS_WIDTH_STEPS         (12u)   // 12 x 5 = 60 deg each side.
-#define OBS_WIDTH_FACE_CM       (8u)    // Farther back = something else.
+#define OBS_WIDTH_FACE_CM       (4u)    // Farther back = something else.
+#define OBS_WIDTH_BEAM_DEG      (7u)    // 0..60.
 #define OBS_WIDTH_TRIM_MM       (0)     // Signed, per side.
 
 uint16_t obs_median3(uint16_t first, uint16_t second, uint16_t third);

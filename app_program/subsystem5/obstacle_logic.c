@@ -46,16 +46,21 @@ static uint16_t const g_cos_x100[OBS_FINE_COUNT + 1u] =
     100u, 97u, 87u, 71u, 50u
 };
 
-// Width sweep: cos(k x 5 deg) x 1000, and tan(k x 5 + 2.5 deg) x 1000
-// (half a step past the last hit: the edge lies between the last hit
-// and the first miss), k = 0..12.
+// Width sweep: cos(k x 5 deg) x 1000, k = 0..12, and tan(d deg) x 1000,
+// d = 0..63 (the edge angle: last hit + ~half a step - beam spread).
 //
 #define WIDTH_SCALE             (1000u)
+#define WIDTH_HALF_STEP_DEG     (3u)        // 2.5, rounded.
+#define WIDTH_TAN_MAX_DEG       (63u)
 
-static uint16_t const g_wtan_mid_x1000[OBS_WIDTH_STEPS + 1u] =
+static uint16_t const g_tan_deg_x1000[WIDTH_TAN_MAX_DEG + 1u] =
 {
-    44u, 132u, 222u, 315u, 414u, 521u, 637u, 767u, 916u, 1091u, 1303u,
-    1570u, 1921u
+    0u, 17u, 35u, 52u, 70u, 87u, 105u, 123u, 141u, 158u, 176u, 194u, 213u,
+    231u, 249u, 268u, 287u, 306u, 325u, 344u, 364u, 384u, 404u, 424u, 445u,
+    466u, 488u, 510u, 532u, 554u, 577u, 601u, 625u, 649u, 675u, 700u, 727u,
+    754u, 781u, 810u, 839u, 869u, 900u, 933u, 966u, 1000u, 1036u, 1072u,
+    1111u, 1150u, 1192u, 1235u, 1280u, 1327u, 1376u, 1428u, 1483u, 1540u,
+    1600u, 1664u, 1732u, 1804u, 1881u, 1963u
 };
 
 static uint16_t const g_wcos_x1000[OBS_WIDTH_STEPS + 1u] =
@@ -460,8 +465,9 @@ obs_is_on_face(uint16_t dist_cm, uint16_t step, uint16_t front_cm)
 
 /*!
  * @brief  Half-width from the last hit on the face: its forward
- *         distance (dist x cos) x tan(step angle + half a step), i.e. the
- *         edge is taken midway to the first miss.
+ *         distance (dist x cos) x tan(edge angle), the edge angle being
+ *         the hit's angle + half a step (midway to the first miss) -
+ *         OBS_WIDTH_BEAM_DEG (beam spread), never below 0.
  * @param  dist_cm  Last reading on the face (step 0: the centre reading).
  * @param  step     Width step of that reading, 0..OBS_WIDTH_STEPS.
  * @return Distance in mm, rounded.
@@ -471,14 +477,25 @@ obs_side_mm(uint16_t dist_cm, uint16_t step)
 {
     uint32_t side = 0u;
     uint32_t fwd_mm;
+    uint16_t edge_deg;
 
     if ((dist_cm < OBS_FAR_CM) && (step <= OBS_WIDTH_STEPS))
     {
-        // 510 cm x 10 x 1000 = 5.1e6, then 5100 mm x 1921: fit 32 bits.
+        edge_deg = (uint16_t)((step * OBS_WIDTH_STEP_DEG) +
+                              WIDTH_HALF_STEP_DEG);
+        edge_deg = (edge_deg > OBS_WIDTH_BEAM_DEG) ?
+                   (uint16_t)(edge_deg - OBS_WIDTH_BEAM_DEG) : 0u;
+
+        if (edge_deg > WIDTH_TAN_MAX_DEG)
+        {
+            edge_deg = WIDTH_TAN_MAX_DEG;
+        }
+
+        // 510 cm x 10 x 1000 = 5.1e6, then 5100 mm x 1963: fit 32 bits.
         fwd_mm = (((uint32_t)dist_cm * 10u * g_wcos_x1000[step]) +
                   (WIDTH_SCALE / 2u)) / WIDTH_SCALE;
-        side   = ((fwd_mm * g_wtan_mid_x1000[step]) + (WIDTH_SCALE / 2u)) /
-                 WIDTH_SCALE;
+        side   = ((fwd_mm * g_tan_deg_x1000[edge_deg]) +
+                  (WIDTH_SCALE / 2u)) / WIDTH_SCALE;
     }
 
     return ((uint16_t)side);

@@ -247,7 +247,7 @@ static uint16_t ping_median_cm(void);
 static uint64_t coarse_scan(void);
 static uint64_t fine_scan(uint16_t side);
 static uint16_t width_side_mm(uint16_t side, uint16_t front_cm,
-                              bool * p_b_edge);
+                              bool * p_b_edge, uint16_t * p_hit_deg);
 static void     measure_width(void);
 static uint8_t  coarse_angle(uint16_t idx);
 static uint8_t  fine_angle(uint16_t side, uint16_t step);
@@ -1231,11 +1231,13 @@ fine_scan(uint16_t side)
  *         obstacle's front face.
  * @param  side      OBS_SIDE_LEFT or OBS_SIDE_RIGHT.
  * @param  front_cm  Reading straight ahead.
- * @param  p_b_edge  Out: true if the face ended within OBS_WIDTH_STEPS.
- * @return Half-width on that side in mm (sideways part of the last hit).
+ * @param  p_b_edge   Out: true if the face ended within OBS_WIDTH_STEPS.
+ * @param  p_hit_deg  Out: angle of the last hit from straight ahead.
+ * @return Half-width on that side in mm (obs_side_mm() of the last hit).
  */
 static uint16_t
-width_side_mm(uint16_t side, uint16_t front_cm, bool * p_b_edge)
+width_side_mm(uint16_t side, uint16_t front_cm, bool * p_b_edge,
+              uint16_t * p_hit_deg)
 {
     bool const b_is_high = ((OBS_SIDE_LEFT == side) ==
                             (1 == OBS_LEFT_IS_HIGH_ANGLE));
@@ -1244,7 +1246,8 @@ width_side_mm(uint16_t side, uint16_t front_cm, bool * p_b_edge)
     uint16_t   offset;
     uint16_t   dist;
 
-    *p_b_edge = false;
+    *p_b_edge  = false;
+    *p_hit_deg = 0u;
 
     for (step = 1u; step <= OBS_WIDTH_STEPS; step++)
     {
@@ -1260,7 +1263,8 @@ width_side_mm(uint16_t side, uint16_t front_cm, bool * p_b_edge)
             break;
         }
 
-        half_mm = obs_side_mm(dist, step);
+        half_mm    = obs_side_mm(dist, step);
+        *p_hit_deg = offset;
     }
 
     return (half_mm);
@@ -1278,6 +1282,8 @@ measure_width(void)
     uint16_t left_mm;
     uint16_t right_mm;
     uint16_t width_mm;
+    uint16_t left_deg;
+    uint16_t right_deg;
     bool     b_left_edge;
     bool     b_right_edge;
     bool     b_whole;
@@ -1294,19 +1300,23 @@ measure_width(void)
     }
     else
     {
-        left_mm  = width_side_mm(OBS_SIDE_LEFT, front_cm, &b_left_edge);
-        right_mm = width_side_mm(OBS_SIDE_RIGHT, front_cm, &b_right_edge);
+        left_mm  = width_side_mm(OBS_SIDE_LEFT, front_cm, &b_left_edge,
+                                 &left_deg);
+        right_mm = width_side_mm(OBS_SIDE_RIGHT, front_cm, &b_right_edge,
+                                 &right_deg);
         servo_set_angle_deg((uint8_t)CENTRE_DEG);
         width_mm = obs_width_mm(left_mm, right_mm);
         b_whole  = (b_left_edge && b_right_edge);
 
-        (void)tm_sprintf(g_log, (UB *)"[S5] WIDTH: %s%u.%u cm (left %u.%u,"
-                         " right %u.%u, front %u cm)",
+        (void)tm_sprintf(g_log, (UB *)"[S5] WIDTH: %s%u.%u cm (left %u.%u"
+                         " seen to %u deg, right %u.%u to %u deg, front"
+                         " %u cm)",
                          b_whole ? "" : "at least ",
                          (UINT)(width_mm / 10u), (UINT)(width_mm % 10u),
                          (UINT)(left_mm / 10u), (UINT)(left_mm % 10u),
+                         (UINT)left_deg,
                          (UINT)(right_mm / 10u), (UINT)(right_mm % 10u),
-                         (UINT)front_cm);
+                         (UINT)right_deg, (UINT)front_cm);
         log_text(g_log);
 
 #if (1 == S5_HAS_COMMS)
