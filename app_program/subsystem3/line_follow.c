@@ -100,6 +100,11 @@
                                    * sensor, hold the heading (no steering)
                                    * for at most this far: longer than the
                                    * longest barcode (5 characters) */
+#define LINE_SETTLE_MM  (150U)    /* LOCAL: after a junction turn, steer at
+                                   * most LINE_SETTLE_LEVEL for this far */
+#define LINE_SETTLE_LEVEL (2)     /* LOCAL: turn levels 4+ stop the inner
+                                   * wheel at cruise (12 mm/s per level):
+                                   * full lock both ways = the wobble */
 #define LINE_JUNC_SEEN  (0.35f)   /* LOCAL debug: both sensors above this
                                    * = something across the line; its
                                    * darkest point is printed after */
@@ -132,6 +137,8 @@ static uint32_t     g_hist_next  = 0U;       /* L+R at the next slot */
 static int32_t      g_ramp_head  = 0;        /* L-R to hold on the ramp */
 static bool         g_b_bc_hold  = false;    /* LOCAL: barcode: heading held */
 static uint32_t     g_bc_hold_sum = 0U;      /* LOCAL: L+R count at its start */
+static bool         g_b_settle   = false;    /* LOCAL: after a junction turn */
+static uint32_t     g_settle_sum = 0U;       /* LOCAL: L+R count at its start */
 
 static uint16_t line_read(uint32_t chan)
 {
@@ -572,6 +579,21 @@ EXPORT void line_task(INT stacd, void * exinf)
             }
             else
             {
+                if (g_b_in_pivot)
+                {
+                    /* LOCAL: the junction turn just ended.  The control
+                     * state was built while spinning (the line swept
+                     * past both sensors), so start again from straight,
+                     * and steer gently for LINE_SETTLE_MM. */
+                    g_err_filt   = 0.0f;
+                    g_err_prev   = 0.0f;
+                    g_last_level = 0;
+                    g_b_resync   = true;
+                    g_b_settle   = true;
+                    g_settle_sum = drv_encoder_get_count(DRV_ENCODER_LEFT) +
+                                   drv_encoder_get_count(DRV_ENCODER_RIGHT);
+                }
+
                 g_b_in_pivot = false;
             }
         }
@@ -617,6 +639,13 @@ EXPORT void line_task(INT stacd, void * exinf)
             else
             {
                 /* Not over a barcode. */
+            }
+
+            if (g_b_settle &&
+                ((drv_encoder_pulses_to_mm(sum - g_settle_sum) / 2U) >=
+                 LINE_SETTLE_MM))
+            {
+                g_b_settle = false;
             }
         }
 
@@ -745,6 +774,23 @@ EXPORT void line_task(INT stacd, void * exinf)
             level = (int32_t)(out + ((out >= 0.0f) ? 0.5f : -0.5f));
             if (level > MOTION_TURN_LEVEL_MAX)       { level = MOTION_TURN_LEVEL_MAX;  }
             else if (level < -MOTION_TURN_LEVEL_MAX) { level = -MOTION_TURN_LEVEL_MAX; }
+
+            /* LOCAL: just after a junction turn, no full lock. */
+            if (g_b_settle)
+            {
+                if (level > LINE_SETTLE_LEVEL)
+                {
+                    level = LINE_SETTLE_LEVEL;
+                }
+                else if (level < -LINE_SETTLE_LEVEL)
+                {
+                    level = -LINE_SETTLE_LEVEL;
+                }
+                else
+                {
+                    /* Within the settle limit. */
+                }
+            }
 
             /* 4. Change the turn gradually, one step per loop. */
             if (level > (g_last_level + LINE_LEVEL_STEP))
