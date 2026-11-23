@@ -1,0 +1,56 @@
+=== micro T-Kernel on Raspberry Pi Pico W (spec 0x6300, product 0x0003) ===
+dual-core (SMP) build, usermain on core 0
+imu: task started, period 10 ms
+all subsystems started
+
+[S5] obstacle scan running (standalone=0)
+[TEST] === test run start === (TEST_ONLY: some modules only)
+[TEST] CO-U01 PASS  parses "2 60 -20 1500"
+[TEST] CO-U02 PASS  accepts whitespace, commas and the full int32_t range
+[TEST] CO-U03 PASS  rejects text, bad ids, overflow and too many args
+[TEST] comms parsing SUMMARY 3 passed, 0 failed
+[TEST] CO-U04 PASS  formats 0 and 2^64-1
+[TEST] CO-U05 PASS  telemetry word matches the dashboard's golden sample
+[TEST] CO-U10 PASS  word 1 and the two-word payload match the dashboard
+[TEST] comms formatting SUMMARY 3 passed, 0 failed
+[TEST] CO-U06 PASS  backoff doubles to the limit with jitter
+[TEST] CO-U07 PASS  backoff restarts from the minimum after a reset
+[TEST] CO-U08 PASS  an over-long payload or topic is refused
+[TEST] CO-U09 PASS  topic filters with + and # match as in MQTT
+[TEST] comms helpers SUMMARY 4 passed, 0 failed
+remote: pong 77
+remote: ignored a message on robocar/mtk3smp-pico/cmd: not "<id> [arg ...]"
+wifi: cyw43_utk_task starting (proc 1)
+remote: unknown command 9
+wifi: cyw43_init() ...
+remote: ignored a message on robocar/mtk3smp-pico/cmd: not "<id> [arg ...]"
+wifi: cyw43_init() returned, bringing interface up ...
+remote: pong 78 (broadcast)
+imu: LSM303D (no gyro) found at 0x1d, WHO_AM_I 0x49
+[TEST] RE-U01 PASS  pings, text and unknown commands are all consumed
+[TEST] remote SUMMARY 1 passed, 0 failed
+telemetry: every 250 ms
+[TEST] INT-15 PASS  "1 250" via the telemetry buffer changes the period
+telemetry: period 10 ms is outside 100..60000
+[TEST] TL-U01 PASS  a 10 ms period is refused
+telemetry: off
+[TEST] TL-U02 PASS  CFG_TELEMETRY_ENABLE 0 stops it
+telemetry: on
+telemetry: every 500 ms
+barcodes: A=L B=R C=S D=U K=R
+telemetry: barcode setting needs <'0'-'9' or 'A'-'Z' as ASCII code> <0-4>
+barcodes: none (all ignored)
+[TEST] TL-U05 PASS  barcode map: set from config, cleared, bad values refused
+[TEST] INT-16 PASS  a sample holds Navigation, Motion and line-sensor values
+[TEST] telemetry settings SUMMARY 5 passed, 0 failed
+[TEST] TL-U03 PASS  an IMU HUMP event becomes an EVT_HUMP message
+[TEST] INT-20 PASS  word 1 holds the last barcode letter and read count
+[TEST] INT-19 PASS  word 1 holds the IMU's motion and terrain, and the distance
+[TEST] telemetry word 1 SUMMARY 3 passed, 0 failed
+[TEST] NAV-U01 PASS  Navigation inputs reject out-of-range values
+[TEST] NAV-U02 PASS  Navigation starts IDLE with no faults
+[TEST] NAV-U03 PASS  bypass plan packs and unpacks
+[TEST] navigation SUMMARY 3 passed, 0 failed
+[TEST] === test run end ===
+[S5] WATCH: front 63 cm
+[NAV-M01] mission script starts in 10 s.  Car on a stand, USB power only.

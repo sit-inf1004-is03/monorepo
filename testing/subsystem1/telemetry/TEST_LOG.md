@@ -26,3 +26,4 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-11-23 | TL-U01, TL-U02, TL-U03, TL-U05 | `2d64476` | Rifa | PASS | `../logs/2026-11-23_s1_unit.txt` | `make NET=lwip TEST=1 TEST_ONLY="s1 nav"` image (the build profile left in `build_make/`). All 4 PASS (TL-U04 retired). The same summaries hold INT-15, INT-16, INT-19 and INT-20, recorded in `integration/TEST_LOG.md`: telemetry settings 5 passed, word 1 3 passed, 0 failed. Log saved up to the end of the test run; the console's Wi-Fi scan and NAV-M01 output after it are not part of these tests |
