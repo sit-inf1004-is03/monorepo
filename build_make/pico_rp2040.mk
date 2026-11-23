@@ -91,6 +91,24 @@ ifeq ($(TEST),1)
 TEST_SUFFIX := _test
 endif
 
+# TEST_ONLY=<modules> (with TEST=1) runs only those modules' tests, e.g.
+# TEST_ONLY=s1 or TEST_ONLY="s1 nav": s1 (comms, remote, telemetry), s2,
+# s3, s4, s5, nav.  Empty (default) runs them all, as a hand-in run must.
+# Every task still starts as usual.  The image is named after the list
+# (_test_only_s1_nav) so it is not mistaken for a full test image.
+TEST_ONLY ?=
+TEST_ONLY_NAMES := s1 s2 s3 s4 s5 nav
+ifneq ($(strip $(TEST_ONLY)),)
+ifneq ($(TEST),1)
+$(error TEST_ONLY requires TEST=1)
+endif
+ifneq ($(filter-out $(TEST_ONLY_NAMES),$(TEST_ONLY)),)
+$(error Unknown TEST_ONLY '$(filter-out $(TEST_ONLY_NAMES),$(TEST_ONLY))'; use any of: $(TEST_ONLY_NAMES))
+endif
+TEST_ONLY_LIST := $(filter $(TEST_ONLY_NAMES),$(TEST_ONLY))
+TEST_SUFFIX := $(TEST_SUFFIX)_only$(subst $(eval) ,,$(foreach m,$(TEST_ONLY_LIST),_$(m)))
+endif
+
 # CRASH_REPORT=1 also copies every console line to UART0 on GP0 (TX) /
 # GP1 (RX), 115200 8N1.  UART output is sent immediately, so it still shows
 # the last messages and the kernel's crash report after a crash, when the
@@ -177,6 +195,10 @@ CFLAGS  += -DCNF_SMP=1
 ASFLAGS += -DCNF_SMP=1
 endif
 CFLAGS  += -DAPP_TEST=$(TEST)
+ifneq ($(strip $(TEST_ONLY_LIST)),)
+CFLAGS  += -DAPP_TEST_ONLY=1
+CFLAGS  += $(foreach m,$(TEST_ONLY_LIST),-DAPP_TEST_ONLY_$(shell echo $(m) | tr a-z A-Z)=1)
+endif
 CFLAGS  += -DTM_CONSOLE_UART=$(CRASH_REPORT)
 ifeq ($(CRASH_REPORT),0)
 CFLAGS  += -DBOARD_UART0_FREE=1
@@ -209,7 +231,7 @@ endif
 # before any recipe executes.
 ################################################################################
 
-PROFILE_ID := smp$(SMP)-$(CONSOLE)-wifi$(WIFI)-net$(NET)-mqtt$(MQTT)-crash$(CRASH_REPORT)-test$(TEST)
+PROFILE_ID := smp$(SMP)-$(CONSOLE)-wifi$(WIFI)-net$(NET)-mqtt$(MQTT)-crash$(CRASH_REPORT)-test$(TEST)$(patsubst _test%,%,$(TEST_SUFFIX))
 PROFILE_FILE := .build_profile
 
 ifneq ($(strip $(shell cat $(PROFILE_FILE) 2>/dev/null)),$(PROFILE_ID))
