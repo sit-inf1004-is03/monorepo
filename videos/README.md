@@ -38,4 +38,4 @@ Newest at the bottom. Never delete a row.
 
 | Date | Subsystem | Test ID / demo | Commit | Student ID | Link | Notes |
 |---|---|---|---|---|---|---|
-| YYYY-MM-DD | S1 | S1-U03 | `abc1234` | | <https://youtu.be/...> | LED blinks at 2 Hz |
+| YYYY-MM-DD | S1 | SYS-10 | `abc1234` | | <https://youtu.be/...> | car shows online on the dashboard |
