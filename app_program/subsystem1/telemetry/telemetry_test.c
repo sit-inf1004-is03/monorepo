@@ -1,9 +1,9 @@
 /**
  * @file    telemetry_test.c
  * @brief   On-target tests of telemetry.  Built only with make TEST=1 (with
- *          or without NET=lwip).  Record unit results in testing/telemetry/
- *          TEST_LOG.md and the INT- results in testing/integration/
- *          TEST_LOG.md.  Coded to BARR-C:2018.
+ *          or without NET=lwip).  Record unit results in
+ *          testing/subsystem1/telemetry/TEST_LOG.md and the INT- results
+ *          in testing/integration/TEST_LOG.md.  Coded to BARR-C:2018.
  *
  * Settings are put straight into the telemetry message buffer, exactly as
  * the network bridge does for a message on robocar/id/config.
@@ -13,13 +13,13 @@
 #include "telemetry.h"
 #include "telemetry_events.h"
 #include "../comms/comms.h"
-#include "../navigation/navigation.h"
-#include "../subsystem2/motion.h"
-#include "../subsystem2/drv_encoder.h"
-#include "../subsystem3/line_barcode.h"
-#include "../subsystem4/subsystem4.h"
-#include "../subsystem4/imu_ramp.h"
-#include "../test_report.h"
+#include "../../navigation/navigation.h"
+#include "../../subsystem2/motion.h"
+#include "../../subsystem2/drv_encoder.h"
+#include "../../subsystem3/line_barcode.h"
+#include "../../subsystem4/subsystem4.h"
+#include "../../subsystem4/imu_ramp.h"
+#include "../../test_report.h"
 
 #if APP_TEST
 

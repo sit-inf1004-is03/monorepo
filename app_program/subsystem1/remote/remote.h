@@ -12,7 +12,7 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
-#include "../app.h"
+#include "../../app.h"
 
 #define REMOTE_PRI              (22)    /* Band 22-23 (TEAM.md section 4). */
 #define REMOTE_MBF_MESSAGES     (8u)    /* Commands its buffer holds. */

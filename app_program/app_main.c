@@ -18,7 +18,9 @@
  *
  *	The subsystems (owners and interfaces: TEAM.md sections 1 and 5)
  *	-----------------------------------------------------------------
- *	  subsystem1/  example LED: blinks GP19, paced by a cyclic handler
+ *	  subsystem1/  Wi-Fi / MQTT: net/ (the bridge), comms/, remote/,
+ *	               telemetry/ and protocol.h (MQTT.md); plus the
+ *	               template's example LED, blinking GP19
  *	  subsystem2/  Motion control: encoders, motors, PID, task_motion
  *	  subsystem3/  Line Following + Barcode
  *	  subsystem4/  (empty template)
@@ -36,14 +38,14 @@
 
 #include "app.h"
 #include "navigation/navigation.h"	/* Navigation / Vehicle Controller */
-#include "comms/comms.h"		/* Wi-Fi / MQTT: comms, remote, telemetry */
-#include "remote/remote.h"
-#include "telemetry/telemetry.h"
+#include "subsystem1/comms/comms.h"		/* Wi-Fi / MQTT (subsystem 1) */
+#include "subsystem1/remote/remote.h"
+#include "subsystem1/telemetry/telemetry.h"
 #if APP_TEST
-#include "comms/comms_test.h"
-#include "remote/remote_test.h"
-#include "telemetry/telemetry_events.h"
-#include "telemetry/telemetry_test.h"
+#include "subsystem1/comms/comms_test.h"
+#include "subsystem1/remote/remote_test.h"
+#include "subsystem1/telemetry/telemetry_events.h"
+#include "subsystem1/telemetry/telemetry_test.h"
 #endif
 
 /*

@@ -22,7 +22,7 @@
  * touches.
  */
 
-#include "../app.h"
+#include "../../app.h"
 #include "net_start.h"
 #if TM_NET_LWIP
 #include "cyw43_utk.h"

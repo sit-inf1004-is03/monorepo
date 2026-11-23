@@ -19,8 +19,8 @@
 
 #include "telemetry_events.h"
 #include "../comms/comms.h"
-#include "../subsystem3/line_barcode.h"
-#include "../subsystem4/subsystem4.h"
+#include "../../subsystem3/line_barcode.h"
+#include "../../subsystem4/subsystem4.h"
 
 /* HUMP event payload (imu_pack.h): [6:0] mm, [7] over 127 mm, [12:8] deg. */
 #define HUMP_MM_MASK            (0x7Fu)

@@ -17,11 +17,11 @@ separate `mqtt-web-interface` project.
 
 | Folder | What it is |
 |---|---|
-| `app_program/net/` | **Not a subsystem.** The network bridge: Wi-Fi, DHCP and the MQTT session, all on the kernel's WiFi task, which is the only task allowed to call lwIP or MQTT. Recovers each layer with exponential backoff. |
-| `app_program/comms/` | What tasks use to reach the bridge: send with `comms_publish()` / `comms_log()`, receive by `comms_subscribe(topic, my_mbf)` in your `_init()`. Never blocks. |
-| `app_program/remote/` | Commands from the dashboard to Navigation (`nav_post_remote()`, IF-13), and the Wi-Fi-loss fault bit when the connection drops (IF-12). |
-| `app_program/telemetry/` | Reads every subsystem's state and publishes it as two 64-bit words; sends humps and barcodes as events when they happen. |
-| `app_program/protocol.h` | Topics, command numbers and the telemetry bit layout. The dashboard has a copy. |
+| `app_program/subsystem1/net/` | **Not a subsystem.** The network bridge: Wi-Fi, DHCP and the MQTT session, all on the kernel's WiFi task, which is the only task allowed to call lwIP or MQTT. Recovers each layer with exponential backoff. |
+| `app_program/subsystem1/comms/` | What tasks use to reach the bridge: send with `comms_publish()` / `comms_log()`, receive by `comms_subscribe(topic, my_mbf)` in your `_init()`. Never blocks. |
+| `app_program/subsystem1/remote/` | Commands from the dashboard to Navigation (`nav_post_remote()`, IF-13), and the Wi-Fi-loss fault bit when the connection drops (IF-12). |
+| `app_program/subsystem1/telemetry/` | Reads every subsystem's state and publishes it as two 64-bit words; sends humps and barcodes as events when they happen. |
+| `app_program/subsystem1/protocol.h` | Topics, command numbers and the telemetry bit layout. The dashboard has a copy. |
 
 No kernel file is changed. `KERNEL_ISSUES.md` explains how this follows the
 course's MQTT guidance and why it is built with `NET=lwip` rather than
@@ -193,7 +193,7 @@ changed.
 
 ## Coding standard
 
-All C files of this part (`app_program/net/`, `comms/`, `remote/`,
+All C files of this part (`app_program/subsystem1/net/`, `comms/`, `remote/`,
 `telemetry/` and `protocol.h`) follow the Barr Group Embedded C Coding
 Standard, BARR-C:2018 (`barr_c_coding_standard_2018.pdf`). In short:
 4-space indents and no tabs, braces on their own lines, lines of at most
@@ -280,9 +280,9 @@ returns `E_TMOUT`. Log lines queued while offline are sent after reconnecting.
 
 | Log | Tests | What they cover |
 |---|---|---|
-| `testing/comms/TEST_LOG.md` | CO-U01 .. CO-U10 | command parsing, number formatting, the telemetry golden samples (both words), backoff, size limits, topic matching |
-| `testing/remote/TEST_LOG.md` | RE-U01 | the remote task consumes every kind of message and keeps running |
-| `testing/telemetry/TEST_LOG.md` | TL-U01 .. TL-U03, TL-U05 | telemetry settings, the hump event message, the barcode map (TL-U04 is retired) |
+| `testing/subsystem1/comms/TEST_LOG.md` | CO-U01 .. CO-U10 | command parsing, number formatting, the telemetry golden samples (both words), backoff, size limits, topic matching |
+| `testing/subsystem1/remote/TEST_LOG.md` | RE-U01 | the remote task consumes every kind of message and keeps running |
+| `testing/subsystem1/telemetry/TEST_LOG.md` | TL-U01 .. TL-U03, TL-U05 | telemetry settings, the hump event message, the barcode map (TL-U04 is retired) |
 | `testing/integration/TEST_LOG.md` | INT-15 .. INT-17, INT-19, INT-20 | settings reach telemetry, both words hold the other subsystems' values (IMU, distance, barcode), the car and dashboard agree on the bit layout (INT-18 is retired) |
 | `testing/system/TEST_LOG.md` | SYS-10 .. SYS-15 | connecting, remote commands, telemetry on the moving car, Wi-Fi loss, broker restart, humps and barcodes on the dashboard |
 

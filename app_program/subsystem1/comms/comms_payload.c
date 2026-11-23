@@ -4,7 +4,7 @@
  *          protocol.h.  Coded to BARR-C:2018.
  */
 
-#include "../app.h"
+#include "../../app.h"
 #include "comms_payload.h"
 
 #define NUMBERS_MAX         (1u + COMMS_PAYLOAD_MAX_ARGS)

@@ -59,7 +59,7 @@
 #include "line_barcode.h"           /* kernel/app headers FIRST (app.h) */
 #include "../gpio_irq.h"            /* gpio_irq_get_time_usec() */
 #include "../navigation/navigation.h"
-#include "../comms/comms.h"         /* comms_log(): dashboard log */
+#include "../subsystem1/comms/comms.h"         /* comms_log(): dashboard log */
 #include "../subsystem2/drv_encoder.h"  /* LOCAL: widths by wheel travel */
 
 #include <stdint.h>

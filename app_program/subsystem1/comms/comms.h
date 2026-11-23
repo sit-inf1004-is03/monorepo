@@ -43,7 +43,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../app.h"
+#include "../../app.h"
 #include "../protocol.h"
 #include "../net/net_bridge.h"
 #include "comms_payload.h"

@@ -1,6 +1,6 @@
 # Kernel issues, and how the MQTT bridge follows the course guidance
 
-The MQTT bridge in `app_program/net/` was written **without changing any kernel
+The MQTT bridge in `app_program/subsystem1/net/` was written **without changing any kernel
 file** (`kernel/`, `lib/`, `include/`, `build_make/`, `config/`, `device/`, `etc/`).
 This file covers two things:
 
@@ -26,7 +26,7 @@ The guidance describes this architecture, and the project follows it:
 
 | Guidance | Where it is met |
 |---|---|
-| Subsystems do not call lwIP or MQTT | Subsystems use only `app_program/comms/comms.h` (message buffers). All lwIP, MQTT and radio calls are in `app_program/net/`, which is not a subsystem. |
+| Subsystems do not call lwIP or MQTT | Subsystems use only `app_program/subsystem1/comms/comms.h` (message buffers). All lwIP, MQTT and radio calls are in `app_program/subsystem1/net/`, which is not a subsystem. |
 | Only code in the Wi-Fi service context calls lwIP/MQTT | `net_bridge.c` runs only as an lwIP timer and lwIP callbacks, both run by the Wi-Fi task's `sys_check_timeouts()` (see B1 for how it gets there). |
 | Subsystem puts publish requests in a TX message buffer; the bridge publishes them | `comms_publish()` / `comms_log()` / `comms_telemetry()` → TX message buffer → `send_queued()` in `net_bridge.c`. |
 | The bridge puts received messages in an RX message buffer; the subsystem takes them | `on_incoming_data()` in `net_bridge.c` → each subscriber's RX message buffer (remote's and telemetry's) → `tk_rcv_mbf()` in the task. |
@@ -40,7 +40,7 @@ The guidance describes this architecture, and the project follows it:
 **Departure 1: the bridge is not in `lib/liblwip/sysdepend/pico_rp2040/mqtt_utk.c`.**
 The guidance puts it there, but that file is part of the kernel tree, which this
 project does not modify. The stock `mqtt_utk.c` is a heartbeat demo with no
-message buffers (B3). So the bridge is in `app_program/net/`, kept apart from
+message buffers (B3). So the bridge is in `app_program/subsystem1/net/`, kept apart from
 the subsystem folders, and it runs in the Wi-Fi service context as the guidance
 requires.
 
@@ -64,10 +64,10 @@ an `MQTT=1` build, the kernel's own `mqtt_utk_start()`. There is no hook that
 lets an application add its own code to that loop.
 
 **Workaround.** The bridge runs as an lwIP timer that re-arms itself
-(`bridge_tick()` in `app_program/net/net_bridge.c`); `sys_check_timeouts()`
+(`bridge_tick()` in `app_program/subsystem1/net/net_bridge.c`); `sys_check_timeouts()`
 then runs it on the Wi-Fi task every 10 ms. Only the first `sys_timeout()` call is
 made from outside the Wi-Fi task, by a short-lived task (`net_start_task()` in
-`app_program/net/net_start.c`) pinned to the Wi-Fi task's core at a lower
+`app_program/subsystem1/net/net_start.c`) pinned to the Wi-Fi task's core at a lower
 priority (5 vs 4). That task can only run while the Wi-Fi task is blocked in a
 kernel call, never part-way through changing lwIP's timer list or memory pools.
 
@@ -105,7 +105,7 @@ way to switch it off. A second client with the same ID would make the broker
 keep dropping one connection in favour of the other.
 
 **Workaround.** Build with `make NET=lwip`, not `MQTT=1`; the application
-compiles lwIP's `mqtt.c` itself (`app_program/net/lwip_mqtt.c`). Building with
+compiles lwIP's `mqtt.c` itself (`app_program/subsystem1/net/lwip_mqtt.c`). Building with
 `MQTT=1` stops with an `#error` explaining this.
 
 **Kernel fix.** Make `mqtt_utk.c` the message-buffer bridge described in the
@@ -119,7 +119,7 @@ subscriptions, the "online" status and the queued log lines sent right after
 connecting.
 
 **Workaround.** The bridge retries on `ERR_MEM` (subscriptions and publishes
-carry on next tick), so the defaults work. `app_program/net/lwip_mqtt.c` also
+carry on next tick), so the defaults work. `app_program/subsystem1/net/lwip_mqtt.c` also
 raises both values (`lwip_mqtt.h`) before including `mqtt.c`, so retries are rarer. That only
 changes the inside of `mqtt_client_t`, which no other file looks into.
 
@@ -146,7 +146,7 @@ retry a failed `cyw43_init()` after a delay.
   runs, and prints that the network is not built in.
 - **`tm_sprintf()` has no 64-bit conversion and no buffer size.** The
   telemetry word is formatted by `comms_payload_format_u64()`
-  (`app_program/comms/comms_payload.c`); log lines are kept short by hand.
+  (`app_program/subsystem1/comms/comms_payload.c`); log lines are kept short by hand.
 - **The Wi-Fi security mode is private to the kernel.** `WIFI_AUTH_MODE` is
   defined in `cyw43_utk.c`; `net_bridge.c` uses the same default and the same
   makefile override (`-DWIFI_AUTH_MODE=...`). If one changes, change the other.
