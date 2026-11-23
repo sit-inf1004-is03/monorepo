@@ -1,0 +1,86 @@
+S5-M02 / S5-M03 evidence: dashboard log (robocar/<id>/log), car on the mat,
+box on the line.  Firmware robocar_2026-11-20_v4_wifi_barcode-map.uf2
+(code = 653b797 on demoversion1: out leg +5 cm).  Copied from the
+dashboard Log panel by the tester; times are the laptop's.
+
+--- run A (2026-11-20 22:36) ---
+22:36:12 [S5] OBSTACLE at 12 cm
+22:36:15 [S5] COARSE: 30:511 60:12 90:11 120:13 150:18 cm (511 = open)
+22:36:15 [S5] COARSE: RIGHT side open
+22:36:16 [S5] FINE: 75:12 60:17 45:511 30:511 cm
+22:36:16 [S5] PLAN: RIGHT, turn 45 deg, out 29 past 19 back <= 57 cm (front 11, edge 45 deg, side 17 cm)
+22:36:17 [S5] StopTurn after 168 of 167 pulses
+22:36:24 [S5] StopTurn after 206 of 203 pulses
+22:36:28 [S5] PAST: passed (estimate), turning in
+22:36:28 [S5] StopTurn after 113 of 112 pulses
+22:36:33 [S5] StopTurn after 62 of 279 pulses (line)
+22:36:33 [S5] search: line on, no search
+22:36:33 [S5] bypass done, watching
+
+--- run B (2026-11-20 22:37) ---
+22:37:12 [S5] OBSTACLE at 13 cm
+22:37:15 [S5] COARSE: 30:511 60:511 90:13 120:14 150:511 cm (511 = open)
+22:37:15 [S5] COARSE: RIGHT side open
+22:37:17 [S5] FINE: 75:14 60:511 45:511 30:511 cm
+22:37:17 [S5] PLAN: RIGHT, turn 45 deg, out 28 past 22 back <= 55 cm (front 13, edge 30 deg, side 16 cm)
+22:37:18 [S5] StopTurn after 168 of 167 pulses
+22:37:24 [S5] StopTurn after 206 of 203 pulses
+22:37:28 [S5] PAST: passed (estimate), turning in
+22:37:29 [S5] StopTurn after 112 of 112 pulses
+22:37:34 [S5] StopTurn after 54 of 279 pulses (line)
+22:37:34 [S5] search: line on, no search
+22:37:34 [S5] bypass done, watching
+
+--- run C (2026-11-20 22:43) ---
+22:43:27 [S5] OBSTACLE at 14 cm
+22:43:29 [S5] COARSE: 30:511 60:15 90:14 120:14 150:20 cm (511 = open)
+22:43:29 [S5] COARSE: RIGHT side open
+22:43:31 [S5] FINE: 75:15 60:511 45:511 30:511 cm
+22:43:31 [S5] PLAN: RIGHT, turn 45 deg, out 28 past 23 back <= 55 cm (front 14, edge 30 deg, side 16 cm)
+22:43:32 [S5] StopTurn after 170 of 167 pulses
+22:43:38 [S5] StopTurn after 204 of 203 pulses
+22:43:43 [S5] PAST: passed (estimate), turning in
+22:43:44 [S5] StopTurn after 114 of 112 pulses
+22:43:48 [S5] StopTurn after 58 of 279 pulses (line)
+22:43:49 [S5] search: line on, no search
+22:43:49 [S5] bypass done, watching
+
+--- runs D, E, F (2026-11-20 22:56 - 22:58) ---
+22:56:23 [S5] OBSTACLE at 14 cm
+22:56:24 [S5] COARSE: 30:511 60:15 90:13 120:14 150:18 cm (511 = open)
+22:56:24 [S5] COARSE: RIGHT side open
+22:56:26 [S5] FINE: 75:14 60:511 45:511 30:511 cm
+22:56:26 [S5] PLAN: RIGHT, turn 45 deg, out 28 past 22 back <= 55 cm (front 13, edge 30 deg, side 16 cm)
+22:56:27 [S5] StopTurn after 171 of 167 pulses
+22:56:33 [S5] StopTurn after 207 of 203 pulses
+22:56:37 [S5] PAST: passed (estimate), turning in
+22:56:38 [S5] StopTurn after 114 of 112 pulses
+22:56:43 [S5] StopTurn after 41 of 279 pulses (line)
+22:56:43 [S5] search: line on, no search
+22:56:43 [S5] bypass done, watching
+22:57:31 [S5] OBSTACLE at 14 cm
+22:57:33 [S5] COARSE: 30:511 60:16 90:13 120:15 150:18 cm (511 = open)
+22:57:33 [S5] COARSE: RIGHT side open
+22:57:35 [S5] FINE: 75:15 60:511 45:511 30:511 cm
+22:57:35 [S5] PLAN: RIGHT, turn 45 deg, out 28 past 22 back <= 55 cm (front 13, edge 30 deg, side 16 cm)
+22:57:36 [S5] StopTurn after 171 of 167 pulses
+22:57:43 [S5] StopTurn after 206 of 203 pulses
+22:57:47 [S5] PAST: passed (estimate), turning in
+22:57:48 [S5] StopTurn after 114 of 112 pulses
+22:57:52 [S5] StopTurn after 56 of 279 pulses (line)
+22:57:52 [S5] search: line on, no search
+22:57:52 [S5] bypass done, watching
+22:58:04 [S5] OBSTACLE at 8 cm
+22:58:07 [S5] COARSE: 30:133 60:41 90:511 120:511 150:511 cm (511 = open)
+22:58:08 [S5] COARSE: LEFT side open
+22:58:09 [S5] FINE: 105:511 120:205 135:511 150:511 cm
+22:58:09 [S5] PLAN: LEFT, turn 45 deg, out 28 past 24 back <= 55 cm (front 15, edge 15 deg, side 16 cm)
+22:58:10 [S5] StopTurn after 170 of 167 pulses
+(log ends; the tester saw the car lose the line.  Straight ahead (90) read
+open after the trigger: the box was not ahead of the car, likely on a
+bend.)
+
+Summary: 6 triggers at 8-14 cm (S5-M02 PASS).  5 of 6 bypasses ended
+"bypass done" with the line found by StopTurn (S5-M03 PASS on a straight);
+run F (box not straight ahead) lost the line: known limit, bypass assumes
+the line continues straight.

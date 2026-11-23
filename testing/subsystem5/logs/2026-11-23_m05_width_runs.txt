@@ -1,0 +1,58 @@
+S5-M05 evidence: obstacle width, dashboard log (robocar/<id>/log) and
+Detections panel.  Box on the line, car line following into it.  Copied
+from the dashboard Log panel by the tester.
+
+--- run 1: 10.5 cm box, clutter on the left (07:39) ---
+Firmware robocar_2026-11-23_v1_final-sunday.uf2 = 891f82c (no beam
+correction).
+07:39:07 [S5] OBSTACLE at 14 cm
+07:39:10 [S5] COARSE: 30:47 60:15 90:13 120:14 150:18 cm (511 = open)
+07:39:16 [S5] WIDTH: at least 24.9 cm (left 17.3, right 7.6, front 13 cm)
+07:39:16 [S5] COARSE: no side clear (> 50 cm)
+07:39:16 [S5] retry 1 of 3
+07:39:19 [S5] COARSE: 30:38 60:14 90:13 120:15 150:511 cm (511 = open)
+07:39:24 [S5] WIDTH: at least 24.9 cm (left 17.3, right 7.6, front 13 cm)
+07:39:24 [S5] COARSE: LEFT side open
+07:39:25 [S5] FINE: 105:14 120:15 135:17 150:26 cm
+07:39:26 [S5] FINE: obstacle edge not found
+07:39:26 [S5] retry 2 of 3
+07:39:28 [S5] COARSE: 30:46 60:14 90:13 120:15 150:27 cm (511 = open)
+07:39:33 [S5] WIDTH: at least 21.2 cm (left 15.4, right 5.8, front 13 cm)
+Result: FAIL (true 10.5).  Right half 7.6 vs 5.25: beam spread.  Left:
+something beside the box at the same depth (also blocked the bypass).
+Fix: OBS_WIDTH_BEAM_DEG, face test 8 -> 4 cm, "seen to" angles in log.
+
+--- run 2: 12.9 cm box, clear around it (07:50) ---
+Firmware robocar_2026-11-23_v3 = 8c5f6bc + local OBS_WIDTH_BEAM_DEG 10.
+07:50:07 [S5] OBSTACLE at 14 cm
+07:50:09 [S5] COARSE: 30:511 60:511 90:14 120:16 150:32 cm (511 = open)
+07:50:13 [S5] WIDTH: 10.9 cm (left 7.4 seen to 35 deg, right 3.5 to 20 deg, front 14 cm)
+07:50:14 [S5] COARSE: RIGHT side open
+07:50:15 [S5] FINE: 75:16 60:511 45:511 30:511 cm
+07:50:15 [S5] PLAN: RIGHT, turn 45 deg, out 28 past 23 back <= 55 cm (front 14, edge 30 deg, side 16 cm)
+(StopTurn lines left out)
+07:50:33 [S5] bypass done, watching
+Result: FAIL (10.9 vs 12.9, -2.0 cm).  Used to calibrate: beam 7 gives
+12.7 for these readings -> OBS_WIDTH_BEAM_DEG 7 (commit 4fcf024).
+
+--- run 3: 15 cm box (tester's measure) (08:04) ---
+Firmware v4 = 8c5f6bc + beam 7 (same S5 code as 4fcf024).
+08:04:34 [S5] OBSTACLE at 13 cm
+08:04:36 [S5] COARSE: 30:511 60:16 90:13 120:15 150:20 cm (511 = open)
+08:04:40 [S5] WIDTH: at least 21.1 cm (left 14.8 seen to 60 deg, right 6.3 to 25 deg, front 13 cm)
+(COARSE side, FINE, PLAN and StopTurn lines left out)
+08:04:58 [S5] bypass done, watching
+Result: FAIL.  Left seen to 60 deg (150:20 = an echo 20 cm away at 60
+deg, closer than the face): something beside the box again.
+
+--- run 4: box size not recorded (08:17) ---
+Firmware v5 = 4fcf024 + barcode change (S5 code as 4fcf024).
+08:17:20 [S5] OBSTACLE at 14 cm
+08:17:22 [S5] COARSE: 30:511 60:511 90:14 120:14 150:17 cm (511 = open)
+08:17:28 [S5] WIDTH: at least 15.3 cm (left 11.9 seen to 60 deg, right 3.4 to 15 deg, front 14 cm)
+(COARSE side, FINE, PLAN and StopTurn lines left out)
+08:17:47 [S5] bypass done, watching
+Result: FAIL (left edge never ended within 60 deg).
+
+Open: repeat with the demo box (15.5 x 12.5 x 9.5) square to the car and
+nothing within ~40 cm either side, on the main build.
