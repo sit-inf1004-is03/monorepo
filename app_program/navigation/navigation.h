@@ -13,7 +13,8 @@
  *                                     nav_post_bypass_plan(),
  *                                     nav_post_bypass_passed(),
  *                                     nav_post_search(),
- *                                     nav_is_search_wait()
+ *                                     nav_is_search_wait(),
+ *                                     nav_get_turned_pulses()
  *   Any subsystem, its own bits only: nav_raise_fault(),
  *                                     nav_clear_fault() (degrade bits)
  *   Wi-Fi / MQTT commands (Rifa):     nav_post_remote()
@@ -131,6 +132,7 @@ ER       nav_post_bypass_passed(void);
 ER       nav_post_search(uint32_t command);
 bool     nav_is_search_wait(void);
 uint32_t nav_get_junction_search(void);   // LOCAL: NAV_JSEARCH_
+int32_t  nav_get_turned_pulses(void);     // LOCAL: + = left
 ER       nav_raise_fault(uint32_t bits);
 ER       nav_clear_fault(uint32_t bits);
 ER       nav_post_remote(uint32_t command);

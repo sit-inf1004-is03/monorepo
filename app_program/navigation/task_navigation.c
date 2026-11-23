@@ -26,7 +26,9 @@
  *     Obstacle Scan's verdict (nav_post_search()): FOUND -> follow the
  *     line; LEFT / RIGHT -> one slow search pivot, StopTurn from Obstacle
  *     Scan (angle or line seen), then wait again; FAILED -> stop with
- *     LINE_NOT_FOUND.
+ *     LINE_NOT_FOUND.  LOCAL: from the obstacle on, Navigation counts the
+ *     car's net pivot (nav_get_turned_pulses()), so Obstacle Scan can
+ *     align back to the heading at the obstacle and search around it.
  *   - A stop fault brakes and holds until a remote CLEAR.
  *
  * Navigation sends Motion one command at a time and always waits for its
@@ -197,6 +199,18 @@ static bool     volatile g_b_search_wait = false;   // In P_SEARCH_WAIT.
 // side (NAV_JSEARCH_), else NONE.  Obstacle Scan reads it for its
 // line search.
 static uint32_t volatile g_junc_search   = NAV_JSEARCH_NONE;
+// LOCAL: net pivot since the obstacle (or since a T turn's search began),
+// pulses per wheel, + = left (nav_get_turned_pulses()).
+static int32_t  volatile g_turned        = 0;
+
+// LOCAL: heading tracker, Navigation task only.  Navigation sends one
+// command at a time, so every pulse between two sends belongs to the
+// first: its move, then its coast after the brake.  A pivot's share is
+// its angle (both wheels count up, so half the sum per wheel; a swing
+// turns as far for the same sum).  Straights hold the heading.
+static int32_t           g_head_closed   = 0;    // Commands done.
+static uint32_t          g_head_sum      = 0u;   // Encoder sum at the send.
+static int32_t           g_head_sign     = 0;    // Of the command running.
 
 // Used by the Navigation task only.  Static storage starts zeroed:
 // P_IDLE, nothing pending.
@@ -224,6 +238,11 @@ static void nav_send_pivot(uint32_t direction, uint32_t speed_mm_s);
 static void nav_send(motion_cmd_t const * p_cmd);
 static ER   nav_post(uint32_t event);
 static uint32_t nav_now_ms(void);
+static uint32_t nav_encoder_sum(void);
+static int32_t  nav_head_open(uint32_t sum);
+static void     nav_head_next(motion_cmd_t const * p_cmd);
+static void     nav_head_publish(void);
+static void     nav_head_reset(void);
 
 
 /*!
@@ -418,6 +437,19 @@ nav_get_junction_search (void)
 }
 
 /*!
+ * @brief LOCAL: how far the car has pivoted since the obstacle was seen
+ *        (or since a T turn's line search began), in encoder pulses per
+ *        wheel, + = left.  Obstacle Scan turns back to the original
+ *        heading with it and centres its search on that heading.  Up to
+ *        NAV_POLL_MSEC old.  Read only.
+ */
+int32_t
+nav_get_turned_pulses (void)
+{
+    return (g_turned);
+}
+
+/*!
  * @brief Raise fault bits (any subsystem, its own bits only).  A bit in
  *        NAV_FLT_STOP_MASK brakes the car and stays raised until a remote
  *        CLEAR; a degrade bit (IMU, Wi-Fi loss) is only recorded, until
@@ -603,6 +635,7 @@ nav_task (INT start_code, void * p_ext_info)
 
         nav_poll_motion();
         nav_process();
+        nav_head_publish();
     }
 }
 
@@ -733,6 +766,7 @@ nav_on_move_done (void)
                           " search\n");
                 g_junc_search = (MOTION_DIR_LEFT == g_ctx.turn_dir) ?
                                 NAV_JSEARCH_LEFT : NAV_JSEARCH_RIGHT;
+                nav_head_reset();   // The search centres on this heading.
                 nav_enter(P_SEARCH_WAIT);
             }
             else
@@ -804,6 +838,7 @@ nav_process (void)
         //
         if ((P_FOLLOW == g_ctx.phase) || (P_APPROACH == g_ctx.phase))
         {
+            nav_head_reset();       // LOCAL: the heading to come back to.
             motion_set_speed_cap(0u);
             nav_brake_then(P_WAIT_PLAN, NAV_STATE_OBSTACLE);
         }
@@ -1366,6 +1401,8 @@ nav_now_ms (void)
 static void
 nav_send (motion_cmd_t const * p_cmd)
 {
+    nav_head_next(p_cmd);
+
     if (E_OK == motion_send(p_cmd, TMO_POL))
     {
         g_ctx.b_motion_busy = true;
@@ -1387,3 +1424,71 @@ nav_post (uint32_t event)
 
 /*** end of file ***/
 
+/*!
+ * @brief LOCAL: sum of both wheels' encoder counts (only differences of
+ *        two sums are used, so it may wrap).
+ */
+static uint32_t
+nav_encoder_sum (void)
+{
+    return (drv_encoder_get_count(DRV_ENCODER_LEFT) +
+            drv_encoder_get_count(DRV_ENCODER_RIGHT));
+}
+
+/*!
+ * @brief LOCAL: heading change of the command running, up to an encoder
+ *        sum taken now, in pulses per wheel (+ = left).
+ *
+ * @param[in] sum  nav_encoder_sum() now.
+ */
+static int32_t
+nav_head_open (uint32_t sum)
+{
+    // Cast: half the pulses of one command, far below 2^31.
+    //
+    return (g_head_sign * (int32_t) ((sum - g_head_sum) / 2u));
+}
+
+/*!
+ * @brief LOCAL: a command is about to be sent: close the last one's
+ *        share and start counting for this one.
+ *
+ * @param[in] p_cmd  The command.
+ */
+static void
+nav_head_next (motion_cmd_t const * p_cmd)
+{
+    uint32_t const sum = nav_encoder_sum();
+
+    g_head_closed += nav_head_open(sum);
+    g_head_sum     = sum;
+    g_head_sign    = 0;
+
+    if ((MOTION_CMD_PIVOT == p_cmd->type) ||
+        (MOTION_CMD_SWING == p_cmd->type))
+    {
+        g_head_sign = (MOTION_DIR_LEFT == p_cmd->direction) ? 1 : -1;
+    }
+
+    g_turned = g_head_closed;
+}
+
+/*!
+ * @brief LOCAL: publish the heading, every step (one store).
+ */
+static void
+nav_head_publish (void)
+{
+    g_turned = g_head_closed + nav_head_open(nav_encoder_sum());
+}
+
+/*!
+ * @brief LOCAL: make the heading now the one to come back to.
+ */
+static void
+nav_head_reset (void)
+{
+    g_head_closed = 0;
+    g_head_sum    = nav_encoder_sum();
+    g_turned      = 0;
+}

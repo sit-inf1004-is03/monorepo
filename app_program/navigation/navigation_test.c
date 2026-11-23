@@ -231,8 +231,12 @@ m01_task (INT start_code, void * p_ext_info)
                                 M01_BYPASS_CM, M01_BYPASS_CM);
     m01_expect_state("plan -> BYPASS", NAV_STATE_BYPASS);
     m01_stop_turn_after("bypass: pivot out", 600u);
+    m01_check("bypass: heading counted left after pivot out",
+              (nav_get_turned_pulses() > 0));   // LOCAL: for Obstacle Scan.
     m01_stop_turn_after("bypass: pivot parallel", 600u);
     m01_stop_turn_after("bypass: pivot in", 600u);
+    m01_check("bypass: heading counted right after pivot in",
+              (nav_get_turned_pulses() < 0));
     m01_check("bypass: creeping to the line",
               m01_wait_activity(MOTION_ACTIVITY_STRAIGHT,
                                 M01_PIVOT_WAIT_MSEC));
