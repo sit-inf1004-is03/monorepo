@@ -36,7 +36,10 @@
  *   gaps does no harm); else 3 thick of all 9.  Thick must be >= 1.5 x
  *   thin.  Must be framed by '*'; tried forwards, then reversed.  Thick /
  *   thin is a ratio, so the car's speed does not matter (only that it is
- *   steady across one barcode).
+ *   steady across one barcode).  LOCAL: failing that, one '*' may be cut
+ *   short to its last / first BC_PART_FRAME elements (the first bars of
+ *   a pass missed or wrong, or the car stopped on the barcode), when
+ *   those still fit (decode_part); logged "(one * cut short)".
  *
  * Command: first data letter, A = LEFT, B = RIGHT, C = STRAIGHT,
  *   D = U-TURN -> nav_post_barcode() (Navigation acts on it only while
@@ -83,7 +86,19 @@
                                      * of the way from the mean thin to
                                      * the mean thick (mark_widest) */
 #endif
-#define WIDTH_UNIT_US       (100U)  /* widths stored in 100 us units */
+#ifndef BC_PART_FRAME
+#define BC_PART_FRAME       (3U)    /* LOCAL: a '*' cut short must still
+                                     * show this many elements, thin /
+                                     * thick as expected (decode_part) */
+#endif
+#ifndef BC_PART_SAME_PCT
+#define BC_PART_SAME_PCT    (160U)  /* LOCAL: ...and the '*' and the letter
+                                     * thin / thick widths within this %
+                                     * of each other */
+#endif
+#define PART_LEN            ((2U * CHAR_STRIDE) + BC_PART_FRAME)
+#define STAR_PATTERN        (0x094U)    /* '*' in g_code39 */
+#define WIDTH_UNIT_US      (100U)  /* widths stored in 100 us units */
 #define WIDTH_MAX           (0xFFFFU)
 #define WHITE_SHIFT         (8U)    /* floor average ~256 samples */
 #define BLACK_DECAY_SHIFT   (13U)   /* bar peak decays over ~8 s */
@@ -201,10 +216,14 @@ static bool          mark_widest(uint16_t const * p_w, uint16_t first,
 static char          lookup(bool const * p_thick);
 static char          decode_char(uint16_t const * p_w);
 static bool          decode_pass(uint16_t const * p_w, uint16_t n,
-                                 char * p_letter, bool * p_b_reversed);
+                                 char * p_letter, bool * p_b_reversed,
+                                 bool * p_b_part);
 static void          log_widths(uint16_t const * p_w);
 static bool          decode(uint16_t const * p_w, uint16_t n,
                             char * p_letter, bool b_reverse);
+static uint16_t      pattern_of(char symbol);
+static bool          decode_part(uint16_t const * p_w, char * p_letter,
+                                 bool b_reverse, bool b_tail);
 static barcode_cmd_t letter_to_cmd(char letter);
 static int16_t       map_index(char letter);
 static void          log_line(void);
@@ -650,18 +669,150 @@ static bool decode(uint16_t const * p_w, uint16_t n, char * p_letter,
     return (b_ok);
 }
 
+/* LOCAL: the 9-bit pattern of a character in g_code39 (0 if none). */
+static uint16_t pattern_of(char symbol)
+{
+    uint16_t pattern = 0U;
+
+    for (uint32_t i = 0U; i < CODE39_COUNT; i++)
+    {
+        if (g_code39[i].symbol == symbol)
+        {
+            pattern = g_code39[i].pattern;
+            break;
+        }
+    }
+
+    return (pattern);
+}
+
+/* LOCAL: one '*' cut short.  On the car the first few bars / gaps of a
+ * pass can come out wrong or be missed (two logged passes of one card,
+ * 23 Nov), and a pass also ends early if the car stops on the barcode.
+ * So accept PART_LEN elements (from p_w, reversed if b_reverse) of
+ *   "*X" + the first BC_PART_FRAME elements of the closing '*', or
+ *   (b_tail) the last BC_PART_FRAME elements of the opening '*' + "X*",
+ * when the two whole characters decode and the cut-off elements and both
+ * gaps between characters are thin / thick as the whole characters say
+ * (split at the mean of thin and thick, bars and gaps apart: the sensor
+ * spot makes bars read narrower than gaps).  *p_letter = X. */
+static bool decode_part(uint16_t const * p_w, char * p_letter,
+                        bool b_reverse, bool b_tail)
+{
+    uint16_t       buf[PART_LEN];
+    bool           thick[PART_LEN];
+    uint32_t       sum[4]  = {0U, 0U, 0U, 0U};  /* thin / thick bar, */
+    uint32_t       cnt[4]  = {0U, 0U, 0U, 0U};  /* thin / thick gap  */
+    uint32_t       sum_s[4] = {0U, 0U, 0U, 0U}; /* the same, '*' only */
+    uint32_t       cnt_s[4] = {0U, 0U, 0U, 0U};
+    uint16_t const data    = b_tail ? (uint16_t)(BC_PART_FRAME + 1U) :
+                                      (uint16_t)CHAR_STRIDE;
+    uint16_t const star    = b_tail ? (uint16_t)(data + CHAR_STRIDE) : 0U;
+    uint16_t const part    = b_tail ? 0U : (uint16_t)(2U * CHAR_STRIDE);
+    uint16_t const part_el = b_tail ?
+                             (uint16_t)(CHAR_ELEMENTS - BC_PART_FRAME) : 0U;
+    uint16_t       pattern;
+    char           c;
+    bool           b_ok;
+
+    for (uint16_t i = 0U; i < PART_LEN; i++)
+    {
+        buf[i]   = b_reverse ? p_w[PART_LEN - 1U - i] : p_w[i];
+        thick[i] = false;
+    }
+
+    c       = decode_char(&buf[data]);
+    pattern = pattern_of(c);
+    b_ok    = (('*' == decode_char(&buf[star])) && (0U != pattern) &&
+               ('*' != c));
+
+    for (uint16_t i = 0U; (i < CHAR_ELEMENTS) && b_ok; i++)
+    {
+        uint16_t const bit = (uint16_t)(1U << (CHAR_ELEMENTS - 1U - i));
+
+        thick[star + i] = (0U != (STAR_PATTERN & bit));
+        thick[data + i] = (0U != (pattern & bit));
+    }
+
+    for (uint16_t i = 0U; (i < BC_PART_FRAME) && b_ok; i++)
+    {
+        thick[part + i] = (0U != (STAR_PATTERN &
+                                  (1U << (CHAR_ELEMENTS - 1U -
+                                          (part_el + i)))));
+    }
+
+    /* Mean widths from the two whole characters.  Every character
+     * starts on a bar, at an even index of buf. */
+    for (uint16_t i = 0U; (i < CHAR_ELEMENTS) && b_ok; i++)
+    {
+        uint16_t const kind = (uint16_t)(((0U != (i & 1U)) ? 2U : 0U));
+        uint16_t const ks   = (uint16_t)(kind + (thick[star + i] ? 1U : 0U));
+        uint16_t const kd   = (uint16_t)(kind + (thick[data + i] ? 1U : 0U));
+
+        sum_s[ks] += buf[star + i];
+        cnt_s[ks]++;
+        sum[kd]   += buf[data + i];
+        cnt[kd]++;
+    }
+
+    /* Both from one printed barcode: '*' and X must have much the same
+     * thin bar, thick bar, thin gap and thick gap widths (X may have no
+     * thick bar).  Means multiplied out: at most 5 x 5 x 65535 x the %,
+     * < 2^32 for a % up to 1000. */
+    for (uint16_t k = 0U; (k < 4U) && b_ok; k++)
+    {
+        if (0U != cnt[k])
+        {
+            uint32_t const s_x = sum_s[k] * cnt[k];     /* '*' mean, */
+            uint32_t const x_s = sum[k] * cnt_s[k];     /* X mean    */
+
+            b_ok = ((s_x * BC_PART_SAME_PCT) >= (x_s * 100U)) &&
+                   ((x_s * BC_PART_SAME_PCT) >= (s_x * 100U));
+        }
+
+        sum[k] += sum_s[k];
+        cnt[k] += cnt_s[k];
+    }
+
+    /* The gaps either side of X, then the cut-off elements: thick when
+     * past the midpoint of the mean thin and mean thick ('*' alone has
+     * thin and thick bars and gaps, so no count is 0).  Multiplied out:
+     * at most 8 widths of 16 bits per mean, < 2^32. */
+    for (uint16_t k = 0U; (k < (BC_PART_FRAME + 2U)) && b_ok; k++)
+    {
+        uint16_t const i    = (0U == k) ? (uint16_t)(data - 1U) :
+                              ((1U == k) ? (uint16_t)(data + CHAR_ELEMENTS) :
+                                           (uint16_t)(part + k - 2U));
+        uint16_t const kind = (uint16_t)(((0U != (i & 1U)) ? 2U : 0U));
+        bool const     b_wide =
+            (((uint32_t)buf[i] * 2U * cnt[kind] * cnt[kind + 1U]) >
+             ((sum[kind] * cnt[kind + 1U]) + (sum[kind + 1U] * cnt[kind])));
+
+        b_ok = (b_wide == thick[i]);
+    }
+
+    if (b_ok)
+    {
+        *p_letter = c;
+    }
+
+    return (b_ok);
+}
+
 /* LOCAL: decode a pass forwards, then reversed; if the whole pass is not
  * a barcode (stray bars before / after it: the line, a smudge, the T),
  * try every 29 / 39 / 49-element stretch that starts on a bar.  The '*'
- * framing keeps a wrong stretch from reading as a letter. */
+ * framing keeps a wrong stretch from reading as a letter.  Failing that,
+ * a stretch with one '*' cut short (decode_part, *p_b_part). */
 static bool decode_pass(uint16_t const * p_w, uint16_t n, char * p_letter,
-                        bool * p_b_reversed)
+                        bool * p_b_reversed, bool * p_b_part)
 {
     bool     b_ok = false;
     uint16_t len;
     uint16_t off;
 
     *p_b_reversed = false;
+    *p_b_part     = false;
 
     for (len = n; (len >= ((3U * CHAR_STRIDE) - 1U)) && (!b_ok); len--)
     {
@@ -677,6 +828,19 @@ static bool decode_pass(uint16_t const * p_w, uint16_t n, char * p_letter,
                     *p_b_reversed = b_ok;
                 }
             }
+        }
+    }
+
+    for (off = 0U; ((off + PART_LEN) <= n) && (!b_ok); off += 2U)
+    {
+        for (uint16_t k = 0U; (k < 4U) && (!b_ok); k++)
+        {
+            bool const b_rev = (0U != (k & 1U));
+
+            b_ok          = decode_part(&p_w[off], p_letter, b_rev,
+                                        (k >= 2U));
+            *p_b_reversed = b_ok && b_rev;
+            *p_b_part     = b_ok;
         }
     }
 
@@ -758,12 +922,14 @@ static void finish_pass(void)
     bool            b_reversed = false;
     bool            b_ok       = false;
     bool            b_by_dist  = false;
+    bool            b_part     = false;
     barcode_cmd_t   cmd        = CMD_NONE;
     uint16_t const *p_widths   = pass_widths(&b_by_dist);
 
     if (!g_b_too_long)
     {
-        b_ok = decode_pass(p_widths, g_count, &letter, &b_reversed);
+        b_ok = decode_pass(p_widths, g_count, &letter, &b_reversed,
+                           &b_part);
     }
 
     if (b_ok)
@@ -775,8 +941,9 @@ static void finish_pass(void)
                       ((uint32_t)(uint8_t)letter & BC_LAST_LETTER_MASK);
 
         cmd = letter_to_cmd(letter);
-        (void)tm_sprintf(g_log, (UB *)"[BC] read *%c*%s -> %s",
+        (void)tm_sprintf(g_log, (UB *)"[BC] read *%c*%s%s -> %s",
                          (INT)letter, b_reversed ? " (reversed)" : "",
+                         b_part ? " (one * cut short)" : "",
                          barcode_cmd_name(cmd));
         log_line();
 
@@ -999,20 +1166,31 @@ void barcode_task(INT stacd, void * exinf)
             finish_pass();
         }
         else if (g_b_in_pass && (!g_b_black) && (g_count != g_tried) &&
-                 (g_count >= ((3U * CHAR_STRIDE) - 1U)) &&
-                 (0U == ((g_count + 1U) % CHAR_STRIDE)))
+                 (g_count >= PART_LEN) && (0U != (g_count & 1U)))
         {
-            /* LOCAL: a bar just ended with a whole number of characters:
-             * if it is already a valid "*X*", decode now instead of
+            /* LOCAL: a bar just ended.  If the pass is already a valid
+             * "*X*" (a whole number of characters), or its last PART_LEN
+             * elements are "X*" after a '*' cut short at the start
+             * (decode_part, either way round), decode now instead of
              * waiting BC_END_GAP_MS (the T's crossbar may come first). */
             char            letter = INVALID_PATTERN;
             bool            b_by_dist;
             uint16_t const *p_widths = pass_widths(&b_by_dist);
+            uint16_t const *p_last   = &p_widths[g_count - PART_LEN];
+            bool            b_ok     = false;
 
             g_tried = g_count;
 
-            if (decode(p_widths, g_count, &letter, false) ||
-                decode(p_widths, g_count, &letter, true))
+            if ((g_count >= ((3U * CHAR_STRIDE) - 1U)) &&
+                (0U == ((g_count + 1U) % CHAR_STRIDE)))
+            {
+                b_ok = (decode(p_widths, g_count, &letter, false) ||
+                        decode(p_widths, g_count, &letter, true));
+            }
+
+            if (b_ok ||
+                decode_part(p_last, &letter, false, true) ||
+                decode_part(p_last, &letter, true, false))
             {
                 finish_pass();
             }
