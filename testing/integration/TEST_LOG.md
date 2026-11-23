@@ -65,3 +65,4 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | INT-01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-11-23 | INT-15, INT-16, INT-19, INT-20 | `2d64476` | Rifa | PASS | `../subsystem1/logs/2026-11-23_s1_unit.txt` | `make NET=lwip TEST=1 TEST_ONLY="s1 nav"` image (the build profile left in `build_make/`): run by `telemetry_test()` with subsystem 1's tests, all 4 PASS. INT-17 not recorded: its car half (CO-U05, CO-U10) passed, the dashboard's `npm test` half was not run |
