@@ -17,7 +17,7 @@ subsystem, ask its owner or open a pull request for them to review.
 
 | # | Subsystem (what it does) | Student ID | GitHub username | Code | Tests |
 |---|---|---|---|---|---|
-| 1 | Wi-Fi / MQTT: network bridge, comms, dashboard commands and telemetry (`net/`, `comms/`, `remote/`, `telemetry/`, `protocol.h`); the template's *example* LED heartbeat on GP19 is still here too | | achrinza | `app_program/subsystem1/` | `testing/subsystem1/` (`comms/`, `remote/`, `telemetry/`) |
+| 1 | Wi-Fi / MQTT: network bridge, comms, dashboard commands and telemetry (`net/`, `comms/`, `remote/`, `telemetry/`, `protocol.h`) | | achrinza | `app_program/subsystem1/` | `testing/subsystem1/` (`comms/`, `remote/`, `telemetry/`) |
 | 2 | *example:* Producer: makes a sample every 300 ms | | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
 | 4 | IMU-based motion and terrain monitoring (GY-511 / LSM303D on I2C1) | 2501298 | | `app_program/subsystem4/`, `app_program/common/` | `testing/subsystem4/` |
@@ -67,7 +67,7 @@ fixed.
 | GP16 | S5 | ultrasonic TRIG (output, Grove port 4, `drv_ultrasonic`) |
 | GP17 | S5 | ultrasonic ECHO (input, both edges via `gpio_irq`, Grove port 4) |
 | GP18 | | |
-| GP19 | *example:* S1 | external LED (LED + 330 Ω to GND) |
+| GP19 | | free (was the template's example LED, removed) |
 | GP20 | | |
 | GP21 | | |
 | GP22 | | |
@@ -147,7 +147,7 @@ change it only by team agreement. Write down every task you create.
 
 | Subsystem | Priority band | Tasks (name – priority – core) |
 |---|---|---|
-| 1 | 12–13 | *example:* led_task – 12 – any |
+| 1 | 12–13 | none: Wi-Fi / MQTT's tasks are in the Wi-Fi / MQTT row below (the example led_task was removed) |
 | 2 | 14–15 | task_motion – 14 – core 1 (away from Wi-Fi's priority 4 task on core 0); one of s2_test_b2_task, s2_test_motor_task, s2_test_motion_task – 15 – core 0 (`TEST=1` builds only) |
 | 3 | 16–17 | line_task – 16 – core 0 (barcode_task – 16, not started yet) |
 | 4 | 18–19 | imu_task – 18 – any |
@@ -199,19 +199,20 @@ Each interface is tested by at least one integration test
 ## 6. Kernel object budget
 
 Limits are set in `config/config.h`. If the team needs more, raise the
-limit there. The numbers below are the example's usage.
+limit there. The numbers below are the example's usage, except S1, which is
+Wi-Fi / MQTT's own (net_start exits after start-up).
 
 | Object | Limit | S1 | S2 | S3 | S4 | S5 |
 |---|---|---|---|---|---|---|
-| Task | 32 | 1 | 1 | 1 | 1 | 1 |
+| Task | 32 | 3 | 1 | 1 | 1 | 1 |
 | Semaphore | 16 | | 1 | | | |
 | Event flag | 16 | | | | 1 | |
 | Mailbox | 12 | | | 1 | | |
 | Mutex | 12 | | | 1 | | |
-| Message buffer | 12 | | | | 1 | |
+| Message buffer | 12 | 3 | | | 1 | |
 | Fixed memory pool | 12 | | 1 | | | |
 | Variable memory pool | 12 | | | | | |
-| Cyclic handler | 12 | 1 | | | 1 | |
+| Cyclic handler | 12 | | | | 1 | |
 | Alarm handler | 12 | | | | | |
 
 (The kernel's USB and WiFi service tasks also use a few of these.)

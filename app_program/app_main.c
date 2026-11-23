@@ -19,16 +19,16 @@
  *	The subsystems (owners and interfaces: TEAM.md sections 1 and 5)
  *	-----------------------------------------------------------------
  *	  subsystem1/  Wi-Fi / MQTT: net/ (the bridge), comms/, remote/,
- *	               telemetry/ and protocol.h (MQTT.md); plus the
- *	               template's example LED, blinking GP19
+ *	               telemetry/ and protocol.h (MQTT.md)
  *	  subsystem2/  Motion control: encoders, motors, PID, task_motion
  *	  subsystem3/  Line Following + Barcode
  *	  subsystem4/  (empty template)
  *	  subsystem5/  (empty template)
  *	  navigation/  Navigation / Vehicle Controller: the only module that
  *	               commands Motion
- *	The template's example producer -> consumer -> monitor chain
- *	(S2 -> S3 -> S4, IF-01 .. IF-05) has been retired.
+ *	The template's examples have been retired: the producer -> consumer
+ *	-> monitor chain (S2 -> S3 -> S4, IF-01 .. IF-05) and the LED
+ *	heartbeat that was subsystem 1.
  *
  *	The subsystem that RECEIVES or OWNS the data creates the object and
  *	publishes its ID in its header; the other side just uses it.
@@ -101,7 +101,6 @@ EXPORT INT usermain(void)
 #endif
 
 	/* Phase 1: every subsystem creates its kernel objects */
-	CHECK(subsystem1_init(), "subsystem1_init");
 	CHECK(subsystem2_init(), "subsystem2_init");
 	CHECK(subsystem3_init(), "subsystem3_init");
 	CHECK(subsystem4_init(), "subsystem4_init");
@@ -112,7 +111,6 @@ EXPORT INT usermain(void)
 	CHECK(telemetry_init(), "telemetry_init");
 
 	/* Phase 2: every subsystem starts its tasks */
-	CHECK(subsystem1_start(), "subsystem1_start");
 	CHECK(subsystem2_start(), "subsystem2_start");
 	CHECK(subsystem3_start(), "subsystem3_start");
 	CHECK(subsystem4_start(), "subsystem4_start");
@@ -140,7 +138,6 @@ EXPORT INT usermain(void)
 	comms_test();		/* Wi-Fi / MQTT first: quick, never drive */
 	remote_test();		/* the car, and done before NAV-M01 starts */
 	telemetry_test();
-	subsystem1_test();
 	subsystem2_test();
 	subsystem3_test();
 	telemetry_events_hold_imu(true);  /* S4-U06 reads them itself */

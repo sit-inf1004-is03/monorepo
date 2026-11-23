@@ -84,8 +84,8 @@ build, then runs the tests one module after another in the initial task:
 
 ```
 [TEST] === test run start ===
-comms, remote, telemetry      quick, never drive the car
-subsystem1 ... subsystem3
+comms, remote, telemetry      subsystem 1 (Wi-Fi / MQTT): quick, never drive the car
+subsystem2, subsystem3
 subsystem4                    telemetry leaves the IMU's events alone meanwhile
 subsystem5
 navigation                    quick checks, then starts NAV-M01 in its own task
