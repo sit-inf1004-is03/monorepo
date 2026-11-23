@@ -8,7 +8,8 @@
  * onto the kernel's shared "adca" device (the line task reads channels 0
  * and 1 of the same device; the driver's spinlock serialises the two).
  *
- * Sampling (barcode_task, every BC_SAMPLE_MS):
+ * Sampling (barcode_task, every BC_SAMPLE_MS, woken by timer ALARM2:
+ *   the kernel's 10 ms tick cannot time 1 ms):
  *   Higher ADC = blacker (BC_BAR_IS_HIGH).  A slow average follows the
  *   white floor, a peak that decays slowly follows the black bars.  The
  *   FIRST bar must cross their midpoint (+ hysteresis), so noise on the
@@ -125,6 +126,23 @@
 #define BEEP_LONG_MS        (400U)
 #define BEEP_CHIRP_MS       (30U)   /* read, but no command: 3 chirps */
 
+/* LOCAL: the sample tick.  The kernel tick is 10 ms (CNF_TIMER_PERIOD)
+ * and a delay sleeps at least one tick more than asked, so
+ * tk_dly_tsk(BC_SAMPLE_MS) slept 20 ms: the sensor was read at 50 Hz, and
+ * time widths came in 20 ms steps.  A spare RP2040 timer alarm (ALARM2:
+ * the port does not link the SDK's timer code, and nothing else arms an
+ * alarm) wakes barcode_task every BC_SAMPLE_MS instead. */
+#define BC_TICK_US          ((uint32_t)BC_SAMPLE_MS * 1000U)
+#define BC_TICK_ALARM       ((uint32_t)TIMER_ALARM2)
+#define BC_TICK_INTR        ((uint32_t)TIMER_INTR)
+#define BC_TICK_INTE        ((uint32_t)TIMER_INTE)
+#define BC_TICK_RAWL        ((uint32_t)TIMER_TIMERAWL)
+#define BC_TICK_INTNO       (2U)    /* TIMER_IRQ_2 in the RP2040 IRQ table */
+#define BC_TICK_BIT         (1UL << 2)
+#define BC_TICK_PRIORITY    (2)     /* as gpio_irq.c */
+#define BC_TICK_MARGIN_US   (50U)   /* an alarm closer than this is late */
+#define BC_TICK_TMO_MS      (20)    /* no tick this long: re-arm */
+
 /* Code 39: 9 elements, first element = bit 8, 1 = thick. */
 typedef struct
 {
@@ -202,6 +220,12 @@ static uint16_t g_beep_on_ms   = 0U;
 /* Navigation's state at the last sample: barcode_task only. */
 static uint32_t g_nav_seen     = NAV_STATE_IDLE;
 
+/* LOCAL: sample tick.  g_tick_at: barcode_task's core only, with its
+ * interrupts off (tick ISR, or bc_wait() under DI). */
+static ID                g_bc_tid  = 0;
+static bool              g_b_tick  = false;
+static uint32_t volatile g_tick_at = 0U;
+
 static uint16_t      read_ao(void);
 static void          learn_floor(void);
 static void          sample(void);
@@ -232,6 +256,10 @@ static void          beep_start(uint8_t count, uint16_t on_ms);
 static void          beep_tick(void);
 static void          beep_silence(void);
 static void          quiet_on_stop(void);
+static void          bc_tick_init(void);
+static void          bc_tick_arm(void);
+static void          bc_tick_isr(UINT intno);
+static void          bc_wait(void);
 
 /* ===================================================================== *
  *  Sampling
@@ -266,7 +294,7 @@ static void learn_floor(void)
     for (uint32_t i = 0U; i < LEARN_SAMPLES; i++)
     {
         sum += read_ao();
-        (void)tk_dly_tsk(BC_SAMPLE_MS);
+        bc_wait();
     }
 
     g_white_q = (sum / LEARN_SAMPLES) << LEVEL_FRAC_SHIFT;
@@ -1139,6 +1167,84 @@ ER barcode_init(void)
     return ((g_adc_dd < E_OK) ? (ER)g_adc_dd : E_OK);
 }
 
+/* LOCAL: start the sample tick (from barcode_task, so the alarm's
+ * interrupt is taken on the task's own core).  If the interrupt cannot be
+ * defined, bc_wait() falls back to tk_dly_tsk() (50 Hz). */
+static void bc_tick_init(void)
+{
+    T_DINT dint = { 0 };
+
+    g_bc_tid = tk_get_tid();
+
+    /* Cast: the kernel stores every handler as FP; TA_HLNG handlers get
+     * one UINT, bc_tick_isr()'s signature. */
+    dint.intatr = TA_HLNG;
+    dint.inthdr = (FP)bc_tick_isr;
+
+    if (E_OK == tk_def_int(BC_TICK_INTNO, &dint))
+    {
+        g_tick_at = in_w(BC_TICK_RAWL);
+        out_w(BC_TICK_INTR, BC_TICK_BIT);   /* drop a stale match */
+        set_w(BC_TICK_INTE, BC_TICK_BIT);
+        bc_tick_arm();
+        EnableInt(BC_TICK_INTNO, BC_TICK_PRIORITY);
+        g_b_tick = true;
+    }
+    else
+    {
+        tm_printf((UB *)"[BC] no 1 kHz tick: sampling at 50 Hz\n");
+    }
+}
+
+/* LOCAL: next alarm one tick after the last, or one tick from now if
+ * that is already (nearly) past: the timer compares for equality, so an
+ * alarm set in the past would not fire for 71 minutes. */
+static void bc_tick_arm(void)
+{
+    uint32_t const now = in_w(BC_TICK_RAWL);
+    uint32_t       at  = g_tick_at + BC_TICK_US;
+
+    if ((int32_t)(at - now) < (int32_t)BC_TICK_MARGIN_US)
+    {
+        at = now + BC_TICK_US;
+    }
+
+    g_tick_at = at;
+    out_w(BC_TICK_ALARM, at);
+}
+
+/* LOCAL: ALARM2 matched: clear it, arm the next, wake barcode_task. */
+static void bc_tick_isr(UINT intno)
+{
+    (void)intno;
+
+    out_w(BC_TICK_INTR, BC_TICK_BIT);
+    bc_tick_arm();
+    (void)tk_wup_tsk(g_bc_tid);
+}
+
+/* LOCAL: wait for the next sample tick.  Wake-ups that came while the
+ * task was busy (a log line) are queued, so it catches up.  No tick for
+ * BC_TICK_TMO_MS: the alarm was lost, arm it again. */
+static void bc_wait(void)
+{
+    UINT imask;
+
+    if (g_b_tick)
+    {
+        if (E_TMOUT == tk_slp_tsk(BC_TICK_TMO_MS))
+        {
+            DI(imask);
+            bc_tick_arm();
+            EI(imask);
+        }
+    }
+    else
+    {
+        (void)tk_dly_tsk(BC_SAMPLE_MS);
+    }
+}
+
 /* Sample every BC_SAMPLE_MS; a pass ends after BC_END_GAP_MS without an
  * edge, and is decoded then. */
 void barcode_task(INT stacd, void * exinf)
@@ -1150,6 +1256,7 @@ void barcode_task(INT stacd, void * exinf)
     (void)stacd;
     (void)exinf;
 
+    bc_tick_init();
     learn_floor();
     beep_start(1U, BC_BEEP_MS);     /* Ready: proves the buzzer works. */
 
@@ -1213,7 +1320,7 @@ void barcode_task(INT stacd, void * exinf)
         }
 #endif
 
-        (void)tk_dly_tsk(BC_SAMPLE_MS);
+        bc_wait();
     }
 }
 
