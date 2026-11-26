@@ -38,4 +38,7 @@ Newest at the bottom. Never delete a row.
 
 | Date | Subsystem | Test ID / demo | Commit | Student ID | Link | Notes |
 |---|---|---|---|---|---|---|
-| YYYY-MM-DD | S1 | SYS-10 | `abc1234` | | <https://youtu.be/...> | car shows online on the dashboard |
+| 2026-11-23 | S4 | S4-M02 hump height (standalone) | 4b8c874 | all | https://www.youtube.com/watch?v=sc8UPtc7g84 | car crosses the hump; height on the dashboard |
+| 2026-11-23 | S5 | S5-M02, S5-M03 obstacle stop and bypass (standalone) | 4b8c874 | all | https://www.youtube.com/watch?v=v-P4jcvzVxA | stops under 15 cm, goes round, rejoins the line |
+| 2026-11-23 | S3, S4 | Hump and curved line following | 4b8c874 | all | https://www.youtube.com/watch?v=Z8Xdo-MpRV0 | follows the curve and crosses the hump |
+| 2026-11-23 | All | Full run: line following, barcode turn at the T junction, hump, obstacle bypass | 4b8c874 | all | https://www.youtube.com/watch?v=bMt3-Lljm-M | whole course in one take |
